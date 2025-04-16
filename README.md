@@ -35,14 +35,23 @@ Full technical overview available in [`workflow.html`](./workflow.html).
 
 ## 📁 Project Structure
 .
+
 ├── index.html         # Landing page
+
 ├── vault.html         # Main vault interface
+
 ├── vault.js           # DApp logic (wallet connection, encryption, decryption)
+
 ├── vault.css          # Styles for the DApp
+
 ├── workflow.html      # Detailed DApp process overview
+
 ├── terms.html         # Terms & Conditions
+
 ├── privacy.html       # Privacy Policy
+
 └── license.html       # MIT License
+
 ```
 
 ---
