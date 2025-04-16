@@ -1,58 +1,39 @@
-# CroVault
+# 🔐 CroVault
 
-**CroVault** is a decentralized privacy vault built on the Cronos blockchain. It securely stores encrypted credentials, notes, and wallet information directly on-chain, accessible only through your crypto wallet and a personal password.
+**CroVault** is a decentralized privacy vault DApp that allows users to securely store encrypted credentials, notes, and wallet information on the Cronos blockchain. It uses client-side encryption, self-custody design, and open-source smart contracts to give users full control over their sensitive data — even beyond their lifetime.
 
 ---
 
-## Live Demo
+## 🌍 Live Site
 
 👉 [https://crovault.com](https://crovault.com)
 
 ---
 
-## Features
+## 🛡 Key Features
 
-- **End-to-End Encryption**  
-  Uses AES-GCM with PBKDF2 for secure, client-side data encryption.
-
-- **Blockchain Storage**  
-  Your data is stored in your personal vault smart contract on the Cronos blockchain.
-
-- **Web3-Enabled**  
-  No centralized server—only you control access to your data with your wallet and password.
-
-- **Legacy Support**  
-  Optionally share access with trusted individuals when needed.
-
-- **Open Source**  
-  All smart contracts are verified and auditable on Cronoscan.
+- ✅ **End-to-End Encryption** (AES-GCM with PBKDF2)
+- ✅ **No Centralized Storage** – Everything lives on-chain
+- ✅ **Secure Legacy Planning** – Share access only when needed
+- ✅ **Multi-device access** – Nothing stored locally
+- ✅ **Verified Smart Contracts** – Viewable on Cronoscan
+- ✅ **Open Source & Auditable**
 
 ---
 
-## How It Works
+## 🔧 How It Works
 
-1. **Connect Your Wallet:**  
-   Use a Cronos-compatible Web3 wallet to connect to the DApp.
+1. Connect your crypto wallet (supports Web3 wallets)
+2. Set a strong password (never sent to server)
+3. Create your personal vault smart contract
+4. Store data securely (encrypted on device before blockchain)
+5. Share selectively if desired
 
-2. **Set a Password:**  
-   Create a strong, 12+ character password for client-side encryption (never sent to a server).
-
-3. **Create Your Vault:**  
-   Deploy your personal vault smart contract, which stores your encrypted data on the blockchain.
-
-4. **Store and Manage Data:**  
-   Add, update, or delete encrypted credentials, notes, and wallet addresses as needed.
-
-5. **Secure Access:**  
-   Only someone with both your wallet and your password can decrypt your data.
-
-See the detailed overview in the [Workflow Overview](./workflow.html) page.
+Full technical overview available in [`workflow.html`](./workflow.html).
 
 ---
 
-## Project Structure
-
-```
+## 📁 Project Structure
 .
 ├── index.html         # Landing page
 ├── vault.html         # Main vault interface
@@ -66,21 +47,31 @@ See the detailed overview in the [Workflow Overview](./workflow.html) page.
 
 ---
 
-## Local Setup
+## 💻 Local Development
 
-Clone the repository and start a local static server (e.g., using Python):
+### Prerequisites
+- Node.js (optional, for bundling)
+- Static server (or open `index.html` directly)
+
+### Quick Start (for testing locally)
 
 ```bash
+# 1. Clone the repo
 git clone https://github.com/YourUsername/crovault.git
 cd crovault
+
+# 2. Run a local server (Python 3)
 python3 -m http.server 8080
+
+# 3. Visit
+http://localhost:8080
 ```
 
 Then open your browser at [http://localhost:8080](http://localhost:8080).
 
 ---
 
-## Smart Contracts
+## 🔐 Smart Contracts
 
 All smart contracts are publicly verified on Cronoscan:
 
@@ -90,25 +81,25 @@ All smart contracts are publicly verified on Cronoscan:
 
 ---
 
-## License
+## 📜 License
 
 This project is licensed under the [MIT License](./license.html).
 
 ---
 
-## Connect with Us
+## 📣 Support & Social
 
 - [Twitter / X](https://x.com/CroVault)
 - [Telegram](https://t.me/CroVault)
 
 ---
 
-## Disclaimer
+## ⚠️ Disclaimer
 
 CroVault is a decentralized application (dApp). You are solely responsible for your vault password, crypto wallet, and private keys. **If you lose access, your data cannot be recovered.**
 
 ---
 
-## Contributing
+## 🙌 Contributions
 
 Contributions are welcome! For major changes, please open an issue first to discuss your ideas, then submit a pull request.
