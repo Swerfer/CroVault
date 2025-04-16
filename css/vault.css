@@ -120,7 +120,7 @@ header {
 .h2-index {
   margin-top: 40px;
   text-align: center;
-  font-size: 2rem;
+  font-size: 1.6rem;
 }
 
 @media (max-width: 768px) {
@@ -150,7 +150,6 @@ header {
 .centered-left.faq {
   max-width: 395px;
 }
-
 
 details {
   color: var(--color-muted);
@@ -242,6 +241,18 @@ summary {
 }
 
 /* ==== End CSS for the index page ==== */
+
+/* ==== CSS for the blog page ==== */
+
+.blogImage {
+  display: block;
+  margin: 30px auto;
+  max-width: 400px;
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 0 20px var(--color-shadow);
+}
+/* ==== End CSS for the blog page ==== */
 
 .displayNone {
   display: none;

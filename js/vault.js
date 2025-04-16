@@ -206,6 +206,8 @@ function showVaultType(type) {
 }
 
 async function fetchVaultCount() {
+  const path = window.location.pathname.toLowerCase();
+  if (!(path.endsWith("/") || path.endsWith("/index") || path.endsWith("/index.html"))) return;
   const url = "https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=0xa07477Da0dB859F7799bAbA9bac87E8AF104b810&topic0=0x5d9c31ffa0fecffd7cf379989a3c7af252f0335e0d2a1320b55245912c781f53";
   try {
     const response = await fetch(url);
