@@ -1,0 +1,29 @@
+# Enable Gzip Compression
+mod_gzip_on Yes
+
+# Set UTF-8 Encoding
+AddDefaultCharset UTF-8
+
+# Enable Rewrite Engine
+RewriteEngine On
+RewriteBase /
+
+# Redirect all HTTP to HTTPS
+RewriteCond %{HTTPS} !=on
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# Force non-www (remove www)
+RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+# Custom 404 Page
+ErrorDocument 404 /404.html
+
+# Prevent Access to .htaccess
+<Files .htaccess>
+order allow,deny
+deny from all
+</Files>
+
+# Prevent Directory Listings
+Options All -Indexes

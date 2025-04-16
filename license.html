@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Basic meta tags -->
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="CroVault is a privacy vault for your sensitive data. Store credentials, notes, and wallet addresses securely.">
+  <meta name="keywords" content="CroVault, privacy vault, secure storage, credentials, notes, wallet addresses">
+  <meta name="author" content="CroVault Team">
+  <meta name="theme-color" content="#051126">
+  <meta name="robots" content="index, follow"> 
+  <title>CroVault - Your privacy data safely stored on the blockchain in your own personal vault</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/vault.css">
+  <link rel="canonical" href="https://crovault.com/license.html" />
+  <meta name="description" content="CroVault is a privacy vault for your sensitive data. Store credentials, notes, and wallet addresses securely.">
+
+</head>
+<body>
+  <div class="page-container">
+    <!-- Header with menu -->
+    <header>
+      <div id="headerDiv" class="header-content">
+        <a href="/" title="CroVault privacy-policy">
+          <img src="assets/images/Icon Transparent/CroVault 480.png" alt="CroVault Logo" title="CroVault Logo"/>
+        </a>
+        <div>
+          <span class="title">CroVault</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <div class="py-3 content">
+      
+      <h1 class="h1-index">MIT License</h1>
+      <p>
+        Copyright (c) <span id="license-year"></span> CroVault
+      </p>
+      <p>
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights  
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell  
+        copies of the Software, and to permit persons to whom the Software is  
+        furnished to do so, subject to the following conditions:
+      </p>
+      <p>
+        The above copyright notice and this permission notice shall be included in  
+        all copies or substantial portions of the Software.
+      </p>
+      <p>
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR  
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE  
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER  
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN  
+        THE SOFTWARE.
+      </p>
+
+      <footer class="mt-4">
+        <p>
+          <strong>&copy; <span id="year"></span> CroVault. All Rights Reserved.</strong>
+          &nbsp;|&nbsp;
+          <a href="/privacy.html" class="text-light">Privacy Policy</a>
+          &nbsp;|&nbsp;
+          <a href="/terms.html" class="text-light">Terms and Conditions</a>
+        </p>
+        <div>
+          <a href="https://x.com/CroVault" title="Twitter/X" class="social-link sl-style">
+            <i class="fab fa-x-twitter"></i>
+          </a>
+          <a href="https://t.me/CroVault" title="Telegram" class="social-link sl-style">
+            <i class="fab fa-telegram"></i>
+          </a>
+        </div>
+      </footer>
+    </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // ===== Footer year =====
+      document.getElementById("license-year").textContent = new Date().getFullYear();
+      document.getElementById("year").textContent = new Date().getFullYear();
+    });
+  </script>
+    
+</body>
+</html>

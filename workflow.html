@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Basic meta tags -->
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="CroVault DApp workflow overview"/>
+  <meta name="keywords" content="CroVault, workflow, how it works, vault, password, encryption"/>
+  <meta name="author" content="CroVault Team"/>
+  <meta name="theme-color" content="#051126">
+  <meta name="robots" content="index, follow"> 
+  <title>CroVault - Workflow Overview</title>
+
+  <!-- Favicons & manifest -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <!-- FontAwesome + Bootstrap -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+  
+  <!-- Reuse the vault CSS for styling -->
+  <link rel="stylesheet" href="css/vault.css">
+
+</head>
+<body>
+  <div class="page-container">
+    <!-- Header -->
+    <header>
+      <div id="headerDiv" class="header-content">
+        <a href="/" title="CroVault homepage">
+          <img src="assets/images/Icon Transparent/CroVault 480.png" alt="CroVault Logo" title="CroVault Logo"/>
+        </a>
+        <div>
+          <span class="title">CroVault</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <div class="py-3 content">
+      <section class="section">
+        <h1 class="text-center">CroVault Workflow Overview</h1>
+        <p class="text-center">
+          This page describes the major steps and states in the CroVault DApp workflow, from first visiting the Vault page
+          through connecting a wallet, deriving a key, creating a vault, unlocking the data, saving items, and handling idle timeouts.
+        </p>
+      </section>
+
+      <!-- 1) Page Initialization -->
+      <section class="section">
+        <h2>1. Page Initialization</h2>
+        <p>
+          <strong>User visits the vault page:</strong> <br>
+          The page loads <code>vault.js</code> and waits for <code>DOMContentLoaded</code>. 
+          Then:
+        </p>
+        <ul>
+          <li>Web3Modal is initialized.</li>
+          <li>If <code>web3Modal.cachedProvider</code> is found, the code attempts an auto-connect to the wallet.</li>
+          <li>A fallback read-only <code>JsonRpcProvider</code> is created to fetch the creation/upsert fees from the CostManager contract.</li>
+          <li>The DOM is updated to display these fees for the user’s reference.</li>
+        </ul>
+        <p>If a wallet is <em>not</em> connected, a “Connect Wallet” button appears so the user can proceed.</p>
+      </section>
+
+      <!-- 2) Connect or View on CronoScan -->
+      <section class="section">
+        <h2>2. Connect or View on CronoScan</h2>
+        <p>
+          When the user clicks “Connect Wallet”:
+        </p>
+        <ul>
+          <li>
+            If <code>walletAddress</code> is <strong>not set</strong> (i.e., we are not yet connected):
+            <ul>
+              <li>Runs <code>connectWallet()</code>, which attempts repeated wallet connections.</li>
+              <li>On success, calls <code>afterWalletConnect()</code> to finalize the session.</li>
+              <li>On failure, sets the button text back to “Connect Wallet.”</li>
+            </ul>
+          </li>
+          <li>
+            If <code>walletAddress</code> <strong>is already set</strong> (meaning we’re connected):
+            <ul>
+              <li>Instead of re-connecting, it opens CronoScan in a new tab for the user’s address:
+                <br><code>https://cronoscan.com/address/&lt;walletAddress&gt;</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      <!-- 3) afterWalletConnect -->
+      <section class="section">
+        <h2>3. afterWalletConnect (Establish Session)</h2>
+        <ul>
+          <li>We create an Ethers <code>provider</code> and <code>signer</code>.</li>
+          <li>We fetch the wallet’s address: <code>(await signer.getAddress()).toLowerCase()</code>.</li>
+          <li>Update the UI button text to “Connected: 0x1234...ABCD.”</li>
+          <li>We add a listener for <code>accountsChanged</code> to detect if the user changes or disconnects their wallet:
+            <ul>
+              <li>This calls <code>handleIdleTimeout(false)</code> to forcibly lock/hide the vault if the account changes.</li>
+            </ul>
+          </li>
+          <li>We attempt to switch or add the Cronos chain (<code>chainId: 0x19</code>).</li>
+          <li>We call <code>hideOrShowCreateVault()</code> to check for an existing vault in the factory:
+            <ul>
+              <li>If none, show the “Create Vault” button.</li>
+              <li>If found, we hide that button and load data via <code>loadAndShowCredentials()</code>.</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      <!-- 4) Create Vault -->
+      <section class="section">
+        <h2>4. Create Vault (if needed)</h2>
+        <p>
+          If no vault exists for the user’s address, they see a “Create Vault” button.
+          Clicking it calls <code>createNewVault()</code>:
+        </p>
+        <ul>
+          <li>Calls <code>factory.createVault()</code> with <code>value = creationCost</code>.</li>
+          <li>On success, the transaction emits a “VaultCreated” event with the new vault address.</li>
+          <li>We store that address in <code>userVault</code>, hide the create button, and proceed (the user can set a password when they first add data).</li>
+        </ul>
+      </section>
+
+      <!-- 5) Deriving the Wallet Key (Signature) -->
+      <section class="section">
+        <h2>5. Deriving the Wallet Key (Signature)</h2>
+        <p>
+          Before encrypting/decrypting data, we call <code>deriveWalletKey()</code>, which:
+        </p>
+        <ul>
+          <li>Asks the user to sign a special message: 
+            <br><code>"I authorize access to my CroVault data on the blockchain"</code>
+          </li>
+          <li>Performs a SHA-256 hash on the resulting signature to form <code>walletDerivedKey</code>.</li>
+          <li>If the user refuses to sign, we keep prompting for a signature whenever encryption/decryption is needed.</li>
+        </ul>
+      </section>
+
+      <!-- 6) Setting the Vault Password -->
+      <section class="section">
+        <h2>6. Setting the Vault Password</h2>
+        <p>
+          If the user’s vault is new, or they have no data, they’ll eventually see a <strong>Set Password</strong> modal:
+        </p>
+        <ul>
+          <li>They must enter a 12+ character password meeting complexity rules.</li>
+          <li>This password is never sent to the server — it’s used client-side to derive encryption keys (AES-GCM) in combination with <code>walletDerivedKey</code>.</li>
+          <li>Once set, it cannot be changed (the only way to reset is to delete all vault data or deploy a new vault).</li>
+        </ul>
+        <p>
+          If the vault <em>already has data</em>, the user sees an <strong>Unlock</strong> modal:
+          They must enter the correct password to decrypt existing data.
+          If it’s wrong, <code>showWrongPasswordModal()</code> appears, letting them retry or cancel.
+        </p>
+      </section>
+
+      <!-- 7) Viewing/Adding/Editing/Deleting Data -->
+      <section class="section">
+        <h2>7. Viewing, Adding, Editing, or Deleting Data</h2>
+        <ul>
+          <li><strong>Read from chain:</strong> 
+            <code>readCredentials()</code>, <code>readNote()</code>, and <code>readWalletAddress()</code> retrieve each item as an encrypted JSON string.
+            We parse/decrypt with <code>decryptWithPassword(sessionPassword, ...)</code>.
+          </li>
+          <li><strong>Add/Edit data:</strong>
+            <ul>
+              <li>Items go into <code>pendingCredentials</code> / <code>pendingNotes</code> / <code>pendingWallets</code>.</li>
+              <li>The user sees these as “(Pending)” until they click “Save All.”</li>
+            </ul>
+          </li>
+          <li><strong>Save All:</strong>
+            <ul>
+              <li>Encrypt each pending item with <code>encryptWithPassword()</code> (AES-GCM) and send to the contract’s <code>upsert</code> methods with <code>value = upsertCost</code>.</li>
+              <li>After mining, we re-fetch and re-decrypt the data so the UI is up to date.</li>
+            </ul>
+          </li>
+          <li><strong>Delete items:</strong>
+            <ul>
+              <li>Calls <code>deleteCredentials(ids)</code>, etc., then re-loads from chain to refresh the UI.</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      <!-- 8) Idle Timeout & Session Reset -->
+      <section class="section">
+        <h2>8. Idle Timeout & Session Reset</h2>
+        <p>
+          The DApp enforces a 2.5-minute idle timer:
+        </p>
+        <ul>
+          <li>If no user activity (click, scroll, keypress) occurs, <code>handleIdleTimeout(true)</code> fires.</li>
+          <li>We immediately hide the vault, clear <code>sessionPassword</code> and <code>walletDerivedKey</code>, and show an alert about the session reset.</li>
+          <li>The user must re-sign and re-enter the password to resume.</li>
+          <li>If the user manually changes accounts in the wallet, we call <code>handleIdleTimeout(false)</code> (no alert) but still reset and hide the vault.</li>
+        </ul>
+      </section>
+
+      <!-- 9) Resetting the Password (Delete All Data) -->
+      <section class="section">
+        <h2>9. Resetting the Password (Delete All Data)</h2>
+        <p>
+          There’s no built-in method to “change” your vault password. 
+          Instead, if you want a fresh password, you must:
+        </p>
+        <ol>
+          <li>Delete all items (credentials, notes, wallets) from your vault or deploy a new vault.</li>
+          <li>Next time you add data, you can set a brand-new password.</li>
+        </ol>
+      </section>
+
+      <!-- 10) Summary Diagram (Textual) -->
+      <section class="section">
+        <h2>10. Summary Diagram (Textual)</h2>
+        <p>The overall state flow in text form:</p>
+        <pre class="white" style="background:#333; padding:1em; overflow:auto;">
+          ┌───────────┐
+          │ Page Load │
+          └─────┬─────┘
+                │
+                v
+   ┌───────────────────────────┐
+   │ Check Cached Web3Provider │
+   └────────────┬──────────────┘
+                │No
+                v
+       [Show Connect Button]
+                │User clicks
+                v
+     ┌──────────────────────┐
+     │ connectWallet()      │
+     │ -> afterWalletConnect│
+     └──────────┬───────────┘
+                │Yes
+                v
+ ┌───────────────────────────────┐
+ │ Wallet is connected -> Button │
+ │   links to CronoScan          │
+ └───────────────────────────────┘
+
+
+afterWalletConnect():
+ ┌────────────────────────────────────────────────────────┐
+ │1) Switch to Cronos chain                               │
+ │2) walletAddress = getAddress()                         │
+ │3) Check vault: factory.ownerToVault(address)           │
+ │4) If vault=0x000.. => show "Create Vault"              │
+ │   else => userVault & load data => possibly show       │
+ │   unlock modal (if data found)                         │
+ └────────────────────────────────────────────────────────┘
+
+Create Vault Flow:
+ ┌────────────────────────────────────────────────────────┐
+ │ createVault(value=creationCost) -> event => userVault  │
+ │ user must sign + set password when they add data.      │
+ └────────────────────────────────────────────────────────┘
+
+Unlock Flow:
+ ┌────────────────────────────────────────────────────────┐
+ │ If vault has data => showUnlockModal => user pass =>   │
+ │ deriveWalletKey => decrypt => show vault => idleTimer  │
+ └────────────────────────────────────────────────────────┘
+
+Saving / Editing / Deleting Data:
+ ┌────────────────────────────────────────────────────────┐
+ │1) read & decrypt existing data                         │
+ │2) user modifies => pending arrays => "Save All"        │
+ │3) upsert with upsertCost => re-read => re-decrypt      │
+ │4) "Delete" calls delete => re-read => UI refresh       │
+ └────────────────────────────────────────────────────────┘
+
+Idle Timeout / Account Switch:
+ ┌────────────────────────────────────────────────────────┐
+ │ If user is idle => handleIdleTimeout(true) => reset    │
+ │ session => hide vault => user must unlock again.       │
+ │ If accountsChanged => handleIdleTimeout(false).        │
+ └────────────────────────────────────────────────────────┘
+
+Reset Password:
+ ┌────────────────────────────────────────────────────────┐
+ │ Must delete all data or create a new vault => fresh pw │
+ └────────────────────────────────────────────────────────┘
+        </pre>
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-4">
+      <p>
+        <strong>&copy; <span id="year"></span> CroVault. All Rights Reserved.</strong>
+        &nbsp;|&nbsp;
+        <a href="/privacy.html" class="text-light">Privacy Policy</a>
+        &nbsp;|&nbsp;
+        <a href="/terms.html" class="text-light">Terms and Conditions</a>
+        &nbsp;|&nbsp;
+        <a href="/LICENSE.html" class="text-light">MIT License</a>
+      </p>
+      <p>
+        ⚠️ Disclaimer: CroVault is a decentralized application. You are solely responsible for your data, wallet, and password. We cannot recover lost vaults.
+      </p>
+      <div>
+        <a href="https://x.com/CroVault" title="Twitter/X" class="social-link sl-style">
+          <i class="fab fa-x-twitter"></i>
+        </a>
+        <a href="https://t.me/CroVault" title="Telegram" class="social-link sl-style">
+          <i class="fab fa-telegram"></i>
+        </a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- A small script to fill the footer year -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("year").textContent = new Date().getFullYear();
+    });
+  </script>
+</body>
+</html>

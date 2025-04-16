@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Basic meta tags -->
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="CroVault is a privacy vault for your sensitive data. Store credentials, notes, and wallet addresses securely.">
+  <meta name="keywords" content="CroVault, privacy vault, secure storage, credentials, notes, wallet addresses">
+  <meta name="author" content="CroVault Team">
+  <meta name="theme-color" content="#051126">
+  <meta name="robots" content="index, follow"> 
+  <title>CroVault - Your privacy data safely stored on the blockchain in your own personal vault</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/vault.css">
+  <link rel="canonical" href="https://crovault.com/vault" />
+
+  <!-- Ethers + Web3Modal JS -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="https://unpkg.com/web3modal"></script>
+
+  <!-- Your logic -->
+  <script src="js/vault.js"></script>
+
+</head>
+<body>
+  <div class="page-container">
+    <!-- Header with menu -->
+    <header>
+      <div id="headerDiv" class="header-content">
+        <a href="/" title="CroVault homepage">
+          <img src="assets/images/Icon Transparent/CroVault 480.png" alt="CroVault Logo" title="CroVault Logo"/>
+        </a>
+        <div>
+          <span class="title">CroVault</h1>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <div class="py-3 content">
+      <section id="intro" class="section">
+        <h1>Your personal, secure privacy data vault</h1>
+      </section>
+
+      <section id="connectBtns" class="section connectBtns">
+        <div>
+          <div class="mb-3 text-center">
+            <button id="connectWalletBtn" class="btn-custom small maxwidth" title="Connect Wallet">
+              <span id="connectBtnText">Connect Wallet</span>
+              <span id="walletLoader" class="btn-spinner displayNone">
+                <span class="loader"></span>
+              </span>
+            </button>
+            <button id="retrySignBtn" class="btn-custom small your-vault-buttons displayNone">
+              <i class="fas fa-pen-nib"></i> Sign
+            </button>
+            <button id="retryUnlockBtn" class="btn-custom small your-vault-buttons displayNone">
+              <i class="fas fa-unlock"></i> Unlock
+            </button>
+            <p id="vaultAddress" class="mt-2"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- NEW: Create Vault section -->
+      <section id="createVaultSection" class="section hidden">
+        <div class="mb-3 text-center">
+          <h2>Create a Vault</h2>
+          <!-- This button is disabled unless a wallet is connected -->
+          <button id="createVaultBtn" class="btn-custom small maxwidth">
+            Create
+          </button>
+          <p id="createVaultPrice" class="gold mt-2"></p>
+          <div id="deployLoader" class="btn-spinner displayNone">
+            <span class="loader"></span>
+          </div>
+          <div id="deployResult"></div>
+        </div>
+      </section>
+
+      <section id="vaultDataSection" class="section displayNone">
+
+        <div class="flex-between">
+
+          <h3 class="vault-section-title">Your Vault</h3>
+          <div>
+            <button id="globalSaveAllBtn" class="btn-custom small your-vault-buttons displayNone">
+              <i class="fas fa-save"></i> Save All
+            </button>
+          </div>
+        </div>        
+      
+        <!-- === Credentials Section === -->
+        <div class="vault-section" id="credentialSection">
+          <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="credentialList"><i class="fas fa-lock"></i> Credentials (<span id="credCount">0</span>)</h4>
+            <button id="addCredentialBtn" class="icon-only-btn" title="Add Credential"><i class="fas fa-plus"></i></button>
+          </div>                            
+          <div id="credentialList" class="vault-content displayNone">
+            <!-- New Credential Form -->
+            <div id="newCredentialForm" class="vault-card vault-credentials displayNone">
+              <div>
+                <h4 id="credentialFormTitle"><i class="fas fa-lock"></i> New Credential</h4>
+                <p id="upsertCredentialPrice" class="gold mt-2"></p>
+              </div>
+              <div class="dataDiv">
+                <input type="text" id="credName" placeholder="Name (max 32 chars)" maxlength="32">
+                <input type="text" id="credUsername" placeholder="Username (max 256 chars)" maxlength="256">
+                <input type="text" id="credPassword" placeholder="Password (max 256 chars)" maxlength="256">
+                <input type="text" id="credRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+              </div>
+              <div class="buttonDiv">
+                <button id="saveCredentialBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelCredentialBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+              </div>
+            </div>
+            <!-- The list of Credentials comes here -->
+            <div id="credentialReadItems"></div>
+            <div id="credentialPendingItems"></div>
+          </div>       
+        </div>
+      
+        <!-- === Notes Section === -->
+        <div class="vault-section" id="noteSection">
+          <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="noteList"><i class="fas fa-note-sticky"></i> Notes (<span id="noteCount">0</span>)</h4>
+            <button id="addNoteBtn" class="icon-only-btn" title="Add Note"><i class="fas fa-plus"></i></button>
+          </div>                            
+          <div id="noteList" class="vault-content displayNone">
+            <!-- New Note Form -->
+            <div id="newNoteForm" class="vault-card vault-notes displayNone">
+              <div>
+
+                <h4 id="noteFormTitle"><i class="fas fa-note-sticky"></i> New Note</h4>
+                <p id="upsertNotePrice" class="gold mt-2"></p>
+              </div>
+              <div class="dataDiv">
+                <input type="text" id="noteName" placeholder="Note title (max 64 chars)" maxlength="64">
+                <textarea id="noteContent" rows="5" maxlength="4096" placeholder="Note content (max 4096 chars)"></textarea>
+              </div>
+              <div class="buttonDiv">
+                <button id="saveNoteBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelNoteBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+              </div>
+            </div>
+            <!-- The list of Notes comes here -->
+            <div id="noteReadItems"></div>
+            <div id="notePendingItems"></div>
+          </div>
+        </div>
+      
+        <!-- === Wallet Addresses Section === -->
+        <div class="vault-section" id="walletSection">
+          <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="walletList"><i class="fas fa-wallet"></i> Wallet Addresses (<span id="walletCount">0</span>)</h4>
+            <button id="addWalletBtn" class="icon-only-btn" title="Add Wallet Address"><i class="fas fa-plus"></i></button>
+          </div>
+          <div id="walletList" class="vault-content displayNone">
+            <!-- New Wallet Form -->
+            <div id="newWalletForm" class="vault-card vault-wallets displayNone">
+              <div>
+
+                <h4 id="walletFormTitle"><i class="fas fa-wallet"></i> New Wallet Address</h4>
+                <p id="upsertWalletPrice" class="gold mt-2"></p>
+              </div>
+              <div class="dataDiv">
+                <input type="text" id="walletName" placeholder="Name (max 32 chars)" maxlength="32">
+                <input type="text" id="walletAddress" placeholder="Wallet Address (0x...)">
+                <input type="text" id="walletPrivateKey" placeholder="Private Key">
+                <input type="text" id="walletSeedPhrase" placeholder="Seed Phrase (24 words)">
+                <input type="text" id="walletRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+              </div>
+              <div class="buttonDiv">
+                <button id="saveWalletBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelWalletBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+              </div>
+            </div>
+            <div id="walletReadItems"></div>
+            <div id="walletPendingItems"></div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <p>
+          <strong>&copy; <span id="year"></span> CroVault. All Rights Reserved.</strong>
+          &nbsp;|&nbsp;
+          <a href="/privacy.html" class="text-light">Privacy Policy</a>
+          &nbsp;|&nbsp;
+          <a href="/terms.html" class="text-light">Terms and Conditions</a>
+          &nbsp;|&nbsp;
+          <a href="/LICENSE.html" class="text-light">MIT License</a>
+        </p>
+        <p>
+          ⚠️ Disclaimer: CroVault is a decentralized application. You are solely responsible for your data, wallet, and password. We cannot recover lost vaults.
+        </p>
+        <div>
+          <a href="https://x.com/CroVault" title="Twitter/X" class="social-link sl-style">
+            <i class="fab fa-x-twitter"></i>
+          </a>
+          <a href="https://t.me/CroVault" title="Telegram" class="social-link sl-style">
+            <i class="fab fa-telegram"></i>
+          </a>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Password Setup Modal -->
+    <div id="passwordModal" class="modal hidden">
+      <div class="modal-content">
+        <h3><i class="fas fa-lock"></i> Set Your Vault Password</h3>
+        <div class="text-start">
+          <p>
+            <br>
+            This password will be used to encrypt and decrypt your vault data.
+          </p>
+          <p>
+            <strong>Keep it safe! If you loose this password, you won't be able to unlock your vault!</strong>
+          </p>
+          <p class="red">
+            <strong>This is a one time action. You can't change your password ever!</strong>
+          </p>
+        </div>  
+
+        <div class="password-field">
+          <input type="password" id="vaultPassword" placeholder="Enter password">
+        </div>
+
+        <div class="password-field ">
+          <input type="password" id="vaultPasswordConfirm" placeholder="Confirm password">
+          <div id="invalidPasswordStrength" class="text-start mt-2 invalid-password">&nbsp;</div>
+        </div>
+
+        <div class="buttonDiv">
+          <button id="confirmVaultPasswordBtn" class="btn-custom green"><i class="fas fa-check"></i> Confirm</button>
+          <button id="cancelVaultPasswordBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vault Unlock Modal -->
+    <div id="unlockModal" class="modal hidden">
+      <div class="modal-content">
+        <h3><i class="fas fa-unlock"></i> Unlock Your Vault</h3>
+        <p>Enter your password to view and decrypt your data.</p>
+
+        <div class="password-field">
+          <input type="password" id="unlockPassword" placeholder="Vault password">
+        </div>
+
+        <div class="buttonDiv">
+          <button id="confirmUnlockBtn" class="btn-custom green"><i class="fas fa-check"></i> Unlock</button>
+          <button id="cancelUnlockBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wrong password modal -->
+    <div id="wrongPasswordModal" class="modal hidden">
+      <div class="modal-content">
+        <h3><i class="fas fa-times"></i> Wrong Password</h3>
+        <p>The password you entered is incorrect. Please try again.</p>
+        <div class="buttonDiv">
+          <button id="retryUnlockBtnModal" class="btn-custom green"><i class="fas fa-rotate-right"></i> Retry</button>
+          <button id="cancelUnlockBtn2" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="costInfoModal" class="modal hidden">
+      <div class="modal-content">
+        <h3><i class="fas fa-coins"></i> CroVault Fees</h3>
+        <p><strong>Vault Creation Fee:</strong> <span id="feeCreate">…</span> CRO</p>
+        <p><strong>Data Save/Update Fee:</strong> <span id="feeUpsert">…</span> CRO</p>
+        <div class="buttonDiv">
+          <button onclick="document.getElementById('costInfoModal').classList.add('hidden')" class="btn-custom green">
+            <i class="fas fa-check"></i> Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+    
+</body>
+</html>

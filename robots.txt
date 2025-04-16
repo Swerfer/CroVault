@@ -1,0 +1,22 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /backend/
+Disallow: /private/
+Disallow: /tmp/
+Disallow: /test/
+Disallow: /wp-admin/
+Disallow: /cgi-bin/
+
+# Block specific file types from indexing
+Disallow: /*.php$
+Disallow: /*.json$
+Disallow: /*.xml$
+Disallow: /*.cgi$
+Disallow: /*.env$
+Disallow: /*.js$
+
+# Allow search engines to index the main content
+Allow: /
+
+# Sitemap Location
+Sitemap: https://crovault.com/sitemap.xml
