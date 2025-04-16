@@ -52,32 +52,6 @@ Full technical overview available in [`workflow.html`](./workflow.html).
 
 └── license.html       # MIT License
 
-```
-
----
-
-## 💻 Local Development
-
-### Prerequisites
-- Node.js (optional, for bundling)
-- Static server (or open `index.html` directly)
-
-### Quick Start (for testing locally)
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/YourUsername/crovault.git
-cd crovault
-
-# 2. Run a local server (Python 3)
-python3 -m http.server 8080
-
-# 3. Visit
-http://localhost:8080
-```
-
-Then open your browser at [http://localhost:8080](http://localhost:8080).
-
 ---
 
 ## 🔐 Smart Contracts
