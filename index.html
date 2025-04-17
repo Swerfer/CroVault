@@ -17,6 +17,8 @@
   <meta property="og:image" content="https://crovault.com/assets/images/Icon/crovault-logo.webp">
   <meta property="og:url" content="https://crovault.com">
   <meta property="og:type" content="website">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -34,7 +36,7 @@
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></noscript>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
-  <link rel="stylesheet" href="css/vault.css">
+  <link rel="stylesheet" href="css/vault.css?v=4">
   <link rel="canonical" href="https://crovault.com/" />
   <script type="application/ld+json">
     {
@@ -75,12 +77,25 @@
         <div>
           <span class="title">CroVault</span>
         </div>
-        <nav class="text-end px-4 mt-2">
-          <a href="/blogs" class="fs-5">Blog</a>
-        </nav>        
+    
+        <!-- Toggle menu button -->
+        <button class="hamburger white" onclick="toggleMenu()">
+          <span id="hamburger-icon">☰</span>
+        </button>
+
+        <!-- Overlay background (for dim effect) -->
+        <div id="overlay" onclick="closeMenu()"></div>
+    
+        <!-- Combined nav menu -->
+        <div class="nav-menu px-4 mt-2" id="navMenu">
+          <a href="/blog" class="fs-5">Blog</a>
+          <a href="/instructions" class="fs-5">Instructions</a>
+        </div>
       </div>
+    
       <p id="activeVaults" class="text-center fs-5"></p>
     </header>
+    
 
     <!-- Main content -->
     <div class="py-3 content">
@@ -89,11 +104,13 @@
         <h1 class="h1-index">Blockchain password manager. <br>Secure your digital legacy.</h1>
 
         <h2 class="h2-index">
-          <span>CroVault is a blockchain password manager and encrypted vault.</span><br/>
-          <span>Store passwords, wallet addresses, notes, and seed phrases.</span><br/>
-          <span>Data is encrypted client-side using your password and wallet.</span><br/>
-          <span>Your vault is stored on the Cronos blockchain — not on servers.</span><br/>
-          <span>Use it for secure backup, or plan digital inheritance easily.</span><br/>
+          <div class="text-start d-inline-block">
+            <span>CroVault is a blockchain password manager and encrypted vault.</span><br/>
+            <span>Store passwords, wallet addresses, notes, and seed phrases.</span><br/>
+            <span>Data is encrypted client-side using your password and wallet.</span><br/>
+            <span>Your vault is stored on the Cronos blockchain — not on servers.</span><br/>
+            <span>Use it for secure backup, or plan digital inheritance easily.</span><br/>
+          </div>
         </h2>               
 
         <div class="text-center mt-4">
@@ -151,8 +168,8 @@
           </picture>          
           <!-- Mobile Image -->
           <picture>
-            <source srcset="assets/images/legacy/legacy-warning-mobile.webp" type="image/webp">
-            <img src="assets/images/legacy/legacy-warning-mobile.png" 
+            <source srcset="assets/images/legacy/legacy-warning-woman-mobile-1.webp" type="image/webp">
+            <img src="assets/images/legacy/legacy-warning-woman-mobile-1.png" 
                  alt="Important data locked after death without a plan" 
                  title="Ensure loved ones can access your vault after you're gone"  
                  class="death-image mobile-only">
@@ -354,6 +371,44 @@
               Yes. You can edit or delete saved credentials, notes, or wallet addresses.
             </p>
           </details>
+
+          <details>
+            <summary>How can I store my Authenticator accounts?</summary>
+            <p>
+              Most popular authenticator apps have no export function, but store the data in the cloud. There is one option for new accounts (or if you re-add accounts):
+            </p>
+            <p>
+              This only works if you still have access to the QR code or manual key when setting up an account in for e.g. Microsoft Authenticator, Google Authenticator or Authy.
+              <ul>
+                <li>
+                  When setting up a 2FA account in e.g. Microsoft Authenticator (e.g. for GitHub, Binance, etc.), click “Can’t scan QR code?” or “Use manual entry”
+                </li>
+                <li>
+                  You’ll see a secret key (Base32 string) — looks like:
+                  <ul>
+                    <li>
+                      JBSWY3DPEHPK3PXP
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  Copy this key and store it in CroVault under a new “Note”. Example:
+                  <ul>
+                    <li>
+                      <strong>Title:</strong> GitHub Authenticator
+                    </li>
+                    <li>
+                      <strong>Note:</strong><br>
+                      Key: JBSWY3DPEHPK3PXP<br>
+                      Digits: 6<br>
+                      Period: 30<br>
+                      Algorithm: SHA1
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </p>
+          </details>
         
           <details>
             <summary>Is the vault open-source?</summary>
@@ -416,7 +471,7 @@
 
       <section class="text-center mt-5">
         <h4>📝 Want to Learn More?</h4>
-        <p>Read articles about password security, digital inheritance, and safe seed phrase storage on the <a href="/blogs" class="text-light" style="text-decoration: underline;">CroVault Blog</a>.</p>
+        <p>Read articles about password security, digital inheritance, and safe seed phrase storage on the <a href="/blog" class="text-light" style="text-decoration: underline;">CroVault Blog</a>.</p>
       </section>
       
       <footer class="mt-4">
@@ -460,5 +515,50 @@
   <script src="https://unpkg.com/web3modal"></script>
   <!-- Your logic -->
   <script src="js/vault.js"></script>
+  <script>
+    function toggleMenu() {
+      const menu = document.getElementById('navMenu');
+      const overlay = document.getElementById('overlay');
+      const icon = document.getElementById('hamburger-icon');
+  
+      menu.classList.toggle('active');
+      overlay.classList.toggle('active');
+  
+      // Switch icon
+      icon.textContent = menu.classList.contains('active') ? '✕' : '☰';
+    }
+  
+    function closeMenu() {
+      const menu = document.getElementById('navMenu');
+      const overlay = document.getElementById('overlay');
+      const icon = document.getElementById('hamburger-icon');
+  
+      menu.classList.remove('active');
+      overlay.classList.remove('active');
+      icon.textContent = '☰';
+    }
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      const menu = document.getElementById('navMenu');
+      const links = menu.querySelectorAll("a");
+  
+      links.forEach(link => {
+        link.addEventListener("click", () => closeMenu());
+      });
+  
+      // Optional: clicking outside menu also closes
+      document.addEventListener("click", (event) => {
+        const hamburger = document.querySelector(".hamburger");
+        if (
+          menu.classList.contains("active") &&
+          !menu.contains(event.target) &&
+          !hamburger.contains(event.target)
+        ) {
+          closeMenu();
+        }
+      });
+    });
+  </script>  
+  
 </body>
 </html>

@@ -15,22 +15,27 @@
   <priority>1.00</priority>
 </url>
 <url>
-  <loc>https://crovault.com/blogs</loc>
+  <loc>https://crovault.com/blog</loc>
   <lastmod>2025-04-17T10:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://crovault.com/blog/blog_blockchain_password_manager</loc>
+  <loc>https://crovault.com/instructions</loc>
   <lastmod>2025-04-17T10:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://crovault.com/blog/blog_digital_legacy_crovault</loc>
+  <loc>https://crovault.com/blogs/blog_blockchain_password_manager</loc>
   <lastmod>2025-04-17T10:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://crovault.com/blog/blog_seed_phrase_storage</loc>
+  <loc>https://crovault.com/blogs/blog_digital_legacy_crovault</loc>
+  <lastmod>2025-04-17T10:00:00+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://crovault.com/blogs/blog_seed_phrase_storage</loc>
   <lastmod>2025-04-17T10:00:00+00:00</lastmod>
   <priority>0.80</priority>
 </url>
