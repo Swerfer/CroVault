@@ -10,7 +10,6 @@ Disallow: /cgi-bin/
 # Block specific file types from indexing
 Disallow: /*.php$
 Disallow: /*.json$
-Disallow: /*.xml$
 Disallow: /*.cgi$
 Disallow: /*.env$
 Disallow: /*.js$
