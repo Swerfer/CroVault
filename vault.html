@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Basic meta tags -->
+  <!-- Basic meta tags --> 
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="description" content="CroVault is a privacy vault for your sensitive data. Store credentials, notes, and wallet addresses securely.">
@@ -62,6 +62,7 @@
             <button id="retryUnlockBtn" class="btn-custom small your-vault-buttons displayNone">
               <i class="fas fa-unlock"></i> Unlock
             </button>
+            <p id="balance" class="mt-2"></p>
             <p id="vaultAddress" class="mt-2"></p>
           </div>
         </div>
@@ -89,6 +90,9 @@
 
           <h3 class="vault-section-title">Your Vault</h3>
           <div>
+            <button id="estimateSaveBtn" class="btn-custom small your-vault-buttons displayNone">
+              <i class="fas fa-calculator"></i> Estimate Fees
+            </button>
             <button id="globalSaveAllBtn" class="btn-custom small your-vault-buttons displayNone">
               <i class="fas fa-save"></i> Save All
             </button>
@@ -172,7 +176,7 @@
                 <input type="text" id="walletName" placeholder="Name (max 32 chars)" maxlength="32">
                 <input type="text" id="walletAddress" placeholder="Wallet Address (0x...)">
                 <input type="text" id="walletPrivateKey" placeholder="Private Key">
-                <input type="text" id="walletSeedPhrase" placeholder="Seed Phrase (24 words)">
+                <input type="text" id="walletSeedPhrase" placeholder="Seed Phrase (12/24 words)">
                 <input type="text" id="walletRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
               </div>
               <div class="buttonDiv">

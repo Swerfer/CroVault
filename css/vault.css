@@ -307,6 +307,57 @@ summary {
   max-width: 800px;
 }
 
+.faq-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.faq-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.faq-category {
+  flex: 1 1 45%;
+  background: #0b1a30;
+  border-radius: 10px;
+  box-shadow: 0 0 8px var(--color-shadow);
+  padding: 10px 15px;
+}
+
+.faq-category-header {
+  width: 100%;
+  text-align: left;
+  font-weight: bold;
+  font-size: 1.2rem;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.faq-questions {
+  display: none;
+  margin-top: 10px;
+}
+
+.faq-category.open .faq-questions {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .faq-columns {
+    flex-direction: column;
+  }
+
+  .faq-category {
+    flex: 1 1 100%;
+  }
+}
+
 /* ==== End CSS for the index page ==== */
 
 /* ==== CSS for instructions page === */

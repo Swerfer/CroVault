@@ -286,9 +286,13 @@ function updateGlobalSaveButtonVisibility() {
     pendingNotes.length > 0 ||
     pendingWallets.length > 0;
 
-  const btn = document.getElementById("globalSaveAllBtn");
-  if (btn) {
-    btn.classList.toggle("displayNone", !shouldShow);
+  const btn1 = document.getElementById("estimateSaveBtn");
+  const btn2 = document.getElementById("globalSaveAllBtn");
+  if (btn1) {
+    btn1.classList.toggle("displayNone", !shouldShow);
+  }
+  if (btn2) {
+    btn2.classList.toggle("displayNone", !shouldShow);
   }
 }
 
@@ -445,6 +449,8 @@ async function connectWallet() {
 }
 
 async function afterWalletConnect(instance) {
+  const balanceEl = document.getElementById("balance");
+  balanceEl.textContent = "";
   provider = new ethers.providers.Web3Provider(instance);
   signer   = provider.getSigner();
   walletAddress = (await signer.getAddress()).toLowerCase();
@@ -502,6 +508,23 @@ async function afterWalletConnect(instance) {
     } else {
       console.error("Failed to switch to Cronos chain:", switchError);
     }
+  }
+  updateBalanceDisplay();
+}
+
+async function updateBalanceDisplay() {
+  console.log(provider + " - " + walletAddress);
+  if (!provider || !walletAddress) return;
+
+  try {
+    const balanceBigInt = await provider.getBalance(walletAddress);
+    const balanceInEth = ethers.utils.formatEther(balanceBigInt);
+    const balanceEl = document.getElementById("balance");
+    if (balanceEl) {
+      balanceEl.textContent = `Balance: ${parseFloat(balanceInEth).toFixed(2)} CRO`;
+    }
+  } catch (err) {
+    console.error("Failed to fetch wallet balance:", err);
   }
 }
 
@@ -958,6 +981,87 @@ function toggleVaultSection(sectionId) {
 }
 
 // ==== Data write to blockchain ====
+async function estimateSaveAllFees() {
+  if (!sessionPassword || !userVault || !userVault.startsWith("0x")) {
+    alert("Vault is not unlocked or connected.");
+    return;
+  }
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVault, vaultAbi, signer);
+
+  try {
+    let totalGas = ethers.BigNumber.from(0);
+    let results = [];
+
+    if (pendingCredentials.length > 0) {
+      const creds = [];
+      for (const c of pendingCredentials) {
+        creds.push({
+          id: c.id || 0,
+          name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: c.name })),
+          username: JSON.stringify(await encryptWithPassword(sessionPassword, { username: c.username })),
+          password: JSON.stringify(await encryptWithPassword(sessionPassword, { password: c.password })),
+          remarks: JSON.stringify(await encryptWithPassword(sessionPassword, { remarks: c.remarks }))
+        });
+      }
+      const gas = await vault.estimateGas.upsertCredentials(creds, {
+        value: ethers.utils.parseEther(cachedCosts.upsert)
+      });
+      results.push({ type: "Credentials", gas });
+      totalGas = totalGas.add(gas);
+    }
+
+    if (pendingNotes.length > 0) {
+      const notes = [];
+      for (const n of pendingNotes) {
+        notes.push({
+          id: 0,
+          name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: n.name })),
+          note: JSON.stringify(await encryptWithPassword(sessionPassword, { note: n.note }))
+        });
+      }
+      const gas = await vault.estimateGas.upsertNotes(notes, {
+        value: ethers.utils.parseEther(cachedCosts.upsert)
+      });
+      results.push({ type: "Notes", gas });
+      totalGas = totalGas.add(gas);
+    }
+
+    if (pendingWallets.length > 0) {
+      const wallets = [];
+      for (const w of pendingWallets) {
+        wallets.push({
+          walletAddress: w.walletAddress,
+          name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: w.name })),
+          privateKey: JSON.stringify(await encryptWithPassword(sessionPassword, { privateKey: w.privateKey })),
+          seedPhrase: JSON.stringify(await encryptWithPassword(sessionPassword, { seedPhrase: w.seedPhrase })),
+          remarks: JSON.stringify(await encryptWithPassword(sessionPassword, { remarks: w.remarks }))
+        });
+      }
+      const gas = await vault.estimateGas.upsertWalletAddress(wallets, {
+        value: ethers.utils.parseEther(cachedCosts.upsert)
+      });
+      results.push({ type: "Wallets", gas });
+      totalGas = totalGas.add(gas);
+    }
+
+    const gasPrice = await provider.getGasPrice();
+    const totalFee = ethers.utils.formatEther(totalGas.mul(gasPrice));
+
+    let summary = `Estimated gas fees:\n`;
+    for (const r of results) {
+      const fee = ethers.utils.formatEther(r.gas.mul(gasPrice));
+      summary += `- ${r.type}: ~${parseFloat(fee).toFixed(2)} CRO\n`;
+    }
+    summary += `Total estimated fee: ~${parseFloat(totalFee).toFixed(2)} CRO`;
+
+    alert(summary);
+  } catch (err) {
+    console.error("Gas estimation failed:", err);
+    alert("Failed to estimate gas: " + err.message);
+  }
+}
 
 async function saveAllPendingItems() {
   if (!sessionPassword) {
@@ -968,6 +1072,7 @@ async function saveAllPendingItems() {
     });
     return;
   }
+  alert("If the fee shown in your wallet is low (<1 CRO), then reject the transaction and try again.");
   const signer = provider.getSigner();
   const vault = new ethers.Contract(userVault, vaultAbi, signer);
   try {
@@ -1027,7 +1132,7 @@ async function saveAllPendingItems() {
     pendingCredentials = [];
     pendingNotes = [];
     pendingWallets = [];
-
+    updateBalanceDisplay();
     await loadAndShowCredentials();
     await loadAndShowNotes();
     await loadAndShowWallets();
@@ -1417,13 +1522,24 @@ function renderCredentialItem(cred) {
   detail.className = "data-details displayNone";
   detail.id = `cred-${cred.id}`;
   detail.innerHTML = `
-    <div><strong>Username:</strong> ${cred.username}</div>
     <div>
-      <strong>Password:</strong> <span class="hidden-password">********</span>
+      <strong>Username:</strong> ${cred.username}
+      <button class="icon-btn" title="Copy Username" onclick="copyToClipboard('${cred.username}')">
+        <i class="fas fa-copy white"></i>
+      </button>
+    </div>
+    <div>
+      <strong>Password:</strong>
+      <span class="hidden-password">********</span>
       <span class="real-password displayNone">${cred.password}</span>
       <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
+      <button class="icon-btn" title="Copy Password" onclick="copyToClipboard('${cred.password}')">
+        <i class="fas fa-copy white"></i>
+      </button>
     </div>
-    <div><strong>Remarks:</strong> ${cred.remarks}</div>
+    <div>
+      <strong>Remarks:</strong> ${cred.remarks}
+    </div>
   `;
 
   const actionBar = document.createElement("div");
@@ -1493,7 +1609,9 @@ function renderNoteItem(note) {
   detail.className = "data-details displayNone";
   detail.id = `note-${note.id}`;
   detail.innerHTML = `
-    <div><strong>Note:</strong> ${note.note.replace(/\n/g, "<br>")}</div>
+    <div>
+      <strong>Note:</strong> ${note.note.replace(/\n/g, "<br>")}
+    </div>
   `;
 
   const actionBar = document.createElement("div");
@@ -1549,16 +1667,28 @@ function renderWalletItem(wallet) {
   detail.className = "data-details displayNone";
   detail.id = `wallet-${wallet.walletAddress}`;
   detail.innerHTML = `
-    <div><strong>Address:</strong> ${wallet.walletAddress}</div>
-    <div><strong>Private Key:</strong> 
-      <span class="hidden-password">********</span> 
-      <span class="real-password displayNone">${wallet.privateKey}</span> 
+    <div>
+      <strong>Address:</strong> ${wallet.walletAddress}
+      <button class="icon-btn" title="Copy Address" onclick="copyToClipboard('${wallet.walletAddress}')">
+        <i class="fas fa-copy white"></i>
+      </button>
+    </div>
+    <div>
+      <strong>Private Key:</strong> 
+      <span class="hidden-password">********</span>
+      <span class="real-password displayNone">${wallet.privateKey}</span>
       <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
+      <button class="icon-btn" title="Copy Private Key" onclick="copyToClipboard('${wallet.privateKey}')">
+        <i class="fas fa-copy white"></i>
+      </button>
     </div>
     <div><strong>Seed Phrase:</strong> 
-      <span class="hidden-password">********</span> 
-      <span class="real-password displayNone">${wallet.seedPhrase}</span> 
+      <span class="hidden-password">********</span>
+      <span class="real-password displayNone">${wallet.seedPhrase}</span>
       <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
+      <button class="icon-btn" title="Copy Seed Phrase" onclick="copyToClipboard('${wallet.seedPhrase}')">
+        <i class="fas fa-copy white"></i>
+      </button>
     </div>
     <div><strong>Remarks:</strong> ${wallet.remarks}</div>
   `;
@@ -1639,7 +1769,8 @@ function handleIdleTimeout(timeout = true) {
   // Hide vault section
   const vaultSection = document.getElementById("vaultDataSection");
   if (vaultSection) vaultSection.classList.add("displayNone");
-
+  const balanceEl = document.getElementById("balance");
+  balanceEl.textContent = "";
   // Show retry sign button
   const signBtn = document.getElementById("retrySignBtn");
   if (signBtn) signBtn.classList.remove("displayNone");
@@ -1717,6 +1848,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     })
   });
 
+  document.getElementById("estimateSaveBtn")?.addEventListener("click", estimateSaveAllFees);
   document.getElementById("globalSaveAllBtn")?.addEventListener("click", saveAllPendingItems);
   document.getElementById("retrySignBtn")?.addEventListener("click", loadAndShowCredentials);
 
