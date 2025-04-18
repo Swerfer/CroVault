@@ -36,7 +36,7 @@
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"></noscript>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
-  <link rel="stylesheet" href="css/vault.css?v=4">
+  <link rel="stylesheet" href="css/vault.css?v=5">
   <link rel="canonical" href="https://crovault.com/" />
   <script type="application/ld+json">
     {
@@ -214,258 +214,126 @@
       </section>
       
       <section id="faqSection" class="justify-content-center mt-4">
-        <div class="centered-left faq">
+        <div class="faq-container">
           <h3 class="text-center"><i class="fas fa-question-circle"></i> Frequently Asked Questions</h3>
-          <p class="text-center">Have questions? We have answers!</p>
-        
-          <details>
-            <summary>How safe is my data in the vault?</summary>
-            <p>
-              Your vault data:
-              <ul>
-                <li>Is encrypted client-side, in the browser</li>
-                <li>Uses AES-GCM with a key derived from:</li>
-                <ul>
-                  <li>A password you choose (sessionPassword)</li>
-                  <li>A signed wallet message (your real crypto wallet)</li>
-                </ul>
-                <li>That’s very strong and follows best practices:</li>
-                <ul>
-                  <li>PBKDF2 key derivation with high iteration count</li>
-                  <li>Salted + randomized IVs</li>
-                  <li>Combined symmetric & asymmetric identity via wallet signature</li>
-                </ul>
-                <li>✅ Your data is encrypted before storing on the blockchain</li>
-                <li>✅ The server never sees unencrypted data</li>
-                <li>✅ The signed message ties it to your wallet</li>
-                <li>✅ No one else can decrypt it, even if they have the ciphertext</li>
-              </ul>
-            </p>
-            <p>
-              Always remember: <strong>your password and wallet are the key to your vault</strong>. If you lose even one of them, you lose access to your data.
-            </p>
-          </details>
-
-          <details>
-            <summary>How is it safe to store privacy data on a blockchain?</summary>
-            <p>
-              The data is encrypted before being stored on the blockchain. 
-              Only you can decrypt it using your password and wallet signature. 
-              Even if someone finds the data on the blockchain, they won't be able to read it without your password and wallet signature.
-            </p>
-            <p>
-              <strong>Note: </strong>People store 100s of thousands of dollars worth of crypto on the blockchain.
-              The blockchain is a very secure place to store data, because you need a private key to access it. 
-              Your privacy data is encrypted with a very strong encryption algorithm (AES-GCM) with a key derived from your password and wallet signature.
-            </p>
-          </details>
-
-          <details>
-            <summary>What blockchain is used?</summary>
-            <p>
-              CroVault uses the <strong>Cronos</strong> blockchain, which is an EVM-compatible layer-1 blockchain. 
-              It is a very secure and fast blockchain with low fees. 
-              The data is stored in your own personal vault contract on the blockchain, which is created when you create a vault.
-            </p>
-          </details>
-
-          <details>
-            <summary>What is the difference between a vault and a wallet?</summary>
-            <p>
-              A vault is a blockchain-secured password manager where you can store credentials, encrypted notes, seed phrases, and private information. 
-              A wallet holds your crypto. CroVault separates the two to give you full control over sensitive data beyond financial assets. 
-              The vault allows you to store credentials, notes, and wallet addresses securely, while the wallet is used for transactions and managing your crypto assets.
-            </p>
-            <p>
-              The vault is designed to keep your sensitive information safe, while the wallet is designed to manage your crypto assets.
-          </details>
-        
-          <details>
-            <summary>What if I forget my password?</summary>
-            <p>
-              CroVault uses strong end-to-end encryption. If you lose your password, not even we can access your vault. 
-              This is what makes it a true zero-access encrypted storage solution.
-            </p>
-          </details>
-        
-          <details>
-            <summary>Can I access my vault from another device?</summary>
-            <p>
-              Yes — your CroVault vault is fully decentralized. With your wallet and password, 
-              you can access your encrypted data from any device, anywhere — no server login needed.
-            </p>
-          </details>
-        
-          <details>
-            <summary>Do you store my data or password?</summary>
-            <p>
-              No. CroVault never stores your data or password. Everything is encrypted client-side, 
-              and your data is saved directly in your blockchain vault. This ensures maximum privacy and zero trust.
-            </p>
-          </details>
-        
-          <details>
-            <summary>When I try to connect my wallet, nothing happens?</summary>
-            <p>
-              This is usually a browser or mobile wallet integration issue. Try the following:
-              <ul>
-                <li>On mobile, try opening the website in the app's integrated browser.</li>
-                <li>Make sure your wallet is unlocked and connected to the correct network (Cronos)</li>
-                <li>Try a different browser (Chrome, Firefox, etc.)</li>
-                <li>Clear your browser cache and cookies</li>
-                <li>Disable any ad blockers or privacy extensions that may interfere with wallet connections</li>
-              </ul>
-            </p>
-          </details>
-
-          <details>
-            <summary>How do I create a vault?</summary>
-            <p>
-              To create a vault, you need to connect your wallet and set a password. 
-              This password will be used to encrypt and decrypt your vault data.
-            </p>
-            <p>
-              Once you have connected your wallet, you can create a vault by clicking the "Create Vault" button.
-              There will be a small fee for creating the vault, which will be displayed in your wallet before you confirm the transaction.
-            </p>
-            <p class="text-center">
-              <button onclick="showCostModal()" class="btn-custom small maxwidth"><i class="fas fa-coins"></i> View Fees</button>
-            </p>
-            <p>
-              After creating the vault, you can add credentials, notes, and wallet addresses to it.
-          </details>
-
-          <details>
-            <summary>How much does it cost to save data?</summary>
-            <p>
-              When saving data to your vault, two types of payments are involved: a standard transaction fee on the Cronos network, and a small service fee to CroVault.
-              When you save data, the fee for saving data will be displayed in your wallet before you confirm the transaction.
-            </p>
-            <p class="text-center">
-              <button onclick="showCostModal()" class="btn-custom small maxwidth"><i class="fas fa-coins"></i> View Fees</button>
-            </p>          
-            <p>
-              The transaction fee is required for all blockchain operations and is paid in <strong>CRO</strong>, the native token of the Cronos network. 
-              This fee varies based on the size of your data and current network congestion. 
-              Data storage on a blockchain is expensive, so the fee may be higher than a simple transaction.
-              Keep your data small to save on blockchain fees.
-            </p>
-            <p>
-              In addition to the network fee, CroVault charges a small amount of CRO for saving or updating data.
-            </p>
-            <p>
-              <strong>Note:</strong> Reading and deleting data from your vault is always free.
-            </p>
-          </details>
-        
-          <details>
-            <summary>Why do I need to sign a message?</summary>
-            <p>
-              Signing a message with your wallet creates a unique key for your session. It enhances security without storing anything sensitive.
-            </p>
-          </details>
-        
-          <details>
-            <summary>Can I edit or delete data later?</summary>
-            <p>
-              Yes. You can edit or delete saved credentials, notes, or wallet addresses.
-            </p>
-          </details>
-
-          <details>
-            <summary>How can I store my Authenticator accounts?</summary>
-            <p>
-              Most popular authenticator apps have no export function, but store the data in the cloud. There is one option for new accounts (or if you re-add accounts):
-            </p>
-            <p>
-              This only works if you still have access to the QR code or manual key when setting up an account in for e.g. Microsoft Authenticator, Google Authenticator or Authy.
-              <ul>
-                <li>
-                  When setting up a 2FA account in e.g. Microsoft Authenticator (e.g. for GitHub, Binance, etc.), click “Can’t scan QR code?” or “Use manual entry”
-                </li>
-                <li>
-                  You’ll see a secret key (Base32 string) — looks like:
-                  <ul>
-                    <li>
-                      JBSWY3DPEHPK3PXP
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  Copy this key and store it in CroVault under a new “Note”. Example:
-                  <ul>
-                    <li>
-                      <strong>Title:</strong> GitHub Authenticator
-                    </li>
-                    <li>
-                      <strong>Note:</strong><br>
-                      Key: JBSWY3DPEHPK3PXP<br>
-                      Digits: 6<br>
-                      Period: 30<br>
-                      Algorithm: SHA1
-                    </li>
-                  </ul>
-                </li>
-              </ul>
-            </p>
-          </details>
-        
-          <details>
-            <summary>Is the vault open-source?</summary>
-            <p>
-              Yes. Our vault code is open for review. Transparency is key to trust, and you're encouraged to verify the code yourself.
-            </p>
-            <p>
-              The website does not use any server-side code. All scripts are run in your browser.
-              It is a static website that uses the Cronos EVM blockchain to store your data.
-              You can view the source code of the website by right-clicking on the page and selecting "View Page Source".
-            </p>
-            <p>There are 3 verified smart contracts on the blockchain. You can view the contracts on Cronoscan:</p>
-              <ul>
-                <li><a href="https://cronoscan.com/address/0x587776cCCeC6Ec77971588D9e75468e99e30c318" rel="noopener" target="_blank">Cost Manager</a></li>
-                <li><a href="https://cronoscan.com/address/0xa07477Da0dB859F7799bAbA9bac87E8AF104b810" rel="noopener" target="_blank">Vault Factory</a></li>
-                <li><a href="https://cronoscan.com/address/0xe1eF8879b7216DC3dE4e153B37FFC9D810928EC0" rel="noopener" target="_blank">Vault Contract</a></li>
-              </ul>
-            <p>
-              The Vault Contract is the basic contract which is cloned for your own personal vault which stores your data. 
-              The Vault Factory is the one that creates your personal vault.
-              The Cost Manager is the one that manages the fees for the vault.
-            </p>
-          </details>
-        
-          <details>
-            <summary>Why is signing or saving sometimes slow?</summary>
-            <p>
-              The speed depends on your network connection and the current congestion on Cronos. Wallet popups can also introduce small delays.
-            </p>
-          </details>
-
-          <details>
-            <summary>What if I have more questions?</summary>
-            <p>
-              If you have any questions, please reach out to us on 
-              <a href="https://x.com/CroVault" rel="noopener" target="_blank">X</a> or our
-              <a href="https://t.me/CroVault" rel="noopener" target="_blank">Telegram</a> channel.
-            </p>
-            <p>
-              We are happy to help you with any questions you may have.
-          </details>
+      
+          <div class="faq-columns mt-4">
+            <!-- CATEGORY: Security -->
+            <div class="faq-category">
+              <button class="faq-category-header">Security & Encryption</button>
+              <div class="faq-questions">
+                <details>
+                  <summary>How safe is my data in the vault?</summary>
+                  <p>Your vault data is encrypted client-side with AES-GCM using keys derived from your password and wallet. It’s extremely secure — even we can't access it.</p>
+                </details>
+                <details>
+                  <summary>How is it safe to store privacy data on a blockchain?</summary>
+                  <p>Data is encrypted before touching the blockchain. Even if someone finds your data, it’s unreadable without your password and wallet signature.</p>
+                </details>
+                <details>
+                  <summary>Do you store my data or password?</summary>
+                  <p>No. CroVault never stores your data or password. Everything is encrypted in your browser and saved directly in your blockchain vault.</p>
+                </details>
+                <details>
+                  <summary>Why do I need to sign a message?</summary>
+                  <p>Signing a message with your wallet creates a unique key for your session. It enhances security without storing anything sensitive.</p>
+                </details>
+              </div>
+            </div>
+      
+            <!-- CATEGORY: Using CroVault -->
+            <div class="faq-category">
+              <button class="faq-category-header">Using CroVault</button>
+              <div class="faq-questions">
+                <details>
+                  <summary>What if I forget my password?</summary>
+                  <p>If you forget your password, we cannot recover your vault. This is by design: zero-access encryption.</p>
+                </details>
+                <details>
+                  <summary>Can I access my vault from another device?</summary>
+                  <p>Yes — your CroVault vault is decentralized. With your wallet and password, you can access your data from any device, anywhere.</p>
+                </details>
+                <details>
+                  <summary>Can I edit or delete data later?</summary>
+                  <p>Yes. You can edit or delete saved credentials, notes, or wallet addresses.</p>
+                </details>
+                <details>
+                  <summary>How can I store my Authenticator accounts?</summary>
+                  <p>You can store Authenticator secrets like TOTP keys as notes. Save the Base32 key, algorithm, and interval manually during setup.</p>
+                </details>
+                <details>
+                  <summary>Is the vault open-source?</summary>
+                  <p>Yes. The code is open for review. CroVault is a static dApp, fully transparent and verifiable.</p>
+                </details>
+              </div>
+            </div>
+      
+            <!-- CATEGORY: Blockchain & Vault -->
+            <div class="faq-category">
+              <button class="faq-category-header">Blockchain & Vault</button>
+              <div class="faq-questions">
+                <details>
+                  <summary>What blockchain is used?</summary>
+                  <p>CroVault uses the Cronos blockchain — an EVM-compatible, fast, low-cost layer-1 chain.</p>
+                </details>
+                <details>
+                  <summary>What is the difference between a vault and a wallet?</summary>
+                  <p>Your wallet holds crypto. Your vault securely stores passwords, notes, and secrets using blockchain smart contracts.</p>
+                </details>
+              </div>
+            </div>
+      
+            <!-- CATEGORY: Pricing & Fees -->
+            <div class="faq-category">
+              <button class="faq-category-header">Pricing & Fees</button>
+              <div class="faq-questions">
+                <details>
+                  <summary>How do I create a vault?</summary>
+                  <p>Connect your wallet and set a password. Then click “Create Vault” and confirm the transaction. A small fee is required.</p>
+                </details>
+                <details>
+                  <summary>How much does it cost to save data?</summary>
+                  <p>You pay a Cronos network fee and a small CroVault fee when saving. Reading and deleting data is always free.</p>
+                </details>
+              </div>
+            </div>
+      
+            <!-- CATEGORY: Troubleshooting -->
+            <div class="faq-category">
+              <button class="faq-category-header">Troubleshooting</button>
+              <div class="faq-questions">
+                <details>
+                  <summary>When I try to connect my wallet, nothing happens?</summary>
+                  <p>Try using your wallet’s in-app browser, switching browsers, clearing cache, or disabling extensions that interfere with wallet connections.</p>
+                </details>
+                <details>
+                  <summary>Why is signing or saving sometimes slow?</summary>
+                  <p>Delays are usually caused by network congestion or wallet popup timing. Just wait a few seconds.</p>
+                </details>
+                <details>
+                  <summary>What if I have more questions?</summary>
+                  <p>Reach out on <a href="https://x.com/CroVault" target="_blank">X</a> or <a href="https://t.me/CroVault" target="_blank">Telegram</a> — we're happy to help.</p>
+                </details>
+              </div>
+            </div>
+          </div>
         </div>
-      </section>    
+      </section>
       
       <section>
         <div class="social-share text-center mt-5">
-          <p><strong>💬 Share CroVault with others</strong></p>
-          <div style="font-size: 2rem;">
-            <a href="https://x.com/intent/tweet?text=Check out CroVault – blockchain-secured vault for your private data.&url=https://crovault.com"
+          <p>
+            <strong>💬 Share CroVault on 
+              <a href="https://x.com/intent/tweet?text=Check out CroVault – blockchain-secured vault for your private data.&url=https://crovault.com"
                 rel="noopener" target="_blank" title="Share on X (Twitter)" class="social-link sl-style mx-2">
-              <i class="fab fa-x-twitter"></i>
-            </a>
-            <a href="https://t.me/share/url?url=https://crovault.com&text=Check out CroVault – encrypted blockchain vault for your private data."
+                <i class="fab fa-x-twitter"></i>
+              </a> or  
+              <a href="https://t.me/share/url?url=https://crovault.com&text=Check out CroVault – encrypted blockchain vault for your private data."
                 rel="noopener" target="_blank" title="Share on Telegram" class="social-link sl-style mx-2">
-              <i class="fab fa-telegram"></i>
-            </a>
-          </div>
+                <i class="fab fa-telegram"></i>
+              </a>
+            </strong>
+          </p>
         </div>        
       </section>
 
@@ -556,6 +424,14 @@
         ) {
           closeMenu();
         }
+      });
+    });
+    
+    // === FAQ Category Expand ===
+    document.querySelectorAll('.faq-category-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const category = header.parentElement;
+        category.classList.toggle('open');
       });
     });
   </script>  

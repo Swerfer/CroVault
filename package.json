@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "@reown/appkit": "^1.7.3",
+    "@reown/appkit-adapter-wagmi": "^1.7.3",
+    "@reown/walletkit": "^1.2.3",
+    "@walletconnect/core": "^2.20.0",
+    "@walletconnect/utils": "^2.20.0",
+    "vite": "^6.3.2"
+  },
+  "name": "crovault",
+  "description": "**CroVault** is a decentralized privacy vault DApp that allows users to securely store encrypted credentials, notes, and wallet information on the Cronos blockchain. It uses client-side encryption, self-custody design, and open-source smart contracts to give users full control over their sensitive data — even beyond their lifetime.",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Swerfer/CroVault.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Swerfer/CroVault/issues"
+  },
+  "homepage": "https://github.com/Swerfer/CroVault#readme"
+}
