@@ -1,5 +1,11 @@
 // ==== Config and ABIs ====
-const costManagerAddress = "0x587776cCCeC6Ec77971588D9e75468e99e30c318";
+const costManagerAddress = "0xcBB5409246532Ac3935598Bc4d50baed60fe0EF6";
+const factoryAddress = "0x6324CfA3c13b690d135B69886BB06C736e6aCf52";
+// ==== topic0 = Event VaultCreated in CostManager contract Topics 0 ====
+const topic0 = "0x5d9c31ffa0fecffd7cf379989a3c7af252f0335e0d2a1320b55245912c781f53";
+const fetchVaultCountUrl = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=${factoryAddress}&topic0=${topic0}`;
+const cronosRpcUrl = "https://evm-cronos.crypto.org";
+const cronoScanUrl = "https://cronoscan.com";
 
 const costManagerAbi = [
   {
@@ -106,7 +112,8 @@ const vaultAbi = [
   {
     inputs: [{
       components: [
-        { internalType: "address", name: "walletAddress", type: "address" },
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "address", name: "walletAddress", type: "string" },
         { internalType: "string", name: "name", type: "string" },
         { internalType: "string", name: "privateKey", type: "string" },
         { internalType: "string", name: "seedPhrase", type: "string" },
@@ -126,7 +133,8 @@ const vaultAbi = [
     name: "readWalletAddress",
     outputs: [{
       components: [
-        { internalType: "address", name: "walletAddress", type: "address" },
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "address", name: "walletAddress", type: "string" },
         { internalType: "string", name: "name", type: "string" },
         { internalType: "string", name: "privateKey", type: "string" },
         { internalType: "string", name: "seedPhrase", type: "string" },
@@ -141,12 +149,57 @@ const vaultAbi = [
     type: "function"
   },
   {
-    inputs: [{ internalType: "address[]", name: "walletsToDelete", type: "address[]" }],
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
     name: "deleteWalletAddresses",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function"
   }
+  ,
+  {
+    inputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "key", type: "string" },
+        { internalType: "string", name: "algorithm", type: "string" },
+        { internalType: "uint256", name: "interval", type: "uint256" }
+      ],
+      internalType: "struct VaultContract.TOTPUpsert[]",
+      name: "data",
+      type: "tuple[]"
+    }],
+    name: "upsertTOTP",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "readTOTP",
+    outputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "key", type: "string" },
+        { internalType: "string", name: "algorithm", type: "string" },
+        { internalType: "uint256", name: "interval", type: "uint256" },
+        { internalType: "uint256", name: "timestamp", type: "uint256" }
+      ],
+      internalType: "struct VaultContract.TOTP[]",
+      name: "",
+      type: "tuple[]"
+    }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
+    name: "deleteTOTP",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  }  
 ];
 
 // ==== State ====
@@ -162,9 +215,11 @@ let walletDerivedKey = null;
 let pendingCredentials = [];
 let pendingNotes = [];
 let pendingWallets = [];
+let pendingTotps = [];
 let editingOriginalCredential = null;
 let editingOriginalNote = null;
 let editingOriginalWallet = null;
+let editingOriginalTotp = null;
 
 // ==== Utilities ====
 
@@ -200,6 +255,12 @@ function clearWalletForm() {
   });
 }
 
+function clearTotpForm() {
+  ["totpName", "totpKey", "totpAlgorithm", "totpInterval"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+
 function showVaultType(type) {
   document.querySelectorAll('.vault-card').forEach(el => el.classList.add('displayNone'));
   document.querySelectorAll(`.vault-${type}`).forEach(el => el.classList.remove('displayNone'));
@@ -208,9 +269,8 @@ function showVaultType(type) {
 async function fetchVaultCount() {
   const path = window.location.pathname.toLowerCase();
   if (!(path.endsWith("/") || path.endsWith("/index") || path.endsWith("/index.html"))) return;
-  const url = "https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=0xa07477Da0dB859F7799bAbA9bac87E8AF104b810&topic0=0x5d9c31ffa0fecffd7cf379989a3c7af252f0335e0d2a1320b55245912c781f53";
   try {
-    const response = await fetch(url);
+    const response = await fetch(fetchVaultCountUrl);
     const data = await response.json();
 
     // Check if data looks good
@@ -249,6 +309,11 @@ async function fetchAndCacheCosts() {
     if (priceDisplay) {
       priceDisplay.innerHTML = costText;
     }
+    priceDisplay = document.getElementById("upsertTotpPrice");
+    if (priceDisplay) {
+      priceDisplay.innerHTML = costText;
+    }
+
   } catch (e) {
     console.error("Error fetching costs:", e.message);
   }
@@ -284,7 +349,8 @@ function updateGlobalSaveButtonVisibility() {
   const shouldShow =
     pendingCredentials.length > 0 ||
     pendingNotes.length > 0 ||
-    pendingWallets.length > 0;
+    pendingWallets.length > 0 ||
+    pendingTotps.length > 0;
 
   const btn1 = document.getElementById("estimateSaveBtn");
   const btn2 = document.getElementById("globalSaveAllBtn");
@@ -497,9 +563,9 @@ async function afterWalletConnect(instance) {
           params: [{
             chainId: "0x19",
             chainName: "Cronos Mainnet",
-            rpcUrls: ["https://evm-cronos.crypto.org"],
+            rpcUrls: [cronosRpcUrl],
             nativeCurrency: { name: "Cronos CRO", symbol: "CRO", decimals: 18 },
-            blockExplorerUrls: ["https://cronoscan.com"]
+            blockExplorerUrls: [cronoScanUrl]
           }],
         });
       } catch (addError) {
@@ -540,7 +606,6 @@ async function hideOrShowCreateVault() {
 
   try {
     // VaultFactory address and ABI
-    const factoryAddress = "0xa07477Da0dB859F7799bAbA9bac87E8AF104b810";
     //const factoryJson = await fetch("contracts/VaultFactory.json").then(r => r.json());
     //const factoryAbi = factoryJson.abi;
     //const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
@@ -571,8 +636,6 @@ async function hideOrShowCreateVault() {
         `;
       
         await loadAndShowCredentials();
-        //await loadAndShowNotes();
-        //await loadAndShowWallets();
       
       } else {
         createVaultSection.classList.remove("hidden");
@@ -612,7 +675,6 @@ async function createNewVault() {
       // 1. Load factory ABI
       const factoryJson = await fetch("contracts/VaultFactory.json").then(r => r.json());
       const factoryAbi = factoryJson.abi;
-      const factoryAddress = "0xa07477Da0dB859F7799bAbA9bac87E8AF104b810"; 
 
       const factory = new ethers.Contract(factoryAddress, factoryAbi, signer);
 
@@ -776,6 +838,8 @@ function showWrongPasswordModal() {
       await loadAndShowCredentials(); // try again after unlock
       await loadAndShowNotes(); // try again after unlock
       await loadAndShowWallets(); // try again after unlock
+      await loadAndShowTotps();
+
     });
   };
 
@@ -790,12 +854,13 @@ function showWrongPasswordModal() {
 async function retryReadDataWithTimeout(vault, maxRetries = 10, timeoutMs = 1000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const [creds, notes, wallets] = await Promise.all([
+      const [creds, notes, wallets, totps] = await Promise.all([
         vault.readCredentials(),
         vault.readNote(),
-        vault.readWalletAddress()
+        vault.readWalletAddress(),
+        vault.readTOTP()
       ]);
-      return [creds, notes, wallets];
+      return [creds, notes, wallets, totps];
     } catch (err) {
       if (attempt === maxRetries) return null;
       await new Promise(res => setTimeout(res, timeoutMs));
@@ -863,6 +928,7 @@ async function loadAndShowCredentials(deleted = false) {
   if (!creds.length) {
     await loadAndShowNotes();
     await loadAndShowWallets();
+    await loadAndShowTotps();
     return; // No credentials to show
   }
 
@@ -908,6 +974,7 @@ async function loadAndShowNotes() {
 
   if (!notes.length) {
     await loadAndShowWallets();
+    await loadAndShowTotps();
     return; // No notes to show
   }
   const container = document.getElementById("noteReadItems");
@@ -948,7 +1015,10 @@ async function loadAndShowWallets() {
     return;
   }
 
-  if (!wallets.length) return;
+  if (!wallets.length) {
+    await loadAndShowTotps();
+    return; // No notes to show
+  }
 
   const container = document.getElementById("walletReadItems");
   container.innerHTML = "";
@@ -958,11 +1028,12 @@ async function loadAndShowWallets() {
     let decrypted;
     try {
       decrypted = {
+        id: wallet.id,
+        walletAddress: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.walletAddress))).walletAddress,
         name: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.name))).name,
         privateKey: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.privateKey))).privateKey,
         seedPhrase: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.seedPhrase))).seedPhrase,
         remarks: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.remarks))).remarks,
-        walletAddress: wallet.walletAddress
       };
     } catch (e) {
       showWrongPasswordModal();
@@ -970,6 +1041,46 @@ async function loadAndShowWallets() {
     }
 
     renderWalletItem(decrypted);
+  }
+  await loadAndShowTotps();
+}
+
+async function loadAndShowTotps() {
+  if (!userVault || !userVault.startsWith("0x")) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVault, vaultAbi, signer);
+  let totps = [];
+
+  try {
+    totps = await vault.readTOTP();
+  } catch (err) {
+    console.error("Error reading TOTP:", err);
+    return;
+  }
+
+  const container = document.getElementById("totpReadItems");
+  container.innerHTML = "";
+  document.getElementById("totpCount").textContent = totps.length;
+
+  if (!totps.length) return;
+
+  for (const totp of totps) {
+    let decrypted;
+    try {
+      decrypted = {
+        id: totp.id,
+        name: (await decryptWithPassword(sessionPassword, JSON.parse(totp.name))).name,
+        key: (await decryptWithPassword(sessionPassword, JSON.parse(totp.key))).key,
+        algorithm: (await decryptWithPassword(sessionPassword, JSON.parse(totp.algorithm))).algorithm,
+        interval: totp.interval
+      };
+    } catch (e) {
+      showWrongPasswordModal();
+      return;
+    }
+
+    renderTotpItem(decrypted);
   }
 }
 
@@ -1046,6 +1157,24 @@ async function estimateSaveAllFees() {
       totalGas = totalGas.add(gas);
     }
 
+    if (pendingTotps.length > 0) {
+      const totps = [];
+      for (const t of pendingTotps) {
+        totps.push({
+          id: t.id || 0,
+          name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: t.name })),
+          key: JSON.stringify(await encryptWithPassword(sessionPassword, { key: t.key })),
+          algorithm: JSON.stringify(await encryptWithPassword(sessionPassword, { algorithm: t.algorithm })),
+          interval: t.interval || 30
+        });
+      }
+      const gas = await vault.estimateGas.upsertTOTP(totps, {
+        value: ethers.utils.parseEther(cachedCosts.upsert)
+      });
+      results.push({ type: "TOTP", gas });
+      totalGas = totalGas.add(gas);
+    }    
+
     const gasPrice = await provider.getGasPrice();
     const totalFee = ethers.utils.formatEther(totalGas.mul(gasPrice));
 
@@ -1114,12 +1243,14 @@ async function saveAllPendingItems() {
       const wallets = [];
       for (const w of pendingWallets) {
         wallets.push({
-          walletAddress: w.walletAddress,
+          id: w.id || 0,
+          walletAddress: JSON.stringify(await encryptWithPassword(sessionPassword, { walletAddress: w.walletAddress })),
           name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: w.name })),
           privateKey: JSON.stringify(await encryptWithPassword(sessionPassword, { privateKey: w.privateKey })),
           seedPhrase: JSON.stringify(await encryptWithPassword(sessionPassword, { seedPhrase: w.seedPhrase })),
           remarks: JSON.stringify(await encryptWithPassword(sessionPassword, { remarks: w.remarks }))
         });
+        
       }
       const tx = await vault.upsertWalletAddress(wallets, {
         value: ethers.utils.parseEther(cachedCosts.upsert),
@@ -1128,19 +1259,45 @@ async function saveAllPendingItems() {
       await tx.wait();
     }
 
+    if (pendingTotps.length > 0) {
+      const totps = [];
+      for (const t of pendingTotps) {
+        totps.push({
+          id: t.id || 0,
+          name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: t.name })),
+          key: JSON.stringify(await encryptWithPassword(sessionPassword, { key: t.key })),
+          algorithm: JSON.stringify(await encryptWithPassword(sessionPassword, { algorithm: t.algorithm })),
+          interval: t.interval || 30
+        });
+      }
+      const tx = await vault.upsertTOTP(totps, {
+        value: ethers.utils.parseEther(cachedCosts.upsert),
+        gasLimit: 5_000_000
+      });
+      await tx.wait();
+    }
+    
     alert("All pending data saved!");
+    // Clear pending entries first
     pendingCredentials = [];
     pendingNotes = [];
     pendingWallets = [];
+    pendingTotps = [];
+
+    // Immediately update UI to remove yellow pending items before redraw
+    updateCredentialPendingUI();
+    updateNotePendingUI();
+    updateWalletPendingUI();
+    updateTotpPendingUI();
+    updateGlobalSaveButtonVisibility();
+
+    // Now reload all sections from the chain
     updateBalanceDisplay();
     await loadAndShowCredentials();
     await loadAndShowNotes();
     await loadAndShowWallets();
+    await loadAndShowTotps();
 
-    updateCredentialPendingUI();
-    updateNotePendingUI();
-    updateWalletPendingUI();
-    updateGlobalSaveButtonVisibility();
   } catch (err) {
     console.error("Error saving pending data:", err);
     alert("Saving failed: " + err.message);
@@ -1162,10 +1319,10 @@ async function deleteCredentials(ids = []) {
 
     alert("Credential(s) deleted!");
 
-    await loadAndShowCredentials(true);    // ✅ Reload read items
     updateCredentialPendingUI();           // ✅ Refresh pending display (optional but safe)
     updateCredentialCountDisplay();        // ✅ <-- Add this RIGHT HERE
     updateGlobalSaveButtonVisibility();    // ✅ Optional: ensure Save All button hides if needed
+    await loadAndShowCredentials(true);    // ✅ Reload read items
 
   } catch (e) {
     console.error("Error deleting credentials:", e);
@@ -1186,10 +1343,10 @@ async function deleteNotes(ids = []) {
 
     alert("Note(s) deleted!");
 
-    await loadAndShowNotes();
     updateNotePendingUI();
     updateNoteCountDisplay();
     updateGlobalSaveButtonVisibility();
+    await loadAndShowNotes();
 
   } catch (e) {
     console.error("Error deleting notes:", e);
@@ -1197,7 +1354,7 @@ async function deleteNotes(ids = []) {
   }
 }
 
-async function deleteWallets(addresses = []) {
+async function deleteWallets(ids = []) {
   if (!userVault || !userVault.startsWith("0x")) return;
   if (!addresses.length) return;
 
@@ -1205,19 +1362,43 @@ async function deleteWallets(addresses = []) {
     const signer = provider.getSigner();
     const vault = new ethers.Contract(userVault, vaultAbi, signer);
 
-    const tx = await vault.deleteWalletAddresses(addresses);
+    const tx = await vault.deleteWalletAddresses(ids);
     await tx.wait();
 
     alert("Wallet(s) deleted!");
 
-    await loadAndShowWallets();
     updateWalletPendingUI();
     updateWalletCountDisplay();
     updateGlobalSaveButtonVisibility();
+    await loadAndShowWallets();
 
   } catch (e) {
     console.error("Error deleting wallet address(es):", e);
     alert("Failed to delete wallet address(es).");
+  }
+}
+
+async function deleteTotps(ids = []) {
+  if (!userVault || !userVault.startsWith("0x")) return;
+  if (!ids.length) return;
+
+  try {
+    const signer = provider.getSigner();
+    const vault = new ethers.Contract(userVault, vaultAbi, signer);
+
+    const tx = await vault.deleteTOTP(ids);
+    await tx.wait();
+
+    alert("TOTP secret(s) deleted!");
+
+    updateTotpPendingUI();
+    updateTotpCountDisplay();
+    updateGlobalSaveButtonVisibility();
+    await loadAndShowTotps();
+
+  } catch (e) {
+    console.error("Error deleting TOTP:", e);
+    alert("Failed to delete TOTP.");
   }
 }
 
@@ -1306,6 +1487,12 @@ function deletePendingWallet(index) {
   }
 
   updateWalletPendingUI();
+}
+
+function deletePendingTotp(index) {
+  if (!confirm("Are you sure you want to discard this pending TOTP secret?")) return;
+  pendingTotps.splice(index, 1);
+  updateTotpPendingUI();
 }
 
 function updateCredentialPendingUI() {
@@ -1488,6 +1675,55 @@ function updateWalletCountDisplay() {
   document.getElementById("walletCount").innerHTML =
     pendingCount > 0
       ? `${readCount} + <span class="pending-count">${pendingCount}</span>`
+      : `${readCount}`;
+}
+
+function updateTotpPendingUI() {
+  const totpItems = document.getElementById("totpPendingItems");
+  totpItems.innerHTML = "";
+
+  pendingTotps.forEach((totp, index) => {
+    const item = document.createElement("div");
+    item.className = "vault-data-item pending-bg";
+
+    const header = document.createElement("div");
+    header.className = "data-header";
+    header.innerHTML = `<i class="fas fa-key"></i> ${totp.name} <em class="pending-label">(Pending)</em>`;
+    header.onclick = () => detail.classList.toggle("displayNone");
+
+    const detail = document.createElement("div");
+    detail.className = "data-details displayNone";
+    detail.innerHTML = `
+      <div><strong>Key:</strong> ${totp.key}</div>
+      <div><strong>Algorithm:</strong> ${totp.algorithm}</div>
+      <div><strong>Interval:</strong> ${totp.interval} sec</div>
+      <div class="action-icons">
+        <button class="icon-btn danger" title="Delete" onclick="deletePendingTotp(${index})"><i class="fas fa-trash"></i></button>
+      </div>
+    `;
+
+    item.appendChild(header);
+    item.appendChild(detail);
+    totpItems.appendChild(item);
+  });
+
+  const readCount = document.querySelectorAll('#totpReadItems .vault-data-item').length;
+  const pendingCount = pendingTotps.length;
+  document.getElementById("totpCount").innerHTML =
+    pendingCount > 0
+      ? `${readCount} + <span class="pending-label">${pendingCount}</span>`
+      : `${readCount}`;
+
+  updateGlobalSaveButtonVisibility();
+}
+
+function updateTotpCountDisplay() {
+  const readCount = document.querySelectorAll('#totpReadItems .vault-data-item').length;
+  const pendingCount = pendingTotps.length;
+
+  document.getElementById("totpCount").innerHTML =
+    pendingCount > 0
+      ? `${readCount} + <span class="pending-label">${pendingCount}</span>`
       : `${readCount}`;
 }
 
@@ -1723,7 +1959,7 @@ function renderWalletItem(wallet) {
   deleteBtn.title = "Delete";
   deleteBtn.onclick = async () => {
     if (confirm(`Delete wallet "${wallet.name}"?`)) {
-      await deleteWallet([wallet.walletAddress]);
+      await deleteWallets([wallet.ids]);
     }
   };
 
@@ -1746,6 +1982,92 @@ function renderWalletItem(wallet) {
       button.title = hidden.classList.contains("displayNone") ? "Hide" : "Show";
     });
   });  
+}
+
+function renderTotpItem(totp) {
+  const container = document.getElementById("totpReadItems");
+  const item = document.createElement("div");
+  item.className = "vault-data-item";
+
+  const header = document.createElement("div");
+  header.className = "data-header";
+  header.innerHTML = `<i class="fas fa-key"></i> <span class="vault-label-text">${totp.name}</span>`;
+  header.onclick = () => detail.classList.toggle("displayNone");
+
+  const detail = document.createElement("div");
+  detail.className = "data-details displayNone";
+  detail.id = `totp-${totp.id}`;
+  detail.innerHTML = `
+    <div>
+      <strong>Key:</strong>
+      <span class="hidden-password">********</span>
+      <span class="real-password displayNone">${totp.key}</span>
+      <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
+      <button class="icon-btn" title="Copy Key" onclick="copyToClipboard('${totp.key}')">
+        <i class="fas fa-copy white"></i>
+      </button>
+    </div>
+    <div><strong>Algorithm:</strong> ${totp.algorithm}</div>
+    <div><strong>Interval:</strong> ${totp.interval} sec</div>
+  `;
+
+  const actionBar = document.createElement("div");
+  actionBar.className = "action-icons";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn primary";
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = "Edit";
+  editBtn.onclick = () => {
+    document.getElementById("totpName").value = totp.name;
+    document.getElementById("totpKey").value = totp.key;
+    document.getElementById("totpAlgorithm").value = totp.algorithm;
+    document.getElementById("totpInterval").value = totp.interval;
+
+    document.getElementById("newTotpForm").classList.remove("displayNone");
+    document.getElementById("totpList").classList.remove("displayNone");
+    document.getElementById("totpFormTitle").innerHTML = '<i class="fas fa-key"></i> Update TOTP';
+
+    editingOriginalTotp = { ...totp };
+    pendingTotps = pendingTotps.filter(t => t.id !== totp.id);
+
+    const card = document.getElementById(`totp-${totp.id}`)?.parentElement;
+    if (card) container.removeChild(card);
+
+    updateTotpPendingUI();
+  };
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "icon-btn danger";
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = "Delete";
+  deleteBtn.onclick = async () => {
+    if (confirm(`Delete TOTP secret "${totp.name}"?`)) {
+      await deleteTotps([totp.id]);
+    }
+  };
+
+  actionBar.appendChild(editBtn);
+  actionBar.appendChild(deleteBtn);
+  detail.appendChild(actionBar);
+
+  item.appendChild(header);
+  item.appendChild(detail);
+  container.appendChild(item);
+  item.querySelectorAll(".toggle-password").forEach(button => {
+    button.addEventListener("click", () => {
+      const hidden = button.previousElementSibling.previousElementSibling;
+      const revealed = button.previousElementSibling;
+  
+      hidden.classList.toggle("displayNone");
+      revealed.classList.toggle("displayNone");
+  
+      button.querySelector("i").classList.toggle("fa-eye");
+      button.querySelector("i").classList.toggle("fa-eye-slash");
+      button.title = hidden.classList.contains("displayNone") ? "Hide" : "Show";
+    });
+  });
+  
 }
 
 // ==== IDLE TIMEOUT HANDLING ====
@@ -1805,7 +2127,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Always run this (even on index.html)
   document.getElementById("year").textContent = new Date().getFullYear();
 
-  provider = provider || new ethers.providers.JsonRpcProvider("https://evm-cronos.crypto.org");
+  provider = provider || new ethers.providers.JsonRpcProvider(cronosRpcUrl);
 
   await fetchVaultCount();    // ✅ Always fetch vault count
   await fetchAndCacheCosts(); // ✅ Always fetch cost info
@@ -2052,6 +2374,72 @@ document.addEventListener("DOMContentLoaded", async () => {
       updateWalletPendingUI();
 
     });
+  }
+
+  // ===== Totp ====
+  const addTotpBtn = document.getElementById("addTotpBtn");
+  const cancelTotpBtn = document.getElementById("cancelTotpBtn");
+  const saveTotpBtn = document.getElementById("saveTotpBtn");
+
+  if (addTotpBtn) {
+    addTotpBtn.addEventListener("click", () => {
+      closeOtherForms("totp");
+      document.getElementById("totpList").classList.remove("displayNone");
+      document.getElementById("newTotpForm").classList.remove("displayNone");
+    });
+  }
+
+  if (cancelTotpBtn) {
+    cancelTotpBtn.addEventListener("click", () => {
+      const message = editingOriginalTotp
+        ? "Cancel editing this TOTP?"
+        : "Cancel adding this TOTP?";
+    
+      if (confirm(message)) {
+        document.getElementById("newTotpForm").classList.add("displayNone");
+        document.getElementById("totpFormTitle").innerHTML = '<i class="fas fa-key"></i> New TOTP Secret';
+        clearTotpForm();
+    
+        if (editingOriginalTotp) {
+          renderTotpItem(editingOriginalTotp);
+          editingOriginalTotp = null;
+        }
+      }
+    });
+    
+  }
+
+  if (saveTotpBtn) {
+    saveTotpBtn.addEventListener("click", () => {
+      const name = document.getElementById("totpName").value.trim();
+      const key = document.getElementById("totpKey").value.trim();
+      const algorithm = document.getElementById("totpAlgorithm").value.trim();
+      const interval = parseInt(document.getElementById("totpInterval").value.trim(), 10);
+    
+      if (!name || !key || !algorithm || !interval || interval <= 0) {
+        alert("All fields are required and interval must be positive.");
+        return;
+      }
+    
+      if (editingOriginalTotp && editingOriginalTotp.id) {
+        pendingTotps.push({
+          id: editingOriginalTotp.id,
+          name,
+          key,
+          algorithm,
+          interval,
+          _original: { ...editingOriginalTotp }
+        });      
+        editingOriginalTotp = null;
+      } else {
+        pendingTotps.push({ name, key, algorithm, interval });
+      }
+    
+      document.getElementById("newTotpForm").classList.add("displayNone");
+      document.getElementById("totpFormTitle").innerHTML = '<i class="fas fa-key"></i> New TOTP Secret';
+      clearTotpForm();
+      updateTotpPendingUI();
+    });    
   }
 
 });
