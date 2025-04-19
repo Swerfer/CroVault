@@ -3,11 +3,13 @@
   --color-border:         #ccc;
   --color-muted:          #999;
   --color-shadow:         #657186;
+  --color-darkGrey:       #222;
   --color-accent:         #22beb7;
   --color-accent-hover:   #1aa29d;
   --color-link:           #3b8bc0;
   --color-primary-action: #2277dd;
   --color-cookie-bg:      #003366;
+  --color-vaultSection-bg:#0b2a40;
   --color-bg:             #051126;
   --color-pending:        #ffe4b2;
   --color-gold:           #ffd700;
@@ -589,6 +591,14 @@ summary {
   border-radius: 12px;
   box-shadow: 0 0 10px var(--color-shadow);
   line-height: 1.4;
+  max-width: 100%;
+  overflow-x: auto;
+  word-wrap: break-word;
+  white-space: normal;
+  transition: all 0.3s ease;
+  opacity: 1;
+  max-height: 1000px;
+  overflow: hidden;
 }
 
 .vault-card h4 {
@@ -599,6 +609,10 @@ summary {
 .vault-card .buttonDiv {
   margin-top: 10px;
   flex-wrap: wrap;
+}
+
+.vault-card div {
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 768px) {
@@ -655,17 +669,6 @@ summary {
   margin-left: 6px;
 }
 
-.vault-card {
-  max-width: 100%;
-  overflow-x: auto;
-  word-wrap: break-word;
-  white-space: normal;
-}
-
-.vault-card div {
-  overflow-wrap: anywhere;
-}
-
 .modal-content .btn-custom.green {
   font-weight: bold;
   box-shadow: 0 0 0 2px var(--color-accent)aa;
@@ -684,17 +687,57 @@ summary {
   display: none;
 }
 
+.vault-section {
+  margin: 40px auto;
+  padding: 22px 24px;
+  background-color: var(--color-vaultSection-bg);
+  border-radius: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 900px;
+  transition: background 0.3s ease;
+  border-top: none;
+  border-image: linear-gradient(to right, #222, #444, #222);
+  border-image-slice: 1;
+  border-top: 2px solid transparent;
+  position: relative;
+}
+
 .vault-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.2s ease;
+}
+
+.vault-section-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+.vault-section-header:hover i {
+  color: var(--color-gold);
+}
+
+.vault-section-header h4.vault-toggle {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-accent);
   cursor: pointer;
 }
 
-.vault-section-header h4 {
-  margin: 0;
-  cursor: pointer;
+.vault-section-header h4.vault-toggle i {
+  font-size: 1.2rem;
+  color: var(--color-primary-action);
 }
+
 
 .vault-content.displayNone {
   display: none;
@@ -750,6 +793,7 @@ summary {
 
 .pending-bg {
   background-color: var(--color-pending);
+  color: var(--color-darkGrey);
 }
 
 .pending-count {
@@ -864,3 +908,58 @@ footer {
   border: none; 
   cursor: pointer;
 }
+
+#spinnerOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spinner-text {
+  margin-top: 12px;
+  color: var(--color-gold);
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.pulse-highlight {
+  animation: pulseFlash 1.2s ease-out;
+}
+
+@keyframes pulseFlash {
+  0%   { background-color: var(--color-pending); }
+  50%  { background-color: #fff1b7; }
+  100% { background-color: var(--color-pending); }
+}
+
+#stickySaveBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--color-bg);
+  padding: 8px 12px;
+  box-shadow: 0 -2px 6px var(--color-shadow);
+  display: flex;
+  justify-content: space-between;
+  z-index: 9999;
+}
+
+@media (min-width: 769px) {
+  #stickySaveBar {
+    display: none !important;
+  }
+}
+
+

@@ -107,7 +107,7 @@
           </div>                            
           <div id="credentialList" class="vault-content displayNone">
             <!-- New Credential Form -->
-            <div id="newCredentialForm" class="vault-card vault-credentials displayNone">
+            <div id="newCredentialForm" class="vault-card vault-credentials">
               <div>
                 <h4 id="credentialFormTitle"><i class="fas fa-lock"></i> New Credential</h4>
                 <p id="upsertCredentialPrice" class="gold mt-2"></p>
@@ -137,7 +137,7 @@
           </div>                            
           <div id="noteList" class="vault-content displayNone">
             <!-- New Note Form -->
-            <div id="newNoteForm" class="vault-card vault-notes displayNone">
+            <div id="newNoteForm" class="vault-card vault-notes">
               <div>
 
                 <h4 id="noteFormTitle"><i class="fas fa-note-sticky"></i> New Note</h4>
@@ -166,7 +166,7 @@
           </div>
           <div id="walletList" class="vault-content displayNone">
             <!-- New Wallet Form -->
-            <div id="newWalletForm" class="vault-card vault-wallets displayNone">
+            <div id="newWalletForm" class="vault-card vault-wallets">
               <div>
 
                 <h4 id="walletFormTitle"><i class="fas fa-wallet"></i> New Wallet Address</h4>
@@ -197,7 +197,7 @@
           </div>
           <div id="totpList" class="vault-content displayNone">
             <!-- New TOTP Form -->
-            <div id="newTotpForm" class="vault-card vault-totp displayNone">
+            <div id="newTotpForm" class="vault-card vault-totp">
               <div>
                 <h4 id="totpFormTitle"><i class="fas fa-key"></i> New TOTP Secret</h4>
                 <p id="upsertTotpPrice" class="gold mt-2"></p>
@@ -321,6 +321,18 @@
     </div>
 
   </div>
-    
+  
+  <div id="spinnerOverlay" class="hidden">
+    <div class="spinner-container">
+      <div class="loader"></div>
+      <div class="spinner-text">Saving to blockchain...</div>
+    </div>
+  </div>
+
+  <div id="stickySaveBar" class="hidden">
+    <button id="stickySaveBtn" class="btn-custom small"><i class="fas fa-save"></i> Save All</button>
+    <button id="stickyEstimateBtn" class="btn-custom small"><i class="fas fa-calculator"></i> Estimate</button>
+  </div>
+  
 </body>
 </html>
