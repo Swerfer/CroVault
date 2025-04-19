@@ -59,9 +59,9 @@ Full technical overview available in [`workflow.html`](./workflow.html).
 
 All smart contracts are publicly verified on Cronoscan:
 
-- [Vault Contract](https://cronoscan.com/address/0xe1eF8879b7216DC3dE4e153B37FFC9D810928EC0)
-- [Vault Factory](https://cronoscan.com/address/0xa07477Da0dB859F7799bAbA9bac87E8AF104b810)
-- [Cost Manager](https://cronoscan.com/address/0x587776cCCeC6Ec77971588D9e75468e99e30c318)
+- [Vault Contract](https://cronoscan.com/address/0x3D47B247c139F55F5e01371d145d65d406c54A55)
+- [Vault Factory](https://cronoscan.com/address/0x6324CfA3c13b690d135B69886BB06C736e6aCf52)
+- [Cost Manager](https://cronoscan.com/address/0xcBB5409246532Ac3935598Bc4d50baed60fe0EF6)
 
 ---
 

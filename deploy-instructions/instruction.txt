@@ -1,0 +1,37 @@
+npm init -y (in project folder)
+npm install --save-dev hardhat@latest
+npm install --save-dev @nomicfoundation/hardhat-toolbox
+
+npx hardhat run scripts/deployVaulContract.js --network cronos
+npx hardhat run scripts/deployCostManager.js --network cronos
+
+- Set addresses in deployFaultFactory.js
+
+npx hardhat run scripts/deployVaulFactory.js --network cronos
+
+Verify at Cronos Explorer on succes, see Verify testnet.png
+
+Verify at Cronoscan: 
+
+npx hardhat flatten contracts/CostManager.sol > contracts/flattenedCostManager.sol
+npx hardhat flatten contracts/vaultContract.sol > contracts/flattenedVaultContract.sol
+npx hardhat flatten contracts/vaultFactory.sol > contracts/flattenedVaultFactory.sol
+
+Get the constructor abi:
+ - Go to your contract on CronosScan
+ - Click the Transactions tab.
+ - Look for the contract creation transaction (usually the very first txn).
+ - Open it → scroll to "Input Data"
+ - Click “Decode Input Data” (only works if contract is verified)
+ - If not verified, you’ll see raw hex after 0x, like:
+    0x60806040...<constructor arguments at the end>
+ - Copy the last 64+64 = 128 hex characters and decode them to get the 2 addresses
+
+In Cronoscan:
+ - Compiler type: Solidity (Single file)
+ - Compiler version: the used version
+ - EVM Version 'paris'
+ - License type: MIT
+ - Paste code from flattened on next page
+ - Add ABI if necessary (if there are contructor arguments)
+ - Verify and Publish!

@@ -188,6 +188,37 @@
             <div id="walletPendingItems"></div>
           </div>
         </div>
+
+        <!-- === TOTP Section === -->
+        <div class="vault-section" id="totpSection">
+          <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="totpList"><i class="fas fa-key"></i> TOTP Secrets (<span id="totpCount">0</span>)</h4>
+            <button id="addTotpBtn" class="icon-only-btn" title="Add TOTP Secret"><i class="fas fa-plus"></i></button>
+          </div>
+          <div id="totpList" class="vault-content displayNone">
+            <!-- New TOTP Form -->
+            <div id="newTotpForm" class="vault-card vault-totp displayNone">
+              <div>
+                <h4 id="totpFormTitle"><i class="fas fa-key"></i> New TOTP Secret</h4>
+                <p id="upsertTotpPrice" class="gold mt-2"></p>
+              </div>
+              <div class="dataDiv">
+                <input type="text" id="totpName" placeholder="Name (max 64 chars)" maxlength="64">
+                <input type="text" id="totpKey" placeholder="Secret Key (Base32)" maxlength="256">
+                <input type="text" id="totpAlgorithm" placeholder="Algorithm (e.g., SHA1 (default 99%), SHA256)" maxlength="16">
+                <input type="number" id="totpInterval" placeholder="Interval (e.g., 30)" min="1" max="600">
+              </div>
+              <div class="buttonDiv">
+                <button id="saveTotpBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelTotpBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+              </div>
+            </div>
+            <!-- The list of saved and pending TOTP secrets -->
+            <div id="totpReadItems"></div>
+            <div id="totpPendingItems"></div>
+          </div>
+        </div>
+
       </section>
 
       <footer>
