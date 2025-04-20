@@ -1,11 +1,11 @@
 // ==== Config and ABIs ====
-const costManagerAddress = "0xcBB5409246532Ac3935598Bc4d50baed60fe0EF6";
-const factoryAddress = "0x6324CfA3c13b690d135B69886BB06C736e6aCf52";
+const costManagerAddress  = "0xcBB5409246532Ac3935598Bc4d50baed60fe0EF6";
+const factoryAddress      = "0x6324CfA3c13b690d135B69886BB06C736e6aCf52";
 // ==== topic0 = Event VaultCreated in CostManager contract Topics 0 ====
-const topic0 = "0x5d9c31ffa0fecffd7cf379989a3c7af252f0335e0d2a1320b55245912c781f53";
-const fetchVaultCountUrl = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=${factoryAddress}&topic0=${topic0}`;
-const cronosRpcUrl = "https://evm-cronos.crypto.org";
-const cronoScanUrl = "https://cronoscan.com";
+const topic0              = "0x5d9c31ffa0fecffd7cf379989a3c7af252f0335e0d2a1320b55245912c781f53";
+const fetchVaultCountUrl  = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=${factoryAddress}&topic0=${topic0}`;
+const cronosRpcUrl        = "https://evm-cronos.crypto.org";
+const cronoScanUrl        = "https://cronoscan.com";
 
 const costManagerAbi = [
   {
@@ -350,7 +350,7 @@ async function getVaultUpsertCost() {
   for (let i = 0; i < 10; i++) {
     try {
       cachedCosts.upsert = ethers.utils.formatEther(await costManager.vaultUpsertCost());
-      return cachedCosts.creation;
+      return cachedCosts.upsert;
     } catch (e) {
       await new Promise(r => setTimeout(r, 1000));
     }
@@ -503,6 +503,19 @@ function closeOtherForms(excludeSection) {
   });
 }
 
+function unlockAndLoadAllSections() {
+  if (sessionPassword) {
+    return loadAllSections();
+  }
+
+  showUnlockModal(async (pw) => {
+    sessionPassword = pw;
+    await deriveWalletKey();
+    await loadAllSections(); // ✅ only called AFTER pw is set
+  });
+}
+
+
 // ==== Connect wallet flow ====
 
 async function connectWallet() {
@@ -591,6 +604,20 @@ async function afterWalletConnect(instance) {
   updateBalanceDisplay();
 }
 
+async function loadAllSections() {
+  if (!sessionPassword) {
+    console.warn("Skipping loadAllSections: sessionPassword not set");
+    return;
+  }
+
+  await Promise.all([
+    loadAndShowCredentials(),
+    loadAndShowNotes(),
+    loadAndShowWallets(),
+    loadAndShowTotps()
+  ]);
+}
+
 async function updateBalanceDisplay() {
   if (!provider || !walletAddress) return;
 
@@ -647,7 +674,7 @@ async function hideOrShowCreateVault() {
           </a>
         `;
       
-        await loadAndShowCredentials();
+        unlockAndLoadAllSections();
       
       } else {
         createVaultSection.classList.remove("hidden");
@@ -848,11 +875,7 @@ function showWrongPasswordModal() {
     modal.classList.add("hidden");
     showUnlockModal(async (pw) => {
       sessionPassword = pw;
-      await loadAndShowCredentials(); // try again after unlock
-      await loadAndShowNotes(); // try again after unlock
-      await loadAndShowWallets(); // try again after unlock
-      await loadAndShowTotps();
-
+      unlockAndLoadAllSections();
     });
   };
 
@@ -882,6 +905,7 @@ async function retryReadDataWithTimeout(vault, maxRetries = 10, timeoutMs = 1000
 }
 
 async function loadAndShowCredentials(deleted = false) {
+  if (!sessionPassword) return;
   let creds, notes, wallets
 
   // Check if there is a vault address
@@ -896,29 +920,7 @@ async function loadAndShowCredentials(deleted = false) {
       return;
     }
   }
-  // Check if session password is set
-  if (!sessionPassword) {
-    const signer = provider.getSigner();
-    const vault = new ethers.Contract(userVault, vaultAbi, signer);
-    [creds, notes, wallets] = await retryReadDataWithTimeout(vault);
-
-    // Check if there are any items in the vault
-    if (!(creds.length === 0 && notes.length === 0 && wallets.length === 0)) {
-      // Show unlock modal
-      await new Promise(resolve => {
-        showUnlockModal(pw => {
-          sessionPassword = pw;
-          resolve();
-        });
-      });
-    }
-  }
-
-  // If no session password is set but there are items in the vault, return early
-  if (!deleted && !sessionPassword && !(creds.length === 0 && notes.length === 0 && wallets.length === 0)) {
-    return;
-  } 
-
+  
   // If session password is set show the vault data section
   document.getElementById("vaultDataSection").classList.remove("displayNone");
 
@@ -939,9 +941,6 @@ async function loadAndShowCredentials(deleted = false) {
   }
 
   if (!creds.length) {
-    await loadAndShowNotes();
-    await loadAndShowWallets();
-    await loadAndShowTotps();
     return; // No credentials to show
   }
 
@@ -964,14 +963,15 @@ async function loadAndShowCredentials(deleted = false) {
       return;
     }
 
-    renderCredentialItem(decrypted);
+    renderCredentialItem(decrypted, false);
   }
-  await loadAndShowNotes();
+  updateCredentialPendingUI();
 }
 
 // ==== Updated Note Reader ====
 
 async function loadAndShowNotes() {
+  if (!sessionPassword) return;
   if (!userVault || !userVault.startsWith("0x")) return;
 
   const signer = provider.getSigner();
@@ -986,8 +986,6 @@ async function loadAndShowNotes() {
   }
 
   if (!notes.length) {
-    await loadAndShowWallets();
-    await loadAndShowTotps();
     return; // No notes to show
   }
   const container = document.getElementById("noteReadItems");
@@ -1007,14 +1005,15 @@ async function loadAndShowNotes() {
       return;
     }
 
-    renderNoteItem(decrypted);
+    renderNoteItem(decrypted, false);
   }
-  await loadAndShowWallets();
+  updateNotePendingUI();
 }
 
 // ==== Updated Wallet Reader ====
 
 async function loadAndShowWallets() {
+  if (!sessionPassword) return;
   if (!userVault || !userVault.startsWith("0x")) return;
 
   const signer = provider.getSigner();
@@ -1029,7 +1028,6 @@ async function loadAndShowWallets() {
   }
 
   if (!wallets.length) {
-    await loadAndShowTotps();
     return; // No notes to show
   }
 
@@ -1053,12 +1051,13 @@ async function loadAndShowWallets() {
       return;
     }
 
-    renderWalletItem(decrypted);
+    renderWalletItem(decrypted, false);
   }
-  await loadAndShowTotps();
+  updateWalletPendingUI();
 }
 
 async function loadAndShowTotps() {
+  if (!sessionPassword) return;
   if (!userVault || !userVault.startsWith("0x")) return;
 
   const signer = provider.getSigner();
@@ -1093,8 +1092,9 @@ async function loadAndShowTotps() {
       return;
     }
 
-    renderTotpItem(decrypted);
+    renderTotpItem(decrypted, false);
   }
+  updateTotpPendingUI();
 }
 
 function toggleVaultSection(sectionId) {
@@ -1156,12 +1156,13 @@ async function estimateSaveAllFees() {
       const wallets = [];
       for (const w of pendingWallets) {
         wallets.push({
-          walletAddress: w.walletAddress,
+          id: w.id || 0,
+          walletAddress: JSON.stringify(await encryptWithPassword(sessionPassword, { walletAddress: w.walletAddress })),
           name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: w.name })),
           privateKey: JSON.stringify(await encryptWithPassword(sessionPassword, { privateKey: w.privateKey })),
           seedPhrase: JSON.stringify(await encryptWithPassword(sessionPassword, { seedPhrase: w.seedPhrase })),
           remarks: JSON.stringify(await encryptWithPassword(sessionPassword, { remarks: w.remarks }))
-        });
+        });        
       }
       const gas = await vault.estimateGas.upsertWalletAddress(wallets, {
         value: ethers.utils.parseEther(cachedCosts.upsert)
@@ -1833,7 +1834,7 @@ function hasUnsavedTotp() {
     .some(id => document.getElementById(id).value.trim() !== "");
 }
 
-function renderCredentialItem(cred) {
+function renderCredentialItem(cred, shouldUpdateUI = true) {
   const container = document.getElementById("credentialReadItems");
   const item = document.createElement("div");
   item.className = "vault-data-item";
@@ -1886,7 +1887,9 @@ function renderCredentialItem(cred) {
     pendingCredentials = pendingCredentials.filter(c => c.id !== cred.id);
     const readCard = document.getElementById(`cred-${cred.id}`)?.parentElement;
     if (readCard) container.removeChild(readCard);
-    updateCredentialPendingUI();
+    if (shouldUpdateUI) {
+      updateCredentialPendingUI();
+    }
   };
 
   const deleteBtn = document.createElement("button");
@@ -1920,7 +1923,7 @@ function renderCredentialItem(cred) {
   });  
 }
 
-function renderNoteItem(note) {
+function renderNoteItem(note, shouldUpdateUI = true) {
   const container = document.getElementById("noteReadItems");
   const item = document.createElement("div");
   item.className = "vault-data-item";
@@ -1956,7 +1959,9 @@ function renderNoteItem(note) {
     pendingNotes = pendingNotes.filter(n => n.id !== note.id);
     const readCard = document.getElementById(`note-${note.id}`)?.parentElement;
     if (readCard) container.removeChild(readCard);
-    updateNotePendingUI();
+    if (shouldUpdateUI) {
+      updateNotePendingUI();
+    }
   };
 
   const deleteBtn = document.createElement("button");
@@ -1978,7 +1983,7 @@ function renderNoteItem(note) {
   container.appendChild(item);
 }
 
-function renderWalletItem(wallet) {
+function renderWalletItem(wallet, shouldUpdateUI = true) {
   const container = document.getElementById("walletReadItems");
   const item = document.createElement("div");
   item.className = "vault-data-item";
@@ -2039,7 +2044,9 @@ function renderWalletItem(wallet) {
     pendingWallets = pendingWallets.filter(w => w.walletAddress !== wallet.walletAddress);
     const card = document.getElementById(`wallet-${wallet.walletAddress}`)?.parentElement;
     if (card) container.removeChild(card);
-    updateWalletPendingUI();
+    if (shouldUpdateUI) {
+      updateWalletPendingUI();
+    }
   };
 
   const deleteBtn = document.createElement("button");
@@ -2073,7 +2080,7 @@ function renderWalletItem(wallet) {
   });  
 }
 
-function renderTotpItem(totp) {
+function renderTotpItem(totp, shouldUpdateUI = true) {
   const container = document.getElementById("totpReadItems");
   const item = document.createElement("div");
   item.className = "vault-data-item";
@@ -2122,8 +2129,9 @@ function renderTotpItem(totp) {
 
     const card = document.getElementById(`totp-${totp.id}`)?.parentElement;
     if (card) container.removeChild(card);
-
-    updateTotpPendingUI();
+    if (shouldUpdateUI) {
+      updateTotpPendingUI();
+    }
   };
 
   const deleteBtn = document.createElement("button");
