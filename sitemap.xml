@@ -25,6 +25,16 @@
   <priority>0.80</priority>
 </url>
 <url>
+  <loc>https://crovault.com/real-life-story</loc>
+  <lastmod>2025-04-17T10:00:00+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://crovault.com/blogs/introducing-totp-support-in-crovault</loc>
+  <lastmod>2025-04-20T10:00:00+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
   <loc>https://crovault.com/blogs/blog_blockchain_password_manager</loc>
   <lastmod>2025-04-17T10:00:00+00:00</lastmod>
   <priority>0.80</priority>

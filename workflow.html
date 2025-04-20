@@ -166,12 +166,12 @@
         <h2>7. Viewing, Adding, Editing, or Deleting Data</h2>
         <ul>
           <li><strong>Read from chain:</strong> 
-            <code>readCredentials()</code>, <code>readNote()</code>, and <code>readWalletAddress()</code> retrieve each item as an encrypted JSON string.
+            <code>readCredentials()</code>, <code>readNote()</code>, <code>readWalletAddress()</code> and <code>readTotp()</code> retrieve each item as an encrypted JSON string.
             We parse/decrypt with <code>decryptWithPassword(sessionPassword, ...)</code>.
           </li>
           <li><strong>Add/Edit data:</strong>
             <ul>
-              <li>Items go into <code>pendingCredentials</code> / <code>pendingNotes</code> / <code>pendingWallets</code>.</li>
+              <li>Items go into <code>pendingCredentials</code> / <code>pendingNotes</code> / <code>pendingWallets</code> / <code>pendingTotps</code>.</li>
               <li>The user sees these as “(Pending)” until they click “Save All.”</li>
             </ul>
           </li>

@@ -212,6 +212,11 @@ header {
 .centered-left.tAndA {
   max-width: 390px;
 }
+
+.centered-left.costs {
+  max-width: 540px;
+}
+
 .centered-left.howItWorks {
   max-width: 450px;
 }
@@ -255,17 +260,26 @@ summary {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10;
-  padding: 2px 8px;
+
   background-color: var(--color-accent);
   color: var(--color-text);
   font-size: 0.9rem;
   font-weight: 600;
-  transition: all 0.3s ease;
+  padding: 6px 20px;           /* Match .btn-custom.maxwidth */
+  line-height: 1.5;
   border: none;
   border-radius: 10px;
-  box-shadow: 0 3px 6px var(--color-shadow);
   cursor: pointer;
+  box-shadow: 0 3px 6px var(--color-shadow);
+  transition: all 0.3s ease;
+  min-height: 30px;
+  width: auto;
+  text-align: center;
+}
 
+.over-image-button:hover {
+  background-color: var(--color-accent-hover);
+  transform: translate(-50%, -52%);
 }
 
 .after-death-images {
@@ -974,4 +988,35 @@ footer {
   }
 }
 
+a.btn-custom {
+  display: inline-block;
+  text-align: center;
+  padding: 5px 8px;
+  line-height: 1.5;
+}
 
+a.btn-custom.maxwidth {
+  padding: 6px 10px; /* match button */
+}
+
+.alex-container {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 2em 0;
+}
+
+.alex-image img {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px var(--color-shadow);
+}
+
+.alex-text {
+  flex: 1;
+  min-width: 300px;
+  max-width: 600px;
+}

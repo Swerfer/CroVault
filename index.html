@@ -19,7 +19,6 @@
   <meta property="og:type" content="website">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="CroVault – Blockchain Vault for Your Private Data">
@@ -63,7 +62,6 @@
 </head>
 <body>
   <div class="page-container">
-    <!-- Header with menu -->
     <header>
       <div id="headerDiv" class="header-content">
         <a href="/" title="CroVault homepage">
@@ -90,17 +88,16 @@
         <div class="nav-menu px-4 mt-2" id="navMenu">
           <a href="/blog" class="fs-5">Blog</a>
           <a href="/instructions" class="fs-5">Instructions</a>
+          <a href="/real-life-story" class="fs-5">Real life story</a>
         </div>
       </div>
     
       <p id="activeVaults" class="text-center fs-5"></p>
     </header>
     
-
-    <!-- Main content -->
     <div class="py-3 content">
       
-      <section>
+      <section id="intro">
         <h1 class="h1-index">Blockchain password manager. <br>Secure your digital legacy.</h1>
 
         <h2 class="h2-index">
@@ -113,12 +110,12 @@
           </div>
         </h2>               
 
-        <div class="text-center mt-4">
+        <div id="buttonCreateYourOwnVault" class="text-center mt-4">
           <a href="vault" class="btn-custom maxwidth">Create Your Vault – Start Securing Data</a>
         </div>
       </section>
 
-      <section class="justify-content-center mt-4">
+      <section id="how-it-works" class="justify-content-center mt-4">
         <div class="centered-left howItWorks">
           <h3 class="text-center">How CroVault Works</h3>
           <ul>
@@ -131,15 +128,15 @@
         </div>
       </section>
 
-      <section class="justify-content-center mt-4">
+      <section id="workflow" class="justify-content-center mt-4">
         <h4 class="text-center mt-4">
           <a href="/workflow" rel="noopener" target="_blank">Extended workflow</a>
         </h4>
       </section>
 
-      <section>
+      <section id="phone">
         <div class="image-container">
-          <a href="vault" class="over-image-button">Secure My Private Info</a>
+          <a href="vault" class="over-image-button">Try CroVault</a>
           <picture>
             <source srcset="assets/images/phone/crovault-dapp.webp" type="image/webp">
             <img src="assets/images/phone/crovault-dapp.png" 
@@ -150,7 +147,6 @@
         </div>
       </section>
 
-      <!-- Life After Death Section -->
       <section id="afterDeathSection" class="text-center mt-5">
         <div class="text-center">
           <h3>Even after you're gone, your data shouldn't be</h3>
@@ -177,7 +173,7 @@
         </div>
       </section>
 
-      <section class="justify-content-center mt-4">
+      <section id="whyCroVault" class="justify-content-center mt-4">
         <div class="centered-left whyCroVault">
           <h3 class="text-center">Why CroVault?</h3>
           <div>
@@ -189,13 +185,31 @@
         </div>  
       </section>
       
-      <section>
+      <section id="buttonLauncCroVault">
         <div class="text-center mt-4">
-          <a href="vault" class="btn-custom maxwidth">Launch CroVault Vault</a>
+          <a href="vault" class="btn-custom maxwidth">Launch CroVault</a>
         </div>
       </section>
 
-      <section class="justify-content-center mt-4">
+      <section id="CroVaultCost" class="justify-content-center mt-4">
+        <div class="centered-left costs ">
+          <h3><i class="fas fa-coins"></i> CroVault Costs</h3>
+          <p>
+            CroVault is fully decentralized — no subscriptions, no user accounts.<br>
+            You only pay small blockchain fees when creating your vault or saving data.
+          </p>
+          <p>
+            Want to see the exact fees for vault creation or data updates?
+          </p>
+          <div class="text-center">
+            <button class="btn-custom maxwidth" onclick="showCostModal()">
+              <i class="fas fa-info-circle"></i> View Current Fees
+            </button>
+          </div>
+        </div>
+      </section>      
+
+      <section id="transparent-auditable" class="justify-content-center mt-4">
         <div class="centered-left tAndA">
           <h3 class="text-center">Transparent & Auditable</h3>
           <p>Everything is open-source and verifiable. CroVault uses:</p>
@@ -258,8 +272,21 @@
                   <p>Yes. You can edit or delete saved credentials, notes, or wallet addresses.</p>
                 </details>
                 <details>
+                  <summary>What is TOTP?</summary>
+                  <p>
+                    TOTP stands for <strong>Time-Based One-Time Password</strong>. It's a widely used 2FA (two-factor authentication) method that generates a new 6-digit code every 30 seconds.
+                  </p>
+                  <p>
+                    Services like Google Authenticator, Microsoft Authenticator, and Authy use TOTP to enhance login security. Each account is based on a secret key that can be entered manually or scanned via QR code.
+                  </p>
+                  <p>
+                    CroVault lets you securely store this TOTP key (and related info like digits, interval, algorithm) in your vault — making it easy to back up and recover your 2FA accounts if your phone is lost or reset.
+                  </p>
+                </details>                
+                <details>
                   <summary>How can I store my Authenticator accounts?</summary>
-                  <p>You can store Authenticator secrets like TOTP keys as notes. Save the Base32 key, algorithm, and interval manually during setup.</p>
+                  <p>You can store Authenticator secrets like TOTP keys. Save the Base32 key, algorithm, and interval manually during setup.</p>
+                  <p>For most authenticators SHA1 is the algorithm and 30 seconds the interval.</p>
                 </details>
                 <details>
                   <summary>Is the vault open-source?</summary>
@@ -294,6 +321,11 @@
                 <details>
                   <summary>How much does it cost to save data?</summary>
                   <p>You pay a Cronos network fee and a small CroVault fee when saving. Reading and deleting data is always free.</p>
+                  <div class="text-center">
+                    <button class="btn-custom maxwidth" onclick="showCostModal()">
+                      <i class="fas fa-info-circle"></i> View Current Fees
+                    </button>
+                  </div>
                 </details>
               </div>
             </div>
@@ -320,7 +352,7 @@
         </div>
       </section>
       
-      <section>
+      <section id="socialShare">
         <div class="social-share text-center mt-5">
           <p>
             <strong>💬 Share CroVault on 
@@ -337,7 +369,7 @@
         </div>        
       </section>
 
-      <section class="text-center mt-5">
+      <section id="learnMore" class="text-center mt-5">
         <h4>📝 Want to Learn More?</h4>
         <p>Read articles about password security, digital inheritance, and safe seed phrase storage on the <a href="/blog" class="text-light" style="text-decoration: underline;">CroVault Blog</a>.</p>
       </section>
@@ -381,7 +413,6 @@
         
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script src="https://unpkg.com/web3modal"></script>
-  <!-- Your logic -->
   <script src="js/vault.js"></script>
   <script>
     function toggleMenu() {
@@ -392,7 +423,6 @@
       menu.classList.toggle('active');
       overlay.classList.toggle('active');
   
-      // Switch icon
       icon.textContent = menu.classList.contains('active') ? '✕' : '☰';
     }
   
@@ -414,7 +444,6 @@
         link.addEventListener("click", () => closeMenu());
       });
   
-      // Optional: clicking outside menu also closes
       document.addEventListener("click", (event) => {
         const hamburger = document.querySelector(".hamburger");
         if (
@@ -427,7 +456,6 @@
       });
     });
     
-    // === FAQ Category Expand ===
     document.querySelectorAll('.faq-category-header').forEach(header => {
       header.addEventListener('click', () => {
         const category = header.parentElement;

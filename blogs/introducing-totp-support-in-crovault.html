@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Introducing TOTP Support in CroVault. CroVault offers a secure, encrypted, blockchain-based alternative.">
+  <meta name="keywords" content="authenticator TOTP storage, crypto backup, decentralized vault, CroVault, secure crypto storage">
+  <title>Introducing TOTP Support in CroVault</title>
+  <link rel="stylesheet" href="/css/vault.css">
+  <link rel="canonical" href="https://crovault.com/blogs/introducing-totp-support-in-crovault" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+<body>
+  <!-- Header with menu -->
+  <header>
+    <div id="headerDiv" class="header-content">
+      <a href="/" title="CroVault homepage">
+        <picture>
+          <source srcset="../assets/images/Icon/crovault-logo.webp" type="image/webp">
+          <img src="../assets/images/Icon/crovault-logo.png" 
+                alt="CroVault secure data vault logo" 
+                title="CroVault – blockchain-secured personal data storage">
+        </picture>
+      </a>
+      <div>
+        <span class="title">CroVault</span>
+      </div>
+    </div>
+  </header>
+  <!-- Main blog content -->
+  <div class="content">
+    <h1>🔐 Introducing TOTP Support in CroVault</h1>
+    <p>April 17, 2025</p>
+    <h2>Secure Your 2FA Secrets On-Chain</h2>
+    <p>We’re excited to announce a powerful new upgrade to CroVault: 
+        support for TOTP (Time-Based One-Time Passwords)! 
+        You can now store your 2FA keys securely and privately—right inside your encrypted blockchain vault.</p>
+    <div class="justify-content-center">
+      <img src="/assets/images/blog/introducing-totp-support-in-crovault.png" alt="Introducing TOTP support in CroVault" title="Introducing TOTP support in CroVault" class="blogImage" />
+    </div>
+
+    <h2>What is TOTP?</h2>
+    <p>
+        TOTP is the most widely used method for two-factor authentication (2FA). Services like Google Authenticator, 
+        Microsoft Authenticator, and Authy rely on TOTP keys to generate time-based 6-digit codes that verify your identity.
+    </p>
+    <p>
+        Now, with CroVault, you can store those sensitive keys directly on-chain, encrypted using your own password and wallet signature.
+    </p>
+
+    <h2>🧱 Why Store TOTP in CroVault?</h2>
+    <p>
+        <strong>
+            ✅ Bulletproof Backup
+        </strong>
+    </p>
+    <p>
+        Lose your phone? As long as you remember your CroVault password and still own your wallet, you can recover your TOTP secrets instantly.
+    </p>
+    <p>
+        <strong>
+            🔒 Privacy-First
+        </strong>
+    </p>
+    <p>
+        Your data is encrypted before it ever touches the blockchain. Not even we can see your keys.
+    </p>
+    <p>
+        <strong>
+            💡 All-in-One Vault
+        </strong>
+    </p>
+    <p>
+        Store your credentials, notes, wallet addresses, and now—your 2FA keys. Everything in one decentralized, non-custodial vault.
+    </p>
+
+    <h2>🛠️ What You Can Do</h2>
+    <p>Each TOTP entry includes:</p>
+    <ul>
+      <li><strong>Name</strong> – Describe the account (e.g., “Binance”, “ProtonMail”).</li>
+      <li><strong>Key</strong> – The base32-encoded TOTP secret.</li>
+      <li><strong>Algorithm</strong> – Choose between SHA1, SHA256, or SHA512.</li>
+      <li><strong>Interval</strong> – The time window in seconds (usually 30).</li>
+    </ul>
+    <p>The interface lets you:</p>
+    <ul>
+      <li>Add and batch-save new TOTP keys</li>
+      <li>Edit or delete existing ones</li>
+      <li>Expand entries to view or manage them</li>
+      <li>Export raw decrypted TOTP keys when needed (e.g., to import into your authenticator app)</li>
+    </ul>
+
+    <h2>🚀 Try It Now</h2>
+    <p>
+        Jump into <a href="https://crovault.com">CroVault</a> and connect your wallet to get started. No logins. No KYC. Just your vault, your password, your data—fully yours.
+    </p>
+    <p>
+        Got feedback or feature requests? We’d love to hear from you in the <a href="https://t.me/CroVault" title="Telegram" class="social-link sl-style">
+            <i class="fab fa-telegram"></i>
+          </a> community chat!
+    </p>
+  </div>
+  <footer class="mt-4">
+    <p>
+      <strong>&copy; 2025 CroVault. All Rights Reserved.</strong>
+      &nbsp;|&nbsp;
+      <a href="/privacy.html" class="text-light">Privacy Policy</a>
+      &nbsp;|&nbsp;
+      <a href="/terms.html" class="text-light">Terms and Conditions</a>
+      &nbsp;|&nbsp;
+      <a href="/license.html" class="text-light">MIT License</a>
+    </p>
+    <p>
+      ⚠️ Disclaimer: CroVault is a decentralized application. You are solely responsible for your data, wallet, and password. We cannot recover lost vaults.
+    </p>
+    <div>
+      <a href="https://x.com/CroVault" title="Twitter/X" class="social-link sl-style">
+        <i class="fab fa-x-twitter"></i>
+      </a>
+      <a href="https://t.me/CroVault" title="Telegram" class="social-link sl-style">
+        <i class="fab fa-telegram"></i>
+      </a>
+    </div>
+  </footer>
+</body>
+</html>
