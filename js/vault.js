@@ -384,15 +384,18 @@ function showCostModal() {
 
 async function deriveWalletKey() {
   if (walletDerivedKey) return; // Already derived
-  const signer = provider.getSigner();
-  const message = "I authorize access to my CroVault data on the blockchain";
-  const signature = await signer.signMessage(message);
-  const rawKey = await crypto.subtle.digest("SHA-256", strToUint8(signature));
-  walletDerivedKey = new Uint8Array(rawKey);
-  const btn = document.getElementById("retrySignBtn");
-  if (btn) {
-    btn.classList.toggle("displayNone", walletDerivedKey);
-  }
+  try {
+    const signer = provider.getSigner();
+    const message = "I authorize access to my CroVault data on the blockchain";
+    const signature = await signer.signMessage(message);
+    const rawKey = await crypto.subtle.digest("SHA-256", strToUint8(signature));
+    walletDerivedKey = new Uint8Array(rawKey);
+  } catch (err) {
+    console.error("Signature cancelled or failed:", err);
+    const retryBtn = document.getElementById("retrySignBtn");
+    if (retryBtn) retryBtn.classList.remove("displayNone");
+    throw err; // rethrow to let caller know
+  }  
 }
 
 async function encryptWithPassword(password, data) {
@@ -2271,7 +2274,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("stickySaveBtn")?.addEventListener("click", saveAllPendingItems);
   document.getElementById("stickyEstimateBtn")?.addEventListener("click", estimateSaveAllFees);
   document.getElementById("globalSaveAllBtn")?.addEventListener("click", saveAllPendingItems);
-  document.getElementById("retrySignBtn")?.addEventListener("click", loadAndShowCredentials);
+  document.getElementById("retrySignBtn")?.addEventListener("click", async () => {
+    try {
+      await deriveWalletKey();
+        const retryBtn = document.getElementById("retrySignBtn");
+        if (retryBtn) retryBtn.classList.add("displayNone");
+        await loadAllSections();
+    } catch (err) {
+      console.warn("Signing failed or cancelled:", err);
+    }
+  }); 
 
   // Vault section header toggles
   document.querySelectorAll(".vault-toggle").forEach(header => {
