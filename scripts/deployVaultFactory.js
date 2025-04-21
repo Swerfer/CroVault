@@ -6,7 +6,7 @@ async function main() {
 
   // Replace these with your actual contract addresses:
   const vaultImplementationAddress = "0x3D47B247c139F55F5e01371d145d65d406c54A55";
-  const costManagerAddress = "0xcBB5409246532Ac3935598Bc4d50baed60fe0EF6";
+  const costManagerAddress = "0x50E2c7201d5714e018a33203FbD92979BC51eee4";
 
   // Deploy the contract with parameters
   const vaultContract = await VaultContract.deploy(

@@ -132,6 +132,10 @@ contract VaultContract is Initializable, OwnableUpgradeable {
         _transferOwnership(_owner);
         require(_costManager != address(0), "Invalid CostManager");
         costManager = CostManager(payable(_costManager));
+
+        /*//////////////////////////////////////////////////////////////
+        ============ Remove if-block with new contracts! ===============
+        //////////////////////////////////////////////////////////////*/
         if (msg.value > 0) {
             (bool success, ) = address(costManager).call{value: msg.value}("");
             require(success, "Forwarding creation fee to CostManager failed");

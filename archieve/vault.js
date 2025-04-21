@@ -1,6 +1,6 @@
 // ==== Config and ABIs ====
-const costManagerAddress  = "0x50E2c7201d5714e018a33203FbD92979BC51eee4";
-const factoryAddress      = "0x3a2649A49c8Bb5A9d0500bF0e43af27B706D084F";
+const costManagerAddress  = "0xcBB5409246532Ac3935598Bc4d50baed60fe0EF6";
+const factoryAddress      = "0x6324CfA3c13b690d135B69886BB06C736e6aCf52";
 // ==== topic0 = Event VaultCreated in CostManager contract Topics 0 ====
 const topic0              = "0x5d9c31ffa0fecffd7cf379989a3c7af252f0335e0d2a1320b55245912c781f53";
 const fetchVaultCountUrl  = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=${factoryAddress}&topic0=${topic0}`;
@@ -459,13 +459,6 @@ function shortenAddress(addr) {
 
 // ==== Helpers ====
 
-async function waitForTxWithTimeout(tx, timeoutMs = 15000) {
-  return Promise.race([
-    tx.wait(), // resolves when confirmed
-    new Promise((_, reject) => setTimeout(() => reject(new Error("Transaction timed out")), timeoutMs))
-  ]);
-}
-
 async function retryWeb3ConnectWithTimeout(maxRetries = 10, timeoutMs = 1000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -486,9 +479,7 @@ async function retryWeb3ConnectWithTimeout(maxRetries = 10, timeoutMs = 1000) {
 async function retryReadVaultMapping(factory, walletAddress, maxRetries = 10, delayMs = 1000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-        // Just the first result of the array. Future modify to itterate multiple vault contracts.
-        const vaults = await factory.getVaultsByOwner(walletAddress);
-        const vaultAddress = vaults.length > 0 ? vaults[0] : null;
+      const vaultAddress = await factory.callStatic["ownerToVault(address)"](walletAddress);
       return vaultAddress;
     } catch (err) {
       if (attempt === maxRetries) throw err;
@@ -519,12 +510,14 @@ function unlockAndLoadAllSections() {
   if (sessionPassword) {
     return loadAllSections();
   }
+
   showUnlockModal(async (pw) => {
     sessionPassword = pw;
     await deriveWalletKey();
     await loadAllSections(); // ✅ only called AFTER pw is set
   });
 }
+
 
 // ==== Connect wallet flow ====
 
@@ -659,8 +652,8 @@ async function hideOrShowCreateVault() {
     //const factoryAbi = factoryJson.abi;
     //const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
     const minimalAbi = [
-        "function getVaultsByOwner(address) view returns (address[])"
-      ];      
+      "function ownerToVault(address) view returns (address)"
+    ];
     const factory = new ethers.Contract(factoryAddress, minimalAbi, provider);
     const vaultAddress = await retryReadVaultMapping(factory, walletAddress);
     vaultAddress == "0x0000000000000000000000000000000000000000" 
@@ -683,7 +676,9 @@ async function hideOrShowCreateVault() {
              <i class="fas fa-external-link-alt"></i>
           </a>
         `;
+      
         unlockAndLoadAllSections();
+      
       } else {
         createVaultSection.classList.remove("hidden");
         document.getElementById("vaultDataSection").classList.add("displayNone");
@@ -914,7 +909,7 @@ async function retryReadDataWithTimeout(vault, maxRetries = 10, timeoutMs = 1000
 
 async function loadAndShowCredentials(deleted = false) {
   if (!sessionPassword) return;
-  let creds
+  let creds, notes, wallets
 
   // Check if there is a vault address
   if (!walletDerivedKey) {
@@ -1227,10 +1222,6 @@ async function saveAllPendingItems() {
   const signer = provider.getSigner();
   const vault = new ethers.Contract(userVault, vaultAbi, signer);
   try {
-    let credentialsFailed = false;
-    let notesFailed       = false;
-    let walletsFailed    = false;
-    let totpsFailed       = false;
     if (pendingCredentials.length > 0) {
       const creds = [];
       for (const c of pendingCredentials) {
@@ -1243,21 +1234,11 @@ async function saveAllPendingItems() {
         });
       }
       showSpinner("Saving credential(s) to blockchain...");
-      try {
-        const tx = await vault.upsertCredentials(creds, {
-          value: ethers.utils.parseEther(cachedCosts.upsert),
-          gasLimit: 5_000_000 
-        });
-      
-        await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
-      
-      } catch (err) {
-        credentialsFailed = true;
-        console.error("Transaction failed or timed out:", err);
-        alert("Transaction timed out or failed. Please try again.");
-        hideSpinner();
-      }
-     
+      const tx = await vault.upsertCredentials(creds, {
+        value: ethers.utils.parseEther(cachedCosts.upsert),
+        gasLimit: 5_000_000 
+      });
+      await tx.wait();
     }
 
     if (pendingNotes.length > 0) {
@@ -1270,20 +1251,11 @@ async function saveAllPendingItems() {
         });
       }
       showSpinner("Saving note(s) to blockchain...");
-      try {
-        const tx = await vault.upsertNotes(notes, {
-          value: ethers.utils.parseEther(cachedCosts.upsert),
-          gasLimit: 5_000_000 
-        });
-      
-        await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
-      
-      } catch (err) {
-        notesFailed = true;
-        console.error("Transaction failed or timed out:", err);
-        alert("Transaction timed out or failed. Please try again.");
-        hideSpinner();
-      }      
+      const tx = await vault.upsertNotes(notes, {
+        value: ethers.utils.parseEther(cachedCosts.upsert),
+        gasLimit: 5_000_000 
+      });
+      await tx.wait();
     }
 
     if (pendingWallets.length > 0) {
@@ -1300,21 +1272,11 @@ async function saveAllPendingItems() {
         
       }
       showSpinner("Saving wallet(s) to blockchain...");
-      try {
-        const tx = await vault.upsertWallets(wallets, {
-          value: ethers.utils.parseEther(cachedCosts.upsert),
-          gasLimit: 5_000_000 
-        });
-      
-        await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
-      
-      } catch (err) {
-        walletsFailed = true;
-        console.error("Transaction failed or timed out:", err);
-        alert("Transaction timed out or failed. Please try again.");
-        hideSpinner();
-      }
-      
+      const tx = await vault.upsertWalletAddress(wallets, {
+        value: ethers.utils.parseEther(cachedCosts.upsert),
+        gasLimit: 5_000_000 
+      });
+      await tx.wait();
     }
 
     if (pendingTotps.length > 0) {
@@ -1329,68 +1291,33 @@ async function saveAllPendingItems() {
         });
       }
       showSpinner("Saving TOTP(s) to blockchain...");
-      try {
-        const tx = await vault.upsertTOTP(totps, {
-          value: ethers.utils.parseEther(cachedCosts.upsert),
-          gasLimit: 5_000_000 
-        });
-      
-        await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
-      
-      } catch (err) {
-        totpsFailed = true;
-        console.error("Transaction failed or timed out:", err);
-        alert("Transaction timed out or failed. Please try again.");
-        hideSpinner();
-      }
-      
+      const tx = await vault.upsertTOTP(totps, {
+        value: ethers.utils.parseEther(cachedCosts.upsert),
+        gasLimit: 5_000_000
+      });
+      await tx.wait();
     }
     
-    const failureMessages = [];
-
-    if (credentialsFailed) {
-      failureMessages.push("Saving credentials failed.");
-    } else {
-      pendingCredentials = [];
-    }
-
-    if (notesFailed) {
-      failureMessages.push("Saving notes failed.");
-    } else {
-      pendingNotes = [];
-    }
-
-    if (walletsFailed) {
-      failureMessages.push("Saving wallets failed.");
-    } else {
-      pendingWallets = [];
-    }
-
-    if (totpsFailed) {
-      failureMessages.push("Saving TOTPs failed.");
-    } else {
-      pendingTotps = [];
-    }
-
-    let alertMessage = "All pending data saved!";
-    if (failureMessages.length) {
-      alertMessage += "\n\nHowever, the following failed:\n" + failureMessages.join("\n");
-    }
-    alert(alertMessage);
+    alert("All pending data saved!");
+    // Clear pending entries first
+    pendingCredentials = [];
+    pendingNotes = [];
+    pendingWallets = [];
+    pendingTotps = [];
 
     // Immediately update UI to remove yellow pending items before redraw
-    if (!credentialsFailed) updateCredentialPendingUI();
-    if (!notesFailed)       updateNotePendingUI();
-    if (!walletsFailed)     updateWalletPendingUI();
-    if (!totpsFailed)       updateTotpPendingUI();
+    updateCredentialPendingUI();
+    updateNotePendingUI();
+    updateWalletPendingUI();
+    updateTotpPendingUI();
     updateGlobalSaveButtonVisibility();
 
     // Now reload all sections from the chain
     updateBalanceDisplay();
-    if (!credentialsFailed) await loadAndShowCredentials();
-    if (!notesFailed)       await loadAndShowNotes();
-    if (!walletsFailed)     await loadAndShowWallets();
-    if (!totpsFailed)       await loadAndShowTotps();
+    await loadAndShowCredentials();
+    await loadAndShowNotes();
+    await loadAndShowWallets();
+    await loadAndShowTotps();
 
   } catch (err) {
     console.error("Error saving pending data:", err);
@@ -2349,9 +2276,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("globalSaveAllBtn")?.addEventListener("click", saveAllPendingItems);
   document.getElementById("retrySignBtn")?.addEventListener("click", async () => {
     try {
+      await deriveWalletKey();
         const retryBtn = document.getElementById("retrySignBtn");
         if (retryBtn) retryBtn.classList.add("displayNone");
-        unlockAndLoadAllSections();
+        await loadAllSections();
     } catch (err) {
       console.warn("Signing failed or cancelled:", err);
     }

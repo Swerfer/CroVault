@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\denni\\OneDrive\\CroVault\\contracts\\CostManager.sol": {
-      "lastModificationDate": 1745047545897,
-      "contentHash": "5649efadea741cde0f78b9b783a73477",
+      "lastModificationDate": 1745243479248,
+      "contentHash": "c2159799451ba2f28441eab55d7982af",
       "sourceName": "contracts/CostManager.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -115,8 +115,8 @@
       ]
     },
     "C:\\Users\\denni\\OneDrive\\CroVault\\contracts\\VaultFactory.sol": {
-      "lastModificationDate": 1745050037702,
-      "contentHash": "866b00463c8869cd2fe774391cfe8150",
+      "lastModificationDate": 1745254668400,
+      "contentHash": "9072710ccfda1bea772faf428079147c",
       "sourceName": "contracts/VaultFactory.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -152,12 +152,13 @@
         "^0.8.28"
       ],
       "artifacts": [
+        "IVaultReadable",
         "VaultFactory"
       ]
     },
     "C:\\Users\\denni\\OneDrive\\CroVault\\contracts\\VaultContract.sol": {
-      "lastModificationDate": 1745051309277,
-      "contentHash": "3fb957fbe30ccd098f6667a8dcdd5b9d",
+      "lastModificationDate": 1745254668398,
+      "contentHash": "fe22293bbdb27d017b64c60736300acc",
       "sourceName": "contracts/VaultContract.sol",
       "solcConfig": {
         "version": "0.8.28",

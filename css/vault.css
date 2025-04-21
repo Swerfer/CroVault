@@ -944,9 +944,14 @@ footer {
 }
 
 .spinner-container {
+  position: relative;
   display: flex;
+  padding: 15px 30px;
   flex-direction: column;
   align-items: center;
+  border-radius: 12px;
+  box-shadow: 0 0 20px var(--color-shadow);
+  background-color: var(--color-bg);
 }
 
 .spinner-text {
@@ -954,6 +959,18 @@ footer {
   color: var(--color-gold);
   font-size: 1.1rem;
   font-weight: bold;
+}
+
+.spinner-close {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
 }
 
 .pulse-highlight {

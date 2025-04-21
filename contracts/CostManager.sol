@@ -25,7 +25,7 @@ contract CostManager is Ownable(msg.sender) {
     event VaultCreationCostUpdated(uint256 oldCost, uint256 newCost);
     event VaultUpsertCostUpdated(uint256 oldCost, uint256 newCost);
     event AuthorizedAddressAdded(address indexed addr);
-    event AuthorizedAddressRemoved(address indexed addr);
+    event AuthorizedAddressRemoved(address indexed addr); 
     
     /**
      * @dev Modifier that allows only the owner or an authorized address to call.
@@ -69,20 +69,20 @@ contract CostManager is Ownable(msg.sender) {
 
     /**
     * @dev Set the cost for vault creation (owner or authorized).
-    * @param _newCost Amount of CRO (e.g., 5 for 5 CRO).
+    * @param _newCost Amount of CRO (e.g., 5000000000000000000 for 5 CRO).
     */
     function setVaultCreationCost(uint256 _newCost) external onlyOwnerOrAuthorized {
-        uint256 costInWei = _newCost * 1 ether;
+        uint256 costInWei = _newCost;
         emit VaultCreationCostUpdated(vaultCreationCost, costInWei);
         vaultCreationCost = costInWei;
     }
 
     /**
     * @dev Set the cost for upserts inside the vault (owner or authorized).
-    * @param _newCost Amount of CRO (e.g., 5 for 5 CRO).
+    * @param _newCost Amount of CRO (e.g., 5000000000000000000 for 5 CRO).
     */
     function setVaultUpsertCost(uint256 _newCost) external onlyOwnerOrAuthorized {
-        uint256 costInWei = _newCost * 1 ether;
+        uint256 costInWei = _newCost;
         emit VaultUpsertCostUpdated(vaultUpsertCost, costInWei);
         vaultUpsertCost = costInWei;
     }
