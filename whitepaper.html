@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CroVault Whitepaper. CroVault offers a secure, encrypted, blockchain-based alternative.">
+  <meta name="keywords" content="whitepaper, white paper, crypto backup, decentralized vault, CroVault, secure crypto storage">
+  <title>Whitepaper - Crovault secure blockchain privacy vault</title>
+  <link rel="stylesheet" href="/css/vault.css">
+  <link rel="canonical" href="https://crovault.com/whitepaper" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+<body>
+  <!-- Header with menu -->
+  <header>
+    <div id="headerDiv" class="header-content">
+      <a href="/" title="CroVault homepage">
+        <picture>
+          <source srcset="../assets/images/Icon/crovault-logo.webp" type="image/webp">
+          <img src="../assets/images/Icon/crovault-logo.png" 
+                alt="CroVault secure data vault logo" 
+                title="CroVault – blockchain-secured personal data storage">
+        </picture>
+      </a>
+      <div>
+        <span class="title">CroVault</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="text-center mb-5">
+        <h1><i class="fas fa-lock"></i> CroVault Whitepaper</h1>
+        <p>April 21, 2025</p>
+    </div>
+
+    <section class="section">
+        <h2>Introduction</h2>
+        <p>In an increasingly digital world, safeguarding sensitive information such as credentials, notes, and cryptocurrency wallet data is critical. 
+            CroVault is a decentralized, blockchain-based privacy vault designed to securely store sensitive user data with robust encryption and blockchain technology.</p>
+    </section>
+
+    <section class="section">
+        <h2>Overview</h2>
+        <p>CroVault allows users to securely store:</p>
+        <ul>
+            <li>Credentials (usernames, passwords, remarks)</li>
+            <li>Notes</li>
+            <li>Wallet Addresses (including private keys and seed phrases)</li>
+            <li>Time-based One-Time Passwords (TOTP)</li>
+        </ul>
+        <p>
+            Data is encrypted client-side using a combination of the user's chosen password and a cryptographic key derived from a signed wallet message, 
+            ensuring users maintain complete control and privacy of their data.
+        </p>
+    </section>
+
+    <section class="section">
+        <h2>Smart Contract Infrastructure</h2>
+        <p>CroVault consists of several smart contracts deployed on the Cronos blockchain:</p>
+        <h3>VaultFactory.sol</h3>
+        <ul>
+            <li>Manages the creation of individual user VaultContracts.</li>
+            <li>Maintains a mapping from wallet addresses to user-specific vault addresses.</li>
+            <li>Emits events upon successful vault creation.</li>
+        </ul>
+        <h3>VaultContract.sol</h3>
+        <ul>
+            <li>Individual contracts deployed per user.</li>
+            <li>Stores encrypted user data including credentials, notes, wallet details, and TOTP secrets.</li>
+            <li>Provides functions for batch operations:</li>
+            <ul>
+                <li>upsertCredentials, readCredentials, deleteCredentials</li>
+                <li>upsertNotes, readNote, deleteNotes</li>
+                <li>upsertWalletAddress, readWalletAddress, deleteWalletAddresses</li>
+                <li>upsertTOTP, readTOTP, deleteTOTP</li>
+            </ul>
+        </ul>
+        <h3>CostManager.sol</h3>
+        <ul>
+            <li>Centralized contract to manage fees related to vault creation and data operations.</li>
+            <li>Provides functions to query current pricing (vaultCreationCost, vaultUpsertCost).</li>
+        </ul>
+    </section>
+
+    <section class="section">
+        <h2>Decentralized Application (dApp)</h2>
+        <p>CroVault’s frontend is designed using HTML, CSS, JavaScript, and utilizes:</p>
+        <ul>
+            <li>Ethers.js for blockchain interactions</li>
+            <li>Web3Modal for wallet connectivity</li>
+            <li>Bootstrap and Font Awesome for UI/UX design</li>
+        </ul>
+        <h3>User Workflow</h3>
+        <ol>
+            <li>Wallet Connection</li>
+            <ul>
+                <li>Users connect their crypto wallet using Web3Modal.</li>
+            </ul>
+            <li>Vault Creation</li>
+            <ul>
+                <li>Users create a vault by interacting with the VaultFactory smart contract.</li>
+                <li>A one-time vault creation fee is applied, obtained from the CostManager contract.</li>
+            </ul>
+            <li>Password Setup</li>
+            <ul>
+                <li>Users set a secure password used for client-side encryption of their vault data.</li>
+                <li>Users are informed that the password cannot be recovered or changed.</li>
+            </ul>
+            <li>Data Management</li>
+            <ul>
+                <li>Users add or modify credentials, notes, wallet addresses, and TOTP entries.</li>
+                <li>Data is encrypted client-side before being transmitted and stored in the user's VaultContract.</li>
+                <li>Batch operations allow efficient updates with optimized transaction costs.</li>
+            </ul>
+            <li>Data Encryption and Decryption</li>
+            <ul>
+                <li>Encryption uses AES-GCM with keys derived from the user’s password and a signed wallet message.</li>
+                <li>Data remains securely encrypted at rest and is only decrypted client-side upon user request.</li>
+            </ul>
+            <li>Fee Management and Transparency</li>
+            <ul>
+                <li>Users can view current fees for vault creation and data updates in-app, ensuring transparency.</li>
+            </ul>
+        </ol>
+    </section>
+
+    <section class="section">
+        <h2>Security and Privacy</h2>
+        <ul>
+            <li>All sensitive data is encrypted client-side, ensuring only the user can decrypt it.</li>
+            <li>Blockchain ensures data immutability and transparency of transactions.</li>
+            <li>Users retain full custody of their data without reliance on centralized storage.</li>
+        </ul>
+    </section>
+
+    <section class="section">
+        <h2>Risks and Disclaimers</h2>
+        <ul>
+            <li>Users must securely manage their encryption passwords and wallet access; CroVault cannot recover lost passwords or vault access.</li>
+        </ul>
+    </section>
+
+    <section class="section">
+        <h2>Conclusion</h2>
+        <p>CroVault provides a secure, decentralized solution for storing and managing sensitive information using blockchain technology, ensuring privacy, security, and user autonomy.</p>
+    </section>
+
+  </div>
+  <footer class="mt-4">
+    <p>
+      <strong>&copy; 2025 CroVault. All Rights Reserved.</strong>
+      &nbsp;|&nbsp;
+      <a href="/privacy.html" class="text-light">Privacy Policy</a>
+      &nbsp;|&nbsp;
+      <a href="/terms.html" class="text-light">Terms and Conditions</a>
+      &nbsp;|&nbsp;
+      <a href="/license.html" class="text-light">MIT License</a>
+    </p>
+    <p>
+      ⚠️ Disclaimer: CroVault is a decentralized application. You are solely responsible for your data, wallet, and password. We cannot recover lost vaults.
+    </p>
+    <div>
+      <a href="https://x.com/CroVault" title="Twitter/X" class="social-link sl-style">
+        <i class="fab fa-x-twitter"></i>
+      </a>
+      <a href="https://t.me/CroVault" title="Telegram" class="social-link sl-style">
+        <i class="fab fa-telegram"></i>
+      </a>
+    </div>
+  </footer>
+</body>
+</html>

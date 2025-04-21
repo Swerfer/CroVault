@@ -4,10 +4,10 @@
   <!-- Basic meta tags -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="CroVault is a secure blockchain-based password manager and digital inheritance vault. 
-      Easily encrypt notes, store seed phrases, and share access with trusted contacts.">
-  <meta name="keywords" content="CroVault, secure password manager, encrypted digital vault, privacy vault, digital inheritance, 
-      crypto note storage, blockchain vault, seed phrase storage, secure wallet info, decentralized vault, web3 vault, private key manager">
+  <meta name="description" content="CroVault is a secure decentralized blockchain-based password manager and digital inheritance vault. 
+      Easily store credentials, seed phrases, and more and share access with trusted contacts.">
+  <meta name="keywords" content="CroVault, secure password manager, encrypted digital vault, privacy vault, digital inheritance, immutable,
+      credentials, blockchain vault, seed phrase storage, secure wallet, decentralized vault, web3 vault, private key manager">
   <meta name="author" content="CroVault Team">
   <meta name="theme-color" content="#051126">
   <meta name="robots" content="index, follow"> 
@@ -89,6 +89,7 @@
           <a href="/blog" class="fs-5">Blog</a>
           <a href="/instructions" class="fs-5">Instructions</a>
           <a href="/real-life-story" class="fs-5">Real life story</a>
+          <a href="/whitepaper" class="fs-5">Whitepaper</a>
         </div>
       </div>
     
@@ -107,6 +108,7 @@
             <span>Data is encrypted client-side using your password and wallet.</span><br/>
             <span>Your vault is stored on the Cronos blockchain — not on servers.</span><br/>
             <span>Use it for secure backup, or plan digital inheritance easily.</span><br/>
+            <span>Decentralized, no servers to hack, immutable backup.</span><br/>
           </div>
         </h2>               
 
@@ -220,7 +222,7 @@
             <li>Deployed smart contracts visible on Cronoscan:</li>
             <ul>
               <li><a href="https://cronoscan.com/address/0xcBB5409246532Ac3935598Bc4d50baed60fe0EF6" rel="noopener" target="_blank">Cost Manager</a></li>
-              <li><a href="https://cronoscan.com/address/0xcBB5409246532Ac3935598Bc4d50baed60fe0EF6" rel="noopener" target="_blank">Vault Factory</a></li>
+              <li><a href="https://cronoscan.com/address/0x6324CfA3c13b690d135B69886BB06C736e6aCf52" rel="noopener" target="_blank">Vault Factory</a></li>
               <li><a href="https://cronoscan.com/address/0x3D47B247c139F55F5e01371d145d65d406c54A55" rel="noopener" target="_blank">Vault Contract</a></li>
             </ul>
           </ul>
@@ -268,6 +270,10 @@
                   <p>Yes — your CroVault vault is decentralized. With your wallet and password, you can access your data from any device, anywhere.</p>
                 </details>
                 <details>
+                  <summary>How do I create a vault?</summary>
+                  <p>Connect your wallet and set a password. Then click “Create Vault” and confirm the transaction. A small fee is required.</p>
+                </details>
+                <details>
                   <summary>Can I edit or delete data later?</summary>
                   <p>Yes. You can edit or delete saved credentials, notes, or wallet addresses.</p>
                 </details>
@@ -307,6 +313,11 @@
                   <summary>What is the difference between a vault and a wallet?</summary>
                   <p>Your wallet holds crypto. Your vault securely stores passwords, notes, and secrets using blockchain smart contracts.</p>
                 </details>
+                <details>
+                  <summary>Why backup privacy data on the blockchain?</summary>
+                  <p>The blockchain is decentralized. No one controls the blockchain. Your data is immutable stored and always and everywhere accessible.</p>
+                  <p>A strong password and your crypto wallet is all you need to get to your encrypted data.</p>
+                </details>
               </div>
             </div>
       
@@ -315,12 +326,21 @@
               <button class="faq-category-header">Pricing & Fees</button>
               <div class="faq-questions">
                 <details>
-                  <summary>How do I create a vault?</summary>
-                  <p>Connect your wallet and set a password. Then click “Create Vault” and confirm the transaction. A small fee is required.</p>
-                </details>
-                <details>
                   <summary>How much does it cost to save data?</summary>
                   <p>You pay a Cronos network fee and a small CroVault fee when saving. Reading and deleting data is always free.</p>
+                  <div class="text-center">
+                    <button class="btn-custom maxwidth" onclick="showCostModal()">
+                      <i class="fas fa-info-circle"></i> View Current Fees
+                    </button>
+                  </div>
+                </details>
+                <details>
+                  <summary>Are there any subscription fees?</summary>
+                  <p>No, CroVault does not have subscription fees. You only pay per transaction when saving data.</p>
+                </details>
+                <details>
+                  <summary>Can fees change over time?</summary>
+                  <p>Yes, Cronos network fees can vary based on network congestion. CroVault fees may be adjusted according to market conditions, but changes are always transparent.</p>
                   <div class="text-center">
                     <button class="btn-custom maxwidth" onclick="showCostModal()">
                       <i class="fas fa-info-circle"></i> View Current Fees
