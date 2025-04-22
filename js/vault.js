@@ -1,6 +1,7 @@
 // ==== Config and ABIs ====
 const costManagerAddress  = "0x50E2c7201d5714e018a33203FbD92979BC51eee4";
 const factoryAddress      = "0x3a2649A49c8Bb5A9d0500bF0e43af27B706D084F";
+
 // ==== topic0 = Event VaultCreated in CostManager contract Topics 0 ====
 const topic0              = "0x5d9c31ffa0fecffd7cf379989a3c7af252f0335e0d2a1320b55245912c781f53";
 const fetchVaultCountUrl  = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=${factoryAddress}&topic0=${topic0}`;
@@ -202,8 +203,424 @@ const vaultAbi = [
   }  
 ];
 
+const factoryAbi =   [
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "_initialImplementation",
+          type: "address"
+        },
+        {
+          internalType: "address",
+          name: "_costManager",
+          type: "address"
+        }
+      ],
+      stateMutability: "nonpayable",
+      type: "constructor"
+    },
+    {
+      inputs: [],
+      name: "FailedDeployment",
+      type: "error"
+    },
+    {
+      inputs: [
+        {
+          internalType: "uint256",
+          name: "balance",
+          type: "uint256"
+        },
+        {
+          internalType: "uint256",
+          name: "needed",
+          type: "uint256"
+        }
+      ],
+      name: "InsufficientBalance",
+      type: "error"
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "owner",
+          type: "address"
+        }
+      ],
+      name: "OwnableInvalidOwner",
+      type: "error"
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "account",
+          type: "address"
+        }
+      ],
+      name: "OwnableUnauthorizedAccount",
+      type: "error"
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: "address",
+          name: "previousOwner",
+          type: "address"
+        },
+        {
+          indexed: true,
+          internalType: "address",
+          name: "newOwner",
+          type: "address"
+        }
+      ],
+      name: "OwnershipTransferred",
+      type: "event"
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: "address",
+          name: "vaultOwner",
+          type: "address"
+        },
+        {
+          indexed: true,
+          internalType: "address",
+          name: "vault",
+          type: "address"
+        },
+        {
+          indexed: false,
+          internalType: "uint256",
+          name: "implementationIndex",
+          type: "uint256"
+        }
+      ],
+      name: "VaultCreated",
+      type: "event"
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: "address",
+          name: "implementation",
+          type: "address"
+        }
+      ],
+      name: "VaultImplementationAdded",
+      type: "event"
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: "uint256",
+          name: "index",
+          type: "uint256"
+        }
+      ],
+      name: "VaultImplementationLocked",
+      type: "event"
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: "uint256",
+          name: "index",
+          type: "uint256"
+        },
+        {
+          indexed: false,
+          internalType: "address",
+          name: "oldImpl",
+          type: "address"
+        },
+        {
+          indexed: false,
+          internalType: "address",
+          name: "newImpl",
+          type: "address"
+        }
+      ],
+      name: "VaultImplementationUpdated",
+      type: "event"
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: "address",
+          name: "owner",
+          type: "address"
+        },
+        {
+          indexed: true,
+          internalType: "address",
+          name: "vault",
+          type: "address"
+        },
+        {
+          indexed: false,
+          internalType: "string",
+          name: "reason",
+          type: "string"
+        }
+      ],
+      name: "VaultInitFailed",
+      type: "event"
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "user",
+          type: "address"
+        },
+        {
+          internalType: "address",
+          name: "vault",
+          type: "address"
+        }
+      ],
+      name: "addVaultForUser",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function"
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "newImpl",
+          type: "address"
+        }
+      ],
+      name: "addVaultImplementation",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function"
+    },
+    {
+      inputs: [],
+      name: "costManager",
+      outputs: [
+        {
+          internalType: "contract CostManager",
+          name: "",
+          type: "address"
+        }
+      ],
+      stateMutability: "view",
+      type: "function"
+    },
+    {
+      inputs: [],
+      name: "createVaultsForAllImplementations",
+      outputs: [],
+      stateMutability: "payable",
+      type: "function"
+    },
+    {
+      inputs: [
+        {
+          internalType: "uint256",
+          name: "index",
+          type: "uint256"
+        }
+      ],
+      name: "deleteVaultImplementation",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function"
+    },
+    {
+      inputs: [],
+      name: "getVaultImplementations",
+      outputs: [
+        {
+          components: [
+            {
+              internalType: "address",
+              name: "implementation",
+              type: "address"
+            },
+            {
+              internalType: "bool",
+              name: "isImmutable",
+              type: "bool"
+            }
+          ],
+          internalType: "struct VaultFactory.VaultImplementation[]",
+          name: "",
+          type: "tuple[]"
+        }
+      ],
+      stateMutability: "view",
+      type: "function"
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "user",
+          type: "address"
+        }
+      ],
+      name: "getVaultsByOwner",
+      outputs: [
+        {
+          internalType: "address[]",
+          name: "",
+          type: "address[]"
+        }
+      ],
+      stateMutability: "view",
+      type: "function"
+    },
+    {
+      inputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256"
+        }
+      ],
+      name: "implementations",
+      outputs: [
+        {
+          internalType: "address",
+          name: "implementation",
+          type: "address"
+        },
+        {
+          internalType: "bool",
+          name: "isImmutable",
+          type: "bool"
+        }
+      ],
+      stateMutability: "view",
+      type: "function"
+    },
+    {
+      inputs: [
+        {
+          internalType: "uint256",
+          name: "index",
+          type: "uint256"
+        }
+      ],
+      name: "lockVaultImplementation",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function"
+    },
+    {
+      inputs: [],
+      name: "owner",
+      outputs: [
+        {
+          internalType: "address",
+          name: "",
+          type: "address"
+        }
+      ],
+      stateMutability: "view",
+      type: "function"
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "",
+          type: "address"
+        },
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256"
+        }
+      ],
+      name: "ownerToVaults",
+      outputs: [
+        {
+          internalType: "address",
+          name: "",
+          type: "address"
+        }
+      ],
+      stateMutability: "view",
+      type: "function"
+    },
+    {
+      inputs: [],
+      name: "renounceOwnership",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function"
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "newOwner",
+          type: "address"
+        }
+      ],
+      name: "transferOwnership",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function"
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "newOwner",
+          type: "address"
+        }
+      ],
+      name: "transferVaultFactoryOwnership",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function"
+    },
+    {
+      inputs: [
+        {
+          internalType: "uint256",
+          name: "index",
+          type: "uint256"
+        },
+        {
+          internalType: "address",
+          name: "newImpl",
+          type: "address"
+        }
+      ],
+      name: "updateVaultImplementation",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function"
+    }
+  ]
+
 // ==== State ====
 
+let newVault = false;
 let cachedCosts = { creation: null, upsert: null };
 let web3Modal;
 let provider;       // ethers provider
@@ -230,6 +647,11 @@ function uint8ToB64(bytes) { return btoa(String.fromCharCode(...new Uint8Array(b
 function b64ToUint8(base64) {
   const binary = atob(base64);
   return Uint8Array.from(binary, c => c.charCodeAt(0));
+}
+
+function formatTimestamp(timestamp) {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString();
 }
 
 function copyToClipboard(text) {
@@ -515,10 +937,31 @@ function closeOtherForms(excludeSection) {
   });
 }
 
-function unlockAndLoadAllSections() {
+async function unlockAndLoadAllSections() {
   if (sessionPassword) {
     return loadAllSections();
   }
+
+  if (userVault && userVault.startsWith("0x")) {
+    try {
+      const signer = provider.getSigner();
+      const vault  = new ethers.Contract(userVault, vaultAbi, signer);
+
+      const [creds, notes, wallets, totps] = await retryReadDataWithTimeout(vault);
+      if (
+        creds.length   === 0 &&
+        notes.length   === 0 &&
+        wallets.length === 0 &&
+        totps.length   === 0
+      ) {
+        newVault = true;
+        await deriveWalletKey();
+        document.getElementById("vaultDataSection").classList.remove("displayNone");
+        return;
+      }
+    } catch {}
+  }
+
   showUnlockModal(async (pw) => {
     sessionPassword = pw;
     await deriveWalletKey();
@@ -710,36 +1153,23 @@ async function createNewVault() {
       throw new Error("Wallet not connected!");
     }
 
-    // 1) Fetch the compiled contract from /contracts/VaultContract.json
-    //    You must place the contract ABI/bytecode in that file.
-    const vaultJson = await fetch("contracts/VaultContract.json").then(r => r.json());
-    const vaultAbi = vaultJson.abi;
-    const vaultBytecode = vaultJson.bytecode;
-    if (!vaultAbi || !vaultBytecode) {
-      throw new Error("Invalid or missing ABI/bytecode in VaultContract.json");
-    }
-
-      // 1. Load factory ABI
-      const factoryJson = await fetch("contracts/VaultFactory.json").then(r => r.json());
-      const factoryAbi = factoryJson.abi;
-
       const factory = new ethers.Contract(factoryAddress, factoryAbi, signer);
-
       showSpinner("Deploying your vault...");
       // 2. Call createVault
-      const tx = await factory.createVault({
+      const tx = await factory.createVaultsForAllImplementations({
       value: ethers.utils.parseEther(cachedCosts.creation),
       });
 
       const receipt = await tx.wait();
       try {
         // 3. Extract new vault address from event
+        // Change later for future extra vault contracts
         const vaultEvent = receipt.events.find(e => e.event === "VaultCreated");
         const deployedAddress = vaultEvent.args.vault;
         deployResult.textContent = "Vault deployed at: " + deployedAddress;
         alert("Vault deployed at: " + deployedAddress);
-        hideSpinner();
       } catch {}
+      hideSpinner();
       hideOrShowCreateVault();
 
   } catch (err) {
@@ -806,11 +1236,11 @@ function showPasswordModal(onConfirm) {
   passInput.focus();
 
   const strengthText = document.getElementById("invalidPasswordStrength");
-
+  console.log("1 -" + strengthText);
   function validateInputs() {
     const p1 = passInput.value;
     const p2 = passConfirm.value;
-
+    console.log("2 -" + strengthText);
     if (!p1 || p1.length < 12) {
       strengthText.textContent = "Password must be at least 12 characters.";
       confirmBtn.disabled = true;
@@ -1114,6 +1544,15 @@ function toggleVaultSection(sectionId) {
 
 // ==== Data write to blockchain ====
 async function estimateSaveAllFees() {
+  if (newVault) {
+    showPasswordModal(async (pw) => {
+      sessionPassword = pw;          // ❶ store it
+      await deriveWalletKey();       // ❷ derive key
+      newVault = false;              // ❸ it’s not new any more
+      await estimateSaveAllFees();   // ❹ retry with a real password
+    });
+    return; // important: stop the first run here
+  }
   if (!sessionPassword || !userVault || !userVault.startsWith("0x")) {
     alert("Vault is not unlocked or connected.");
     return;
@@ -1148,7 +1587,7 @@ async function estimateSaveAllFees() {
       const notes = [];
       for (const n of pendingNotes) {
         notes.push({
-          id: 0,
+          id: n.id || 0,
           name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: n.name })),
           note: JSON.stringify(await encryptWithPassword(sessionPassword, { note: n.note }))
         });
@@ -1223,7 +1662,6 @@ async function saveAllPendingItems() {
     });
     return;
   }
-  alert("If the fee shown in your wallet is low (<1 CRO), then reject the transaction and try again.");
   const signer = provider.getSigner();
   const vault = new ethers.Contract(userVault, vaultAbi, signer);
   try {
@@ -1250,7 +1688,7 @@ async function saveAllPendingItems() {
         });
       
         await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
-      
+        newVault = false;
       } catch (err) {
         credentialsFailed = true;
         console.error("Transaction failed or timed out:", err);
@@ -1264,7 +1702,7 @@ async function saveAllPendingItems() {
       const notes = [];
       for (const n of pendingNotes) {
         notes.push({
-          id: 0,
+          id: n.id || 0,
           name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: n.name })),
           note: JSON.stringify(await encryptWithPassword(sessionPassword, { note: n.note }))
         });
@@ -1277,7 +1715,7 @@ async function saveAllPendingItems() {
         });
       
         await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
-      
+        newVault = false;
       } catch (err) {
         notesFailed = true;
         console.error("Transaction failed or timed out:", err);
@@ -1301,13 +1739,13 @@ async function saveAllPendingItems() {
       }
       showSpinner("Saving wallet(s) to blockchain...");
       try {
-        const tx = await vault.upsertWallets(wallets, {
+        const tx = await vault.upsertWalletAddress(wallets, {
           value: ethers.utils.parseEther(cachedCosts.upsert),
           gasLimit: 5_000_000 
         });
       
         await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
-      
+        newVault = false;
       } catch (err) {
         walletsFailed = true;
         console.error("Transaction failed or timed out:", err);
@@ -1336,7 +1774,7 @@ async function saveAllPendingItems() {
         });
       
         await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
-      
+        newVault = false;
       } catch (err) {
         totpsFailed = true;
         console.error("Transaction failed or timed out:", err);
@@ -1458,7 +1896,7 @@ async function deleteNotes(ids = []) {
 
 async function deleteWallets(ids = []) {
   if (!userVault || !userVault.startsWith("0x")) return;
-  if (!addresses.length) return;
+  if (!ids.length) return;
 
   try {
     showSpinner("Deleting wallet...");
@@ -1942,6 +2380,7 @@ function renderCredentialItem(cred, shouldUpdateUI = true) {
     <div>
       <strong>Remarks:</strong> ${cred.remarks}
     </div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(cred.timestamp)}</div>
   `;
 
   const actionBar = document.createElement("div");
@@ -2016,6 +2455,7 @@ function renderNoteItem(note, shouldUpdateUI = true) {
     <div>
       <strong>Note:</strong> ${note.note.replace(/\n/g, "<br>")}
     </div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(note.timestamp)}</div>
   `;
 
   const actionBar = document.createElement("div");
@@ -2097,6 +2537,7 @@ function renderWalletItem(wallet, shouldUpdateUI = true) {
       </button>
     </div>
     <div><strong>Remarks:</strong> ${wallet.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(wallet.timestamp)}</div>
   `;
 
   const actionBar = document.createElement("div");
@@ -2131,7 +2572,7 @@ function renderWalletItem(wallet, shouldUpdateUI = true) {
   deleteBtn.title = "Delete";
   deleteBtn.onclick = async () => {
     if (confirm(`Delete wallet "${wallet.name}"?`)) {
-      await deleteWallets([wallet.ids]);
+      await deleteWallets([wallet.id]);
     }
   };
 
@@ -2181,6 +2622,7 @@ function renderTotpItem(totp, shouldUpdateUI = true) {
     </div>
     <div><strong>Algorithm:</strong> ${totp.algorithm}</div>
     <div><strong>Interval:</strong> ${totp.interval} sec</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(totp.timestamp)}</div>
   `;
 
   const actionBar = document.createElement("div");
@@ -2605,6 +3047,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   
       if (editingOriginalWallet && editingOriginalWallet.walletAddress === walletAddress) {
         pendingWallets.push({
+          id: editingOriginalWallet.id,
           walletAddress,
           name,
           privateKey,
