@@ -3,7 +3,7 @@ const costManagerAddress  = "0x50E2c7201d5714e018a33203FbD92979BC51eee4";
 const factoryAddress      = "0x3a2649A49c8Bb5A9d0500bF0e43af27B706D084F";
 
 // ==== topic0 = Event VaultCreated in CostManager contract Topics 0 ====
-const topic0              = "0x5d9c31ffa0fecffd7cf379989a3c7af252f0335e0d2a1320b55245912c781f53";
+const topic0              = "0x0b045af6aff86dd2cda5342fd0329a354dc66759ff1eda00d7ecf13a76c7fb3b";
 const fetchVaultCountUrl  = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=${factoryAddress}&topic0=${topic0}`;
 const cronosRpcUrl        = "https://evm-cronos.crypto.org";
 const cronoScanUrl        = "https://cronoscan.com";
@@ -203,420 +203,36 @@ const vaultAbi = [
   }  
 ];
 
-const factoryAbi =   [
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "_initialImplementation",
-          type: "address"
-        },
-        {
-          internalType: "address",
-          name: "_costManager",
-          type: "address"
-        }
-      ],
-      stateMutability: "nonpayable",
-      type: "constructor"
-    },
-    {
-      inputs: [],
-      name: "FailedDeployment",
-      type: "error"
-    },
-    {
-      inputs: [
-        {
-          internalType: "uint256",
-          name: "balance",
-          type: "uint256"
-        },
-        {
-          internalType: "uint256",
-          name: "needed",
-          type: "uint256"
-        }
-      ],
-      name: "InsufficientBalance",
-      type: "error"
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "owner",
-          type: "address"
-        }
-      ],
-      name: "OwnableInvalidOwner",
-      type: "error"
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "account",
-          type: "address"
-        }
-      ],
-      name: "OwnableUnauthorizedAccount",
-      type: "error"
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "previousOwner",
-          type: "address"
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "newOwner",
-          type: "address"
-        }
-      ],
-      name: "OwnershipTransferred",
-      type: "event"
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "vaultOwner",
-          type: "address"
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "vault",
-          type: "address"
-        },
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "implementationIndex",
-          type: "uint256"
-        }
-      ],
-      name: "VaultCreated",
-      type: "event"
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "address",
-          name: "implementation",
-          type: "address"
-        }
-      ],
-      name: "VaultImplementationAdded",
-      type: "event"
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "index",
-          type: "uint256"
-        }
-      ],
-      name: "VaultImplementationLocked",
-      type: "event"
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: false,
-          internalType: "uint256",
-          name: "index",
-          type: "uint256"
-        },
-        {
-          indexed: false,
-          internalType: "address",
-          name: "oldImpl",
-          type: "address"
-        },
-        {
-          indexed: false,
-          internalType: "address",
-          name: "newImpl",
-          type: "address"
-        }
-      ],
-      name: "VaultImplementationUpdated",
-      type: "event"
-    },
-    {
-      anonymous: false,
-      inputs: [
-        {
-          indexed: true,
-          internalType: "address",
-          name: "owner",
-          type: "address"
-        },
-        {
-          indexed: true,
-          internalType: "address",
-          name: "vault",
-          type: "address"
-        },
-        {
-          indexed: false,
-          internalType: "string",
-          name: "reason",
-          type: "string"
-        }
-      ],
-      name: "VaultInitFailed",
-      type: "event"
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "user",
-          type: "address"
-        },
-        {
-          internalType: "address",
-          name: "vault",
-          type: "address"
-        }
-      ],
-      name: "addVaultForUser",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function"
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "newImpl",
-          type: "address"
-        }
-      ],
-      name: "addVaultImplementation",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function"
-    },
-    {
-      inputs: [],
-      name: "costManager",
-      outputs: [
-        {
-          internalType: "contract CostManager",
-          name: "",
-          type: "address"
-        }
-      ],
-      stateMutability: "view",
-      type: "function"
-    },
-    {
-      inputs: [],
-      name: "createVaultsForAllImplementations",
-      outputs: [],
-      stateMutability: "payable",
-      type: "function"
-    },
-    {
-      inputs: [
-        {
-          internalType: "uint256",
-          name: "index",
-          type: "uint256"
-        }
-      ],
-      name: "deleteVaultImplementation",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function"
-    },
-    {
-      inputs: [],
-      name: "getVaultImplementations",
-      outputs: [
-        {
-          components: [
-            {
-              internalType: "address",
-              name: "implementation",
-              type: "address"
-            },
-            {
-              internalType: "bool",
-              name: "isImmutable",
-              type: "bool"
-            }
-          ],
-          internalType: "struct VaultFactory.VaultImplementation[]",
-          name: "",
-          type: "tuple[]"
-        }
-      ],
-      stateMutability: "view",
-      type: "function"
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "user",
-          type: "address"
-        }
-      ],
-      name: "getVaultsByOwner",
-      outputs: [
-        {
-          internalType: "address[]",
-          name: "",
-          type: "address[]"
-        }
-      ],
-      stateMutability: "view",
-      type: "function"
-    },
-    {
-      inputs: [
-        {
-          internalType: "uint256",
-          name: "",
-          type: "uint256"
-        }
-      ],
-      name: "implementations",
-      outputs: [
-        {
-          internalType: "address",
-          name: "implementation",
-          type: "address"
-        },
-        {
-          internalType: "bool",
-          name: "isImmutable",
-          type: "bool"
-        }
-      ],
-      stateMutability: "view",
-      type: "function"
-    },
-    {
-      inputs: [
-        {
-          internalType: "uint256",
-          name: "index",
-          type: "uint256"
-        }
-      ],
-      name: "lockVaultImplementation",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function"
-    },
-    {
-      inputs: [],
-      name: "owner",
-      outputs: [
-        {
-          internalType: "address",
-          name: "",
-          type: "address"
-        }
-      ],
-      stateMutability: "view",
-      type: "function"
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "",
-          type: "address"
-        },
-        {
-          internalType: "uint256",
-          name: "",
-          type: "uint256"
-        }
-      ],
-      name: "ownerToVaults",
-      outputs: [
-        {
-          internalType: "address",
-          name: "",
-          type: "address"
-        }
-      ],
-      stateMutability: "view",
-      type: "function"
-    },
-    {
-      inputs: [],
-      name: "renounceOwnership",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function"
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "newOwner",
-          type: "address"
-        }
-      ],
-      name: "transferOwnership",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function"
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "newOwner",
-          type: "address"
-        }
-      ],
-      name: "transferVaultFactoryOwnership",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function"
-    },
-    {
-      inputs: [
-        {
-          internalType: "uint256",
-          name: "index",
-          type: "uint256"
-        },
-        {
-          internalType: "address",
-          name: "newImpl",
-          type: "address"
-        }
-      ],
-      name: "updateVaultImplementation",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function"
-    }
-  ]
+const factoryAbi = [
+  {
+    inputs: [],
+    name: "createVaultsForAllImplementations",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "user", type: "address" }
+    ],
+    name: "getVaultsByOwner",
+    outputs: [
+      { internalType: "address[]", name: "", type: "address[]" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  internalType: "address", name: "vaultOwner",         type: "address"  },
+      { indexed: true,  internalType: "address", name: "vault",              type: "address"  },
+      { indexed: false, internalType: "uint256", name: "implementationIndex", type: "uint256" }
+    ],
+    name: "VaultCreated",
+    type: "event"
+  }
+];
 
 // ==== State ====
 
@@ -707,7 +323,6 @@ async function fetchVaultCount() {
   try {
     const response = await fetch(fetchVaultCountUrl);
     const data = await response.json();
-
     // Check if data looks good
     if (data && data.status === "1" && Array.isArray(data.result)) {
       const count = data.result.length;
@@ -802,23 +417,14 @@ function showCostModal() {
   document.getElementById("costInfoModal").classList.remove("hidden");
 }
 
-// ==== Encryption / Decryption ====
+function toggleVaultSection(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
 
-async function deriveWalletKey() {
-  if (walletDerivedKey) return; // Already derived
-  try {
-    const signer = provider.getSigner();
-    const message = "I authorize access to my CroVault data on the blockchain";
-    const signature = await signer.signMessage(message);
-    const rawKey = await crypto.subtle.digest("SHA-256", strToUint8(signature));
-    walletDerivedKey = new Uint8Array(rawKey);
-  } catch (err) {
-    console.error("Signature cancelled or failed:", err);
-    const retryBtn = document.getElementById("retrySignBtn");
-    if (retryBtn) retryBtn.classList.remove("displayNone");
-    throw err; // rethrow to let caller know
-  }  
+  section.classList.toggle("displayNone");
 }
+
+// ==== Encryption / Decryption ====
 
 async function encryptWithPassword(password, data) {
   if (!walletDerivedKey) {
@@ -937,36 +543,19 @@ function closeOtherForms(excludeSection) {
   });
 }
 
-async function unlockAndLoadAllSections() {
-  if (sessionPassword) {
-    return loadAllSections();
+async function updateBalanceDisplay() {
+  if (!provider || !walletAddress) return;
+
+  try {
+    const balanceBigInt = await provider.getBalance(walletAddress);
+    const balanceInEth = ethers.utils.formatEther(balanceBigInt);
+    const balanceEl = document.getElementById("balance");
+    if (balanceEl) {
+      balanceEl.textContent = `Balance: ${parseFloat(balanceInEth).toFixed(2)} CRO`;
+    }
+  } catch (err) {
+    console.error("Failed to fetch wallet balance:", err);
   }
-
-  if (userVault && userVault.startsWith("0x")) {
-    try {
-      const signer = provider.getSigner();
-      const vault  = new ethers.Contract(userVault, vaultAbi, signer);
-
-      const [creds, notes, wallets, totps] = await retryReadDataWithTimeout(vault);
-      if (
-        creds.length   === 0 &&
-        notes.length   === 0 &&
-        wallets.length === 0 &&
-        totps.length   === 0
-      ) {
-        newVault = true;
-        await deriveWalletKey();
-        document.getElementById("vaultDataSection").classList.remove("displayNone");
-        return;
-      }
-    } catch {}
-  }
-
-  showUnlockModal(async (pw) => {
-    sessionPassword = pw;
-    await deriveWalletKey();
-    await loadAllSections(); // ✅ only called AFTER pw is set
-  });
 }
 
 // ==== Connect wallet flow ====
@@ -1057,37 +646,6 @@ async function afterWalletConnect(instance) {
   updateBalanceDisplay();
 }
 
-async function loadAllSections() {
-  if (!sessionPassword) {
-    console.warn("Skipping loadAllSections: sessionPassword not set");
-    return;
-  }
-
-  await Promise.all([
-    loadAndShowCredentials(),
-    loadAndShowNotes(),
-    loadAndShowWallets(),
-    loadAndShowTotps()
-  ]);
-}
-
-async function updateBalanceDisplay() {
-  if (!provider || !walletAddress) return;
-
-  try {
-    const balanceBigInt = await provider.getBalance(walletAddress);
-    const balanceInEth = ethers.utils.formatEther(balanceBigInt);
-    const balanceEl = document.getElementById("balance");
-    if (balanceEl) {
-      balanceEl.textContent = `Balance: ${parseFloat(balanceInEth).toFixed(2)} CRO`;
-    }
-  } catch (err) {
-    console.error("Failed to fetch wallet balance:", err);
-  }
-}
-
-// ==== Vault Creation ====
-
 async function hideOrShowCreateVault() {
   const createVaultSection = document.getElementById("createVaultSection");
 
@@ -1097,14 +655,7 @@ async function hideOrShowCreateVault() {
   }
 
   try {
-    // VaultFactory address and ABI
-    //const factoryJson = await fetch("contracts/VaultFactory.json").then(r => r.json());
-    //const factoryAbi = factoryJson.abi;
-    //const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
-    const minimalAbi = [
-        "function getVaultsByOwner(address) view returns (address[])"
-      ];      
-    const factory = new ethers.Contract(factoryAddress, minimalAbi, provider);
+    const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
     const vaultAddress = await retryReadVaultMapping(factory, walletAddress);
     vaultAddress == "0x0000000000000000000000000000000000000000" 
       ? userAddress = null
@@ -1138,6 +689,110 @@ async function hideOrShowCreateVault() {
     createVaultSection.classList.add("hidden"); // fallback: hide
   }
 }
+
+async function unlockAndLoadAllSections() {
+  if (sessionPassword) {
+    return loadAllSections();
+  }
+
+  if (userVault && userVault.startsWith("0x")) {
+    try {
+      const signer = provider.getSigner();
+      const vault  = new ethers.Contract(userVault, vaultAbi, signer);
+
+      const [creds, notes, wallets, totps] = await retryReadDataWithTimeout(vault);
+      if (
+        creds.length   === 0 &&
+        notes.length   === 0 &&
+        wallets.length === 0 &&
+        totps.length   === 0
+      ) {
+        newVault = true;
+        await deriveWalletKey();
+        document.getElementById("vaultDataSection").classList.remove("displayNone");
+        return;
+      }
+    } catch {}
+  }
+
+  showUnlockModal(async (pw) => {
+    sessionPassword = pw;
+    await deriveWalletKey();
+    await loadAllSections(); // ✅ only called AFTER pw is set
+  });
+}
+
+async function loadAllSections() {
+  if (!sessionPassword) {
+    console.warn("Skipping loadAllSections: sessionPassword not set");
+    return;
+  }
+
+  await Promise.all([
+    loadAndShowCredentials(),
+    loadAndShowNotes(),
+    loadAndShowWallets(),
+    loadAndShowTotps()
+  ]);
+}
+
+async function deriveWalletKey() {
+  if (walletDerivedKey) return; // Already derived
+  try {
+    const signer = provider.getSigner();
+    const message = "I authorize access to my CroVault data on the blockchain";
+    const signature = await signer.signMessage(message);
+    const rawKey = await crypto.subtle.digest("SHA-256", strToUint8(signature));
+    walletDerivedKey = new Uint8Array(rawKey);
+  } catch (err) {
+    console.error("Signature cancelled or failed:", err);
+    const retryBtn = document.getElementById("retrySignBtn");
+    if (retryBtn) retryBtn.classList.remove("displayNone");
+    throw err; // rethrow to let caller know
+  }  
+}
+
+// ==== Vault Unlock Modal ====
+
+function showUnlockModal(onConfirm) {
+  const modal = document.getElementById("unlockModal");
+  const passInput = document.getElementById("unlockPassword");
+  const confirmBtn = document.getElementById("confirmUnlockBtn");
+  const cancelBtn = document.getElementById("cancelUnlockBtn");
+
+  passInput.value = "";
+  modal.classList.remove("hidden");
+  passInput.focus();
+
+  function handleKey(event) {
+    if (event.key === "Enter") confirmBtn.click();
+    if (event.key === "Escape") cancelBtn.click();
+  }
+
+  confirmBtn.onclick = () => {
+    const pw = passInput.value;
+    if (!pw || pw.length < 12) return alert("Password too short");
+  
+    modal.classList.add("hidden");
+    document.removeEventListener("keydown", handleKey);
+    onConfirm(pw); // 🔁 No deriveWalletKey here anymore
+    startIdleMonitor(); // ✅ Start idle timeout after unlock
+    document.getElementById("retryUnlockBtn")?.classList.add("displayNone");
+  };
+  
+  
+  cancelBtn.onclick = () => {
+    modal.classList.add("hidden");
+    document.removeEventListener("keydown", handleKey);
+    const retryUnlockBtn = document.getElementById("retryUnlockBtn");
+    if (retryUnlockBtn) retryUnlockBtn.classList.remove("displayNone"); // ✅ here
+  };  
+
+  document.addEventListener("keydown", handleKey);
+}
+
+
+// ==== Create new vault ====
 
 async function createNewVault() {
   const createVaultBtn = document.getElementById("createVaultBtn");
@@ -1179,45 +834,6 @@ async function createNewVault() {
     deployLoader.classList.remove("visibleInline");
     createVaultBtn.disabled = false;
   }
-}
-
-// ==== Vault Unlock Modal ====
-
-function showUnlockModal(onConfirm) {
-  const modal = document.getElementById("unlockModal");
-  const passInput = document.getElementById("unlockPassword");
-  const confirmBtn = document.getElementById("confirmUnlockBtn");
-  const cancelBtn = document.getElementById("cancelUnlockBtn");
-
-  passInput.value = "";
-  modal.classList.remove("hidden");
-  passInput.focus();
-
-  function handleKey(event) {
-    if (event.key === "Enter") confirmBtn.click();
-    if (event.key === "Escape") cancelBtn.click();
-  }
-
-  confirmBtn.onclick = () => {
-    const pw = passInput.value;
-    if (!pw || pw.length < 12) return alert("Password too short");
-  
-    modal.classList.add("hidden");
-    document.removeEventListener("keydown", handleKey);
-    onConfirm(pw); // 🔁 No deriveWalletKey here anymore
-    startIdleMonitor(); // ✅ Start idle timeout after unlock
-    document.getElementById("retryUnlockBtn")?.classList.add("displayNone");
-  };
-  
-  
-  cancelBtn.onclick = () => {
-    modal.classList.add("hidden");
-    document.removeEventListener("keydown", handleKey);
-    const retryUnlockBtn = document.getElementById("retryUnlockBtn");
-    if (retryUnlockBtn) retryUnlockBtn.classList.remove("displayNone"); // ✅ here
-  };  
-
-  document.addEventListener("keydown", handleKey);
 }
 
 // ==== Password Creation Modal ====
@@ -1406,8 +1022,6 @@ async function loadAndShowCredentials(deleted = false) {
   updateCredentialPendingUI();
 }
 
-// ==== Updated Note Reader ====
-
 async function loadAndShowNotes() {
   if (!sessionPassword) return;
   if (!userVault || !userVault.startsWith("0x")) return;
@@ -1447,8 +1061,6 @@ async function loadAndShowNotes() {
   }
   updateNotePendingUI();
 }
-
-// ==== Updated Wallet Reader ====
 
 async function loadAndShowWallets() {
   if (!sessionPassword) return;
@@ -1533,13 +1145,6 @@ async function loadAndShowTotps() {
     renderTotpItem(decrypted, false);
   }
   updateTotpPendingUI();
-}
-
-function toggleVaultSection(sectionId) {
-  const section = document.getElementById(sectionId);
-  if (!section) return;
-
-  section.classList.toggle("displayNone");
 }
 
 // ==== Data write to blockchain ====
