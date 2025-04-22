@@ -15,6 +15,7 @@
   --color-gold:           #ffd700;
   --color-pending-text:   orange;
   --color-delete:         red;
+  --color-limegreen:      limegreen;
   --font-main:            Segoe UI, Tahoma, Roboto, Geneva, Verdana, sans-serif;
 }
 
@@ -50,7 +51,7 @@ a:hover {
 header {
   width: 100%;
   position: fixed;
-  z-index: 9999;
+  z-index: 9990;
   top: 0;
   background: var(--color-bg);
 }
@@ -1033,4 +1034,40 @@ a.btn-custom.maxwidth {
   flex: 1;
   min-width: 300px;
   max-width: 600px;
+}
+
+#alertModal .modal-content {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+#alertModal.success .modal-content h3 {
+  color: var(--color-limegreen);
+}
+#alertModal.error .modal-content h3 {
+  color: var(--color-delete);
+}
+#alertModal.warning .modal-content h3 {
+  color: var(--color-pending-text);
+}
+#alertModal.info .modal-content h3 {
+  color: var(--color-accent);
+}
+
+#confirmModal .modal-content h3 {
+  color: var(--color-gold);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6); /* darker background */
+  z-index: 9998; /* just below modal */
+  backdrop-filter: blur(2px);
+  transition: opacity 0.2s ease;
+}
+
+.modal-overlay.hidden {
+  display: none;
 }

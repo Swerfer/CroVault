@@ -272,8 +272,8 @@ function formatTimestamp(timestamp) {
 
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text)
-    .then(() => alert("Copied to clipboard"))
-    .catch(err => console.error("Failed to copy text:", err));
+    .then(() => showAlert("Copied to clipboard", "success"))
+    .catch(() => {});
 }
 
 function showSpinner(text = "Saving to blockchain...") {
@@ -328,9 +328,8 @@ async function fetchVaultCount() {
       const count = data.result.length;
       document.getElementById("activeVaults").textContent = "Number of active vaults: " + count;
     }
-  } catch (err) {
-    console.error("Failed to fetch vault count:", err);
-    document.getElementById("activeVaults").textContent = "Error";
+  } catch {
+    document.getElementById("activeVaults").textContent = "";
   }
 }
 
@@ -364,9 +363,7 @@ async function fetchAndCacheCosts() {
       priceDisplay.innerHTML = costText;
     }
 
-  } catch (e) {
-    console.error("Error fetching costs:", e.message);
-  }
+  } catch {}
 }
 
 async function getVaultCreationCost() {
@@ -422,6 +419,74 @@ function toggleVaultSection(sectionId) {
   if (!section) return;
 
   section.classList.toggle("displayNone");
+}
+
+function showAlert(message, type = "info", onClose = null) {
+  document.getElementById("modalOverlay")?.classList.remove("hidden");
+  const modal = document.getElementById("alertModal");
+  const title = document.getElementById("alertModalTitle");
+  const text = document.getElementById("alertModalText");
+  const closeBtn = document.getElementById("alertModalCloseBtn");
+
+  // Reset classes
+  modal.className = "modal";
+  modal.classList.add(type); // e.g. "success", "warning"
+
+  // Set title and icon
+  const iconMap = {
+    info: "fas fa-info-circle",
+    success: "fas fa-check-circle",
+    warning: "fas fa-exclamation-triangle",
+    error: "fas fa-times-circle"
+  };
+  const iconClass = iconMap[type] || iconMap.info;
+  title.innerHTML = `<i class="${iconClass}"></i> ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+
+  // Set message
+  text.innerHTML = message;
+  modal.classList.remove("hidden");
+
+  function closeHandler() {
+    modal.classList.add("hidden");
+    document.getElementById("modalOverlay")?.classList.add("hidden");
+    closeBtn.removeEventListener("click", closeHandler);
+    if (onClose) onClose();
+  }
+
+  closeBtn.addEventListener("click", closeHandler);
+}
+
+function showConfirm(message, onConfirm, onCancel = null) {
+  document.getElementById("modalOverlay")?.classList.remove("hidden");
+  const modal = document.getElementById("confirmModal");
+  const title = document.getElementById("confirmModalTitle");
+  const text = document.getElementById("confirmModalText");
+  const yesBtn = document.getElementById("confirmModalYesBtn");
+  const noBtn = document.getElementById("confirmModalNoBtn");
+
+  text.innerHTML = message;
+  title.innerHTML = `<i class="fas fa-question-circle"></i> Confirm`;
+  modal.classList.remove("hidden");
+
+  function cleanup() {
+    modal.classList.add("hidden");
+    document.getElementById("modalOverlay")?.classList.add("hidden");
+    yesBtn.removeEventListener("click", yesHandler);
+    noBtn.removeEventListener("click", noHandler);
+  }
+
+  function yesHandler() {
+    cleanup();
+    if (onConfirm) onConfirm();
+  }
+
+  function noHandler() {
+    cleanup();
+    if (onCancel) onCancel();
+  }
+
+  yesBtn.addEventListener("click", yesHandler);
+  noBtn.addEventListener("click", noHandler);
 }
 
 // ==== Encryption / Decryption ====
@@ -536,9 +601,15 @@ function closeOtherForms(excludeSection) {
   forms.forEach(({ section, form, hasData, clear }) => {
     const formElement = document.getElementById(form);
     if (section !== excludeSection && !formElement.classList.contains("slide-hidden")) {
-      if (hasData() && !confirm("You have unsaved data, discard?")) return;
-      formElement.classList.add("slide-hidden");
-      clear();
+      if (hasData()) {
+        showConfirm("You have unsaved data, discard?", () => {
+          formElement.classList.add("slide-hidden");
+          clear();
+        });
+      } else {
+        formElement.classList.add("slide-hidden");
+        clear();
+      }      
     }
   });
 }
@@ -553,9 +624,7 @@ async function updateBalanceDisplay() {
     if (balanceEl) {
       balanceEl.textContent = `Balance: ${parseFloat(balanceInEth).toFixed(2)} CRO`;
     }
-  } catch (err) {
-    console.error("Failed to fetch wallet balance:", err);
-  }
+  } catch {}
 }
 
 // ==== Connect wallet flow ====
@@ -571,11 +640,9 @@ async function connectWallet() {
     const instance = await retryWeb3ConnectWithTimeout(10, 1000); // 10 tries max, 1s timeout each
     if (!instance) {
       throw new Error("Wallet connection failed after multiple timed-out attempts");
-      return;
     }
     await afterWalletConnect(instance);
   } catch (err) {
-    console.error("Wallet connect error:", err);
     connectBtnText.textContent = "Connect Wallet";
   } finally {
     walletLoader.classList.remove("visibleInline");
@@ -636,12 +703,8 @@ async function afterWalletConnect(instance) {
             blockExplorerUrls: [cronoScanUrl]
           }],
         });
-      } catch (addError) {
-        console.error("Failed to add Cronos chain:", addError);
-      }
-    } else {
-      console.error("Failed to switch to Cronos chain:", switchError);
-    }
+      } catch {}
+    } 
   }
   updateBalanceDisplay();
 }
@@ -684,8 +747,7 @@ async function hideOrShowCreateVault() {
       }
       
       
-  } catch (err) {
-    console.error("Vault check failed:", err);
+  } catch {
     createVaultSection.classList.add("hidden"); // fallback: hide
   }
 }
@@ -724,7 +786,6 @@ async function unlockAndLoadAllSections() {
 
 async function loadAllSections() {
   if (!sessionPassword) {
-    console.warn("Skipping loadAllSections: sessionPassword not set");
     return;
   }
 
@@ -737,6 +798,7 @@ async function loadAllSections() {
 }
 
 async function deriveWalletKey() {
+  const retryBtn = document.getElementById("retrySignBtn");
   if (walletDerivedKey) return; // Already derived
   try {
     const signer = provider.getSigner();
@@ -744,9 +806,8 @@ async function deriveWalletKey() {
     const signature = await signer.signMessage(message);
     const rawKey = await crypto.subtle.digest("SHA-256", strToUint8(signature));
     walletDerivedKey = new Uint8Array(rawKey);
+    if (retryBtn) retryBtn.classList.add("displayNone");
   } catch (err) {
-    console.error("Signature cancelled or failed:", err);
-    const retryBtn = document.getElementById("retrySignBtn");
     if (retryBtn) retryBtn.classList.remove("displayNone");
     throw err; // rethrow to let caller know
   }  
@@ -771,7 +832,7 @@ function showUnlockModal(onConfirm) {
 
   confirmBtn.onclick = () => {
     const pw = passInput.value;
-    if (!pw || pw.length < 12) return alert("Password too short");
+    if (!pw || pw.length < 12) return showAlert("Password too short", "warning");
   
     modal.classList.add("hidden");
     document.removeEventListener("keydown", handleKey);
@@ -790,7 +851,6 @@ function showUnlockModal(onConfirm) {
 
   document.addEventListener("keydown", handleKey);
 }
-
 
 // ==== Create new vault ====
 
@@ -822,13 +882,12 @@ async function createNewVault() {
         const vaultEvent = receipt.events.find(e => e.event === "VaultCreated");
         const deployedAddress = vaultEvent.args.vault;
         deployResult.textContent = "Vault deployed at: " + deployedAddress;
-        alert("Vault deployed at: " + deployedAddress);
+        showAlert("Vault deployed at: " + deployedAddress, "success");
       } catch {}
       hideSpinner();
       hideOrShowCreateVault();
 
   } catch (err) {
-    console.error(err);
     deployResult.textContent = "Error: " + err.message;
   } finally {
     deployLoader.classList.remove("visibleInline");
@@ -852,11 +911,9 @@ function showPasswordModal(onConfirm) {
   passInput.focus();
 
   const strengthText = document.getElementById("invalidPasswordStrength");
-  console.log("1 -" + strengthText);
   function validateInputs() {
     const p1 = passInput.value;
     const p2 = passConfirm.value;
-    console.log("2 -" + strengthText);
     if (!p1 || p1.length < 12) {
       strengthText.textContent = "Password must be at least 12 characters.";
       confirmBtn.disabled = true;
@@ -989,8 +1046,7 @@ async function loadAndShowCredentials(deleted = false) {
 
   try {
     creds = await vault.readCredentials();
-  } catch (err) {
-    console.error("Error reading credentials:", err);
+  } catch {
     return;
   }
 
@@ -1011,6 +1067,7 @@ async function loadAndShowCredentials(deleted = false) {
         username: (await decryptWithPassword(sessionPassword, JSON.parse(cred.username))).username,
         password: (await decryptWithPassword(sessionPassword, JSON.parse(cred.password))).password,
         remarks: (await decryptWithPassword(sessionPassword, JSON.parse(cred.remarks))).remarks,
+        timestamp: cred.timestamp,
       };
     } catch (e) {
       showWrongPasswordModal();
@@ -1032,8 +1089,7 @@ async function loadAndShowNotes() {
 
   try {
     notes = await vault.readNote();
-  } catch (err) {
-    console.error("Error reading notes:", err);
+  } catch {
     return;
   }
 
@@ -1051,6 +1107,7 @@ async function loadAndShowNotes() {
         id: note.id,
         name: (await decryptWithPassword(sessionPassword, JSON.parse(note.name))).name,
         note: (await decryptWithPassword(sessionPassword, JSON.parse(note.note))).note,
+        timestamp: note.timestamp,
       };
     } catch (e) {
       showWrongPasswordModal();
@@ -1072,8 +1129,7 @@ async function loadAndShowWallets() {
 
   try {
     wallets = await vault.readWalletAddress();
-  } catch (err) {
-    console.error("Error reading wallet addresses:", err);
+  } catch {
     return;
   }
 
@@ -1095,6 +1151,7 @@ async function loadAndShowWallets() {
         privateKey: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.privateKey))).privateKey,
         seedPhrase: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.seedPhrase))).seedPhrase,
         remarks: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.remarks))).remarks,
+        timestamp: wallet.timestamp,
       };
     } catch (e) {
       showWrongPasswordModal();
@@ -1116,9 +1173,8 @@ async function loadAndShowTotps() {
 
   try {
     totps = await vault.readTOTP();
-  } catch (err) {
-    console.error("Error reading TOTP:", err);
-    return;
+  } catch {
+      return;
   }
 
   const container = document.getElementById("totpReadItems");
@@ -1135,7 +1191,8 @@ async function loadAndShowTotps() {
         name: (await decryptWithPassword(sessionPassword, JSON.parse(totp.name))).name,
         key: (await decryptWithPassword(sessionPassword, JSON.parse(totp.key))).key,
         algorithm: (await decryptWithPassword(sessionPassword, JSON.parse(totp.algorithm))).algorithm,
-        interval: totp.interval
+        interval: totp.interval,
+        timestamp: totp.timestamp,
       };
     } catch (e) {
       showWrongPasswordModal();
@@ -1159,7 +1216,7 @@ async function estimateSaveAllFees() {
     return; // important: stop the first run here
   }
   if (!sessionPassword || !userVault || !userVault.startsWith("0x")) {
-    alert("Vault is not unlocked or connected.");
+    showAlert("Vault is not unlocked or connected.", "info");
     return;
   }
 
@@ -1251,10 +1308,9 @@ async function estimateSaveAllFees() {
     }
     summary += `Total estimated fee: ~${parseFloat(totalFee).toFixed(2)} CRO`;
 
-    alert(summary);
+    showAlert(summary, "info");
   } catch (err) {
-    console.error("Gas estimation failed:", err);
-    alert("Failed to estimate gas: " + err.message);
+    showAlert("Failed to estimate gas: " + err.message, "error");
   }
 }
 
@@ -1294,10 +1350,9 @@ async function saveAllPendingItems() {
       
         await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
         newVault = false;
-      } catch (err) {
+      } catch {
         credentialsFailed = true;
-        console.error("Transaction failed or timed out:", err);
-        alert("Transaction timed out or failed. Please try again.");
+        showAlert("Transaction timed out or failed. Please try again.", "error");
         hideSpinner();
       }
      
@@ -1321,10 +1376,9 @@ async function saveAllPendingItems() {
       
         await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
         newVault = false;
-      } catch (err) {
+      } catch {
         notesFailed = true;
-        console.error("Transaction failed or timed out:", err);
-        alert("Transaction timed out or failed. Please try again.");
+        showAlert("Transaction timed out or failed. Please try again.", "error");
         hideSpinner();
       }      
     }
@@ -1351,10 +1405,9 @@ async function saveAllPendingItems() {
       
         await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
         newVault = false;
-      } catch (err) {
+      } catch {
         walletsFailed = true;
-        console.error("Transaction failed or timed out:", err);
-        alert("Transaction timed out or failed. Please try again.");
+        showAlert("Transaction timed out or failed. Please try again.", "error");
         hideSpinner();
       }
       
@@ -1380,10 +1433,9 @@ async function saveAllPendingItems() {
       
         await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
         newVault = false;
-      } catch (err) {
+      } catch {
         totpsFailed = true;
-        console.error("Transaction failed or timed out:", err);
-        alert("Transaction timed out or failed. Please try again.");
+        showAlert("Transaction timed out or failed. Please try again.", "error");
         hideSpinner();
       }
       
@@ -1419,7 +1471,7 @@ async function saveAllPendingItems() {
     if (failureMessages.length) {
       alertMessage += "\n\nHowever, the following failed:\n" + failureMessages.join("\n");
     }
-    alert(alertMessage);
+    showAlert(alertMessage, "info");
 
     // Immediately update UI to remove yellow pending items before redraw
     if (!credentialsFailed) updateCredentialPendingUI();
@@ -1436,8 +1488,7 @@ async function saveAllPendingItems() {
     if (!totpsFailed)       await loadAndShowTotps();
 
   } catch (err) {
-    console.error("Error saving pending data:", err);
-    alert("Saving failed: " + err.message);
+    showAlert("Saving failed: " + err.message, "error");
   } finally {
     hideSpinner();
   }
@@ -1457,16 +1508,15 @@ async function deleteCredentials(ids = []) {
     const tx = await vault.deleteCredentials(ids);
     await tx.wait();
 
-    alert("Credential(s) deleted!");
+    showAlert("Credential(s) deleted!", "success");
 
     updateCredentialPendingUI();           // ✅ Refresh pending display (optional but safe)
     updateCredentialCountDisplay();        // ✅ <-- Add this RIGHT HERE
     updateGlobalSaveButtonVisibility();    // ✅ Optional: ensure Save All button hides if needed
     await loadAndShowCredentials(true);    // ✅ Reload read items
 
-  } catch (e) {
-    console.error("Error deleting credentials:", e);
-    alert("Failed to delete credential(s).");
+  } catch {
+    showAlert("Failed to delete credential(s).", "error");
   } finally {
     hideSpinner();
   }
@@ -1484,16 +1534,15 @@ async function deleteNotes(ids = []) {
     const tx = await vault.deleteNotes(ids);
     await tx.wait();
 
-    alert("Note(s) deleted!");
+    showAlert("Note(s) deleted!", "success");
 
     updateNotePendingUI();
     updateNoteCountDisplay();
     updateGlobalSaveButtonVisibility();
     await loadAndShowNotes();
 
-  } catch (e) {
-    console.error("Error deleting notes:", e);
-    alert("Failed to delete note(s).");
+  } catch {
+    showAlert("Failed to delete note(s).", "error");
   } finally {
     hideSpinner();
   }
@@ -1511,16 +1560,15 @@ async function deleteWallets(ids = []) {
     const tx = await vault.deleteWalletAddresses(ids);
     await tx.wait();
 
-    alert("Wallet(s) deleted!");
+    showAlert("Wallet(s) deleted!", "success");
 
     updateWalletPendingUI();
     updateWalletCountDisplay();
     updateGlobalSaveButtonVisibility();
     await loadAndShowWallets();
 
-  } catch (e) {
-    console.error("Error deleting wallet address(es):", e);
-    alert("Failed to delete wallet address(es).");
+  } catch {
+    showAlert("Failed to delete wallet address(es).", "error");
   } finally {
     hideSpinner();
   }
@@ -1538,16 +1586,15 @@ async function deleteTotps(ids = []) {
     const tx = await vault.deleteTOTP(ids);
     await tx.wait();
 
-    alert("TOTP secret(s) deleted!");
+    showAlert("TOTP secret(s) deleted!", "success");
 
     updateTotpPendingUI();
     updateTotpCountDisplay();
     updateGlobalSaveButtonVisibility();
     await loadAndShowTotps();
 
-  } catch (e) {
-    console.error("Error deleting TOTP:", e);
-    alert("Failed to delete TOTP.");
+  } catch {
+    showAlert("Failed to delete TOTP.", "error");
   } finally {
     hideSpinner();
   }
@@ -1574,14 +1621,15 @@ function editPendingCredential(index) {
 }
 
 function deletePendingCredential(index) {
-  if (!confirm("Are you sure you want to discard this pending credential?")) return;
-  const removed = pendingCredentials.splice(index, 1)[0];
-
-  if (removed._original && removed.id === removed._original.id) {
-    renderCredentialItem(removed._original);
-  }  
-
-  updateCredentialPendingUI();
+  showConfirm("Are you sure you want to discard this pending credential?", () => {
+    const removed = pendingCredentials.splice(index, 1)[0];
+  
+    if (removed._original && removed.id === removed._original.id) {
+      renderCredentialItem(removed._original);
+    }
+  
+    updateCredentialPendingUI();
+  });
 }
 
 function editPendingNote(index) {
@@ -1601,14 +1649,15 @@ function editPendingNote(index) {
 }
 
 function deletePendingNote(index) {
-  if (!confirm("Are you sure you want to discard this pending note?")) return;
-  const removed = pendingNotes.splice(index, 1)[0];
-
-  if (removed._original && removed.id === removed._original.id) {
-    renderNoteItem(removed._original);
-  }
-
-  updateNotePendingUI();
+  showConfirmModal("Are you sure you want to discard this pending note?", () => {
+    const removed = pendingNotes.splice(index, 1)[0];
+  
+    if (removed._original && removed.id === removed._original.id) {
+      renderNoteItem(removed._original);
+    }
+  
+    updateNotePendingUI();
+  }); 
 }
 
 function editPendingWallet(index) {
@@ -1630,14 +1679,15 @@ function editPendingWallet(index) {
 }
 
 function deletePendingWallet(index) {
-  if (!confirm("Are you sure you want to discard this pending wallet?")) return;
-
-  const removed = pendingWallets.splice(index, 1)[0];
-  if (removed._original && removed.walletAddress === removed._original.walletAddress) {
-    renderWalletItem(removed._original);
-  }
-
-  updateWalletPendingUI();
+  showConfirm("Are you sure you want to discard this pending wallet?", () => {
+    const removed = pendingWallets.splice(index, 1)[0];
+  
+    if (removed._original && removed.id === removed._original.id) {
+      renderWalletItem(removed._original);
+    }
+  
+    updateWalletPendingUI();
+  }); 
 }
 
 function editPendingTotp(index) {
@@ -1663,9 +1713,10 @@ function editPendingTotp(index) {
 }
 
 function deletePendingTotp(index) {
-  if (!confirm("Are you sure you want to discard this pending TOTP secret?")) return;
-  pendingTotps.splice(index, 1);
-  updateTotpPendingUI();
+  showConfirm("Are you sure you want to discard this pending TOTP secret?", () => {
+    pendingTotps.splice(index, 1);
+    updateTotpPendingUI();
+  });  
 }
 
 function updateCredentialPendingUI() {
@@ -2016,11 +2067,11 @@ function renderCredentialItem(cred, shouldUpdateUI = true) {
   deleteBtn.className = "icon-btn danger";
   deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
   deleteBtn.title = "Delete";
-  deleteBtn.onclick = async () => {
-    if (confirm(`Delete credential "${cred.name}"?`)) {
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete credential "${cred.name}"?`, async () => {
       await deleteCredentials([cred.id]);
-    }
-  };
+    });
+  }; 
 
   actionBar.appendChild(editBtn);
   actionBar.appendChild(deleteBtn);
@@ -2089,10 +2140,10 @@ function renderNoteItem(note, shouldUpdateUI = true) {
   deleteBtn.className = "icon-btn danger";
   deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
   deleteBtn.title = "Delete";
-  deleteBtn.onclick = async () => {
-    if (confirm(`Delete note "${note.name}"?`)) {
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete note "${note.name}"?`, async () => {
       await deleteNotes([note.id]);
-    }
+    });
   };
 
   actionBar.appendChild(editBtn);
@@ -2175,10 +2226,10 @@ function renderWalletItem(wallet, shouldUpdateUI = true) {
   deleteBtn.className = "icon-btn danger";
   deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
   deleteBtn.title = "Delete";
-  deleteBtn.onclick = async () => {
-    if (confirm(`Delete wallet "${wallet.name}"?`)) {
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete wallet "${wallet.name}"?`, async () => {
       await deleteWallets([wallet.id]);
-    }
+    });
   };
 
   actionBar.appendChild(editBtn);
@@ -2261,10 +2312,10 @@ function renderTotpItem(totp, shouldUpdateUI = true) {
   deleteBtn.className = "icon-btn danger";
   deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
   deleteBtn.title = "Delete";
-  deleteBtn.onclick = async () => {
-    if (confirm(`Delete TOTP secret "${totp.name}"?`)) {
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete TOTP "${totp.name}"?`, async () => {
       await deleteTotps([totp.id]);
-    }
+    });
   };
 
   actionBar.appendChild(editBtn);
@@ -2324,7 +2375,7 @@ function handleIdleTimeout(timeout = true) {
     // 🔥 Force rendering first, then alert
     requestAnimationFrame(() => {
       setTimeout(() => {
-        alert("You were inactive for 2½ minutes. Vault access has been reset for your security.");
+        showAlert("You were inactive for 2½ minutes. Vault access has been reset for your security.", "info");
       }, 0);
     });
   }
@@ -2357,7 +2408,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const Web3ModalConstructor = window.Web3Modal && (window.Web3Modal.default || window.Web3Modal);
   if (!Web3ModalConstructor) {
-    console.error("Web3Modal library not found!");
     return;
   }
   web3Modal = new Web3ModalConstructor({
@@ -2399,9 +2449,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const retryBtn = document.getElementById("retrySignBtn");
         if (retryBtn) retryBtn.classList.add("displayNone");
         unlockAndLoadAllSections();
-    } catch (err) {
-      console.warn("Signing failed or cancelled:", err);
-    }
+    } catch {}
   }); 
 
   // Vault section header toggles
@@ -2447,12 +2495,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
   
           if (hasUnsaved) {
-            if (!confirm(`Discard unsaved ${title}?`)) {
-              return; // User cancelled → keep section and form open
-            }
-            form.classList.add("slide-hidden");
-            form.classList.add("displayNone");
-            clearFunc?.();
+            showConfirm(`Discard unsaved ${title}?`, () => {
+              form.classList.add("slide-hidden");
+              form.classList.add("displayNone");
+              clearFunc?.();
+            });
           } else {
             // Form is open but no data → just hide
             form.classList.add("slide-hidden");
@@ -2489,18 +2536,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? "Cancel editing this credential?"
         : "Cancel adding this credential?";
   
-      if (confirm(message)) {
-        const form = document.getElementById("newCredentialForm");
-        form.classList.add("slide-hidden");
-        form.classList.add("displayNone"); // ✅ hide completely
-        document.getElementById("credentialFormTitle").innerHTML = '<i class="fas fa-lock"></i> New Credential';
-        clearCredentialForm();
-  
-        if (editingOriginalCredential) {
-          renderCredentialItem(editingOriginalCredential);
-          editingOriginalCredential = null;
-        }
-      }
+        showConfirm(message, () => {
+          const form = document.getElementById("newCredentialForm");
+          form.classList.add("slide-hidden");
+          form.classList.add("displayNone"); // ✅ hide completely
+          document.getElementById("credentialFormTitle").innerHTML = '<i class="fas fa-lock"></i> New Credential';
+          clearCredentialForm();
+        
+          if (editingOriginalCredential) {
+            renderCredentialItem(editingOriginalCredential);
+            editingOriginalCredential = null;
+          }
+        });        
     });
   }
   
@@ -2512,7 +2559,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const remarks = document.getElementById("credRemarks").value.trim();
 
       if (!name || !username || !password) {
-        alert("Name, username, and password are required.");
+        showAlert("Name, username, and password are required.", "warning");
         return;
       }
 
@@ -2556,18 +2603,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? "Cancel editing this note?"
         : "Cancel adding this note?";
   
-      if (confirm(message)) {
-        const form = document.getElementById("newNoteForm");
-        form.classList.add("slide-hidden");
-        form.classList.add("displayNone"); // ✅ hide completely
-        document.getElementById("noteFormTitle").innerHTML = '<i class="fas fa-note"></i> New Note';
-        clearNoteForm();
-  
-        if (editingOriginalNote) {
-          renderNoteItem(editingOriginalNote);
-          editingOriginalNote = null;
-        }
-      }
+        showConfirm(message, () => {
+          const form = document.getElementById("newNoteForm");
+          form.classList.add("slide-hidden");
+          form.classList.add("displayNone"); // ✅ hide completely
+          document.getElementById("noteFormTitle").innerHTML = '<i class="fas fa-note"></i> New Note';
+          clearNoteForm();
+        
+          if (editingOriginalNote) {
+            renderNoteItem(editingOriginalNote);
+            editingOriginalNote = null;
+          }
+        });        
     });
   }
   
@@ -2577,7 +2624,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const content = document.getElementById("noteContent").value.trim();
   
       if (!name || !content) {
-        alert("Both name and content are required.");
+        showAlert("Both name and content are required.", "warning");
         return;
       }
   
@@ -2622,18 +2669,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? "Cancel editing this wallet?"
         : "Cancel adding this wallet?";
   
-      if (confirm(message)) {
-        const form = document.getElementById("newWalletForm");
-        form.classList.add("slide-hidden");
-        form.classList.add("displayNone"); // ✅ hide completely
-        document.getElementById("walletFormTitle").innerHTML = '<i class="fas fa-wallet"></i> New Wallet';
-        clearWalletForm();
-  
-        if (editingOriginalWallet) {
-          renderWalletItem(editingOriginalWallet);
-          editingOriginalWallet = null;
-        }
-      }
+        showConfirm(message, () => {
+          const form = document.getElementById("newWalletForm");
+          form.classList.add("slide-hidden");
+          form.classList.add("displayNone"); // ✅ hide completely
+          document.getElementById("walletFormTitle").innerHTML = '<i class="fas fa-wallet"></i> New Wallet';
+          clearWalletForm();
+        
+          if (editingOriginalWallet) {
+            renderWalletItem(editingOriginalWallet);
+            editingOriginalWallet = null;
+          }
+        });        
     });
   }
   
@@ -2646,7 +2693,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const remarks = document.getElementById("walletRemarks").value.trim();
   
       if (!name || !walletAddress) {
-        alert("Name and wallet address are required.");
+        showAlert("Name and wallet address are required.", "warning");
         return;
       }
   
@@ -2695,21 +2742,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? "Cancel editing this TOTP?"
         : "Cancel adding this TOTP?";
     
-      if (confirm(message)) {
-        const form = document.getElementById("newTotpForm");
-        form.classList.add("slide-hidden");
-        form.classList.add("displayNone"); // ✅ hide completely
-
-        document.getElementById("totpFormTitle").innerHTML = '<i class="fas fa-key"></i> New TOTP Secret';
-        clearTotpForm();
-    
-        if (editingOriginalTotp) {
-          renderTotpItem(editingOriginalTotp);
-          editingOriginalTotp = null;
-        }
-      }
-    });
-    
+        showConfirm(message, () => {
+          const form = document.getElementById("newTotpForm");
+          form.classList.add("slide-hidden");
+          form.classList.add("displayNone"); // ✅ hide completely
+        
+          document.getElementById("totpFormTitle").innerHTML = '<i class="fas fa-key"></i> New TOTP Secret';
+          clearTotpForm();
+        
+          if (editingOriginalTotp) {
+            renderTotpItem(editingOriginalTotp);
+            editingOriginalTotp = null;
+          }
+        });        
+    });  
   }
 
   if (saveTotpBtn) {
@@ -2720,7 +2766,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const interval = parseInt(document.getElementById("totpInterval").value.trim(), 10);
     
       if (!name || !key || !algorithm || !interval || interval <= 0) {
-        alert("All fields are required and interval must be positive.");
+        showAlert("All fields are required and interval must be positive.", "warning");
         return;
       }
     

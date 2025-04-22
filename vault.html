@@ -305,6 +305,7 @@
       </div>
     </div>
 
+    <!-- Cost information modal -->
     <div id="costInfoModal" class="modal hidden">
       <div class="modal-content">
         <h3><i class="fas fa-coins"></i> CroVault Fees</h3>
@@ -318,20 +319,43 @@
       </div>
     </div>
 
-  </div>
-  
-  <div id="spinnerOverlay" class="hidden"> 
-    <div class="spinner-container">
-      <button class="spinner-close" onclick="hideSpinner()"><i class="fas fa-xmark"></i></button>
-      <div class="loader"></div>
-      <div class="spinner-text">Saving to blockchain...</div>
+    <!-- Alert Modal -->
+    <div id="alertModal" class="modal hidden">
+      <div class="modal-content">
+        <h3 id="alertModalTitle"><i class="fas fa-info-circle"></i> Alert</h3>
+        <p id="alertModalText"></p>
+        <div class="buttonDiv">
+          <button id="alertModalCloseBtn" class="btn-custom green"><i class="fas fa-check"></i> OK</button>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <div id="stickySaveBar" class="hidden">
-    <button id="stickySaveBtn" class="btn-custom small"><i class="fas fa-save"></i> Save All</button>
-    <button id="stickyEstimateBtn" class="btn-custom small"><i class="fas fa-calculator"></i> Estimate</button>
-  </div>
   
+    <!-- Confirm Modal -->
+    <div id="confirmModal" class="modal hidden">
+      <div class="modal-content">
+        <h3 id="confirmModalTitle"><i class="fas fa-question-circle"></i> Confirm</h3>
+        <p id="confirmModalText"></p>
+        <div class="buttonDiv">
+          <button id="confirmModalYesBtn" class="btn-custom green"><i class="fas fa-check"></i> Yes</button>
+          <button id="confirmModalNoBtn" class="btn-custom red"><i class="fas fa-times"></i> No</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay hidden"></div>
+
+    <div id="spinnerOverlay" class="hidden"> 
+      <div class="spinner-container">
+        <button class="spinner-close" onclick="hideSpinner()"><i class="fas fa-xmark"></i></button>
+        <div class="loader"></div>
+        <div class="spinner-text">Saving to blockchain...</div>
+      </div>
+    </div>
+
+    <div id="stickySaveBar" class="hidden">
+      <button id="stickySaveBtn" class="btn-custom small"><i class="fas fa-save"></i> Save All</button>
+      <button id="stickyEstimateBtn" class="btn-custom small"><i class="fas fa-calculator"></i> Estimate</button>
+    </div>
+
 </body>
 </html>
