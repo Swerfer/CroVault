@@ -81,7 +81,7 @@
           <span id="hamburger-icon">☰</span>
         </button>
 
-        <!-- Overlay background (for dim effect) -->
+        <!-- Overlay background (for dim effect) --> 
         <div id="overlay" onclick="closeMenu()"></div>
     
         <!-- Combined nav menu -->
@@ -198,10 +198,10 @@
           <h3><i class="fas fa-coins"></i> CroVault Costs</h3>
           <p>
             CroVault is fully decentralized — no subscriptions, no user accounts.<br>
-            You only pay small blockchain fees when creating your vault or saving data.
+            You only pay small (blockchain) fees when creating your vault or saving data.
           </p>
           <p>
-            Want to see the exact fees for vault creation or data updates?
+            Want to see the exact fees for data updates (vault creation is free)?
           </p>
           <div class="text-center">
             <button class="btn-custom maxwidth" onclick="showCostModal()">
@@ -223,7 +223,10 @@
             <ul>
               <li><a href="https://cronoscan.com/address/0x50E2c7201d5714e018a33203FbD92979BC51eee4" rel="noopener" target="_blank">Cost Manager</a></li>
               <li><a href="https://cronoscan.com/address/0x3a2649A49c8Bb5A9d0500bF0e43af27B706D084F" rel="noopener" target="_blank">Vault Factory</a></li>
-              <li><a href="https://cronoscan.com/address/0x3D47B247c139F55F5e01371d145d65d406c54A55" rel="noopener" target="_blank">Vault Contract</a></li>
+              <li><a href="https://cronoscan.com/address/0x3D47B247c139F55F5e01371d145d65d406c54A55" rel="noopener" target="_blank">Vault Contract 1</a></li>
+              <li><a href="https://cronoscan.com/address/0x15Dc7cb6641cddcF66C28Dfb86cdEffdBa3Bf0E8" rel="noopener" target="_blank">Vault Contract 2</a></li>
+              <li><a href="https://cronoscan.com/address/0x44f46316616e6db886269Aedf495CB723CCf3dE6" rel="noopener" target="_blank">Vault Contract 3</a></li>
+              <li><a href="https://cronoscan.com/address/0x39fCf13A75B3Cb2957620F3034fed7C2E6731e6a" rel="noopener" target="_blank">Vault Contract 4</a></li>
             </ul>
           </ul>
         </div>
@@ -421,7 +424,7 @@
     <div id="costInfoModal" class="modal hidden">
       <div class="modal-content">
         <h3><i class="fas fa-coins"></i> CroVault Fees</h3>
-        <p><strong>Vault Creation Fee:</strong> <span id="feeCreate">…</span> CRO</p>
+        <p><strong>Vault Creation Fee: Free, no extra costs</p>
         <p><strong>Data Save/Update Fee:</strong> <span id="feeUpsert">…</span> CRO</p>
         <div class="buttonDiv">
           <button onclick="document.getElementById('costInfoModal').classList.add('hidden')" class="btn-custom green">

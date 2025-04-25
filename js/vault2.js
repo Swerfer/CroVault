@@ -38,7 +38,38 @@ const costManagerAbi = [
   },
 ];
 
-const vaultAbi = [
+const factoryAbi = [
+  {
+    inputs: [],
+    name: "createVaultsForAllImplementations",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "user", type: "address" }
+    ],
+    name: "getVaultsByOwner",
+    outputs: [
+      { internalType: "address[]", name: "", type: "address[]" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  internalType: "address", name: "vaultOwner",         type: "address"  },
+      { indexed: true,  internalType: "address", name: "vault",              type: "address"  },
+      { indexed: false, internalType: "uint256", name: "implementationIndex", type: "uint256" }
+    ],
+    name: "VaultCreated",
+    type: "event"
+  }
+];
+
+const vault1Abi = [
   {
     inputs: [{
       components: [
@@ -216,34 +247,418 @@ const vaultAbi = [
   }  
 ];
 
-const factoryAbi = [
+const vault2Abi = [
   {
-    inputs: [],
-    name: "createVaultsForAllImplementations",
+    inputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "pin", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" }
+      ],
+      internalType: "struct VaultContract2.PinUpsert[]",
+      name: "data",
+      type: "tuple[]"
+    }],
+    name: "upsertPins",
     outputs: [],
     stateMutability: "payable",
     type: "function"
   },
   {
-    inputs: [
-      { internalType: "address", name: "user", type: "address" }
-    ],
-    name: "getVaultsByOwner",
-    outputs: [
-      { internalType: "address[]", name: "", type: "address[]" }
-    ],
+    inputs: [],
+    name: "readPins",
+    outputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "pin", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" },
+        { internalType: "uint256", name: "timestamp", type: "uint256" }
+      ],
+      internalType: "struct VaultContract2.Pin[]",
+      name: "",
+      type: "tuple[]"
+    }],
     stateMutability: "view",
     type: "function"
   },
   {
-    anonymous: false,
-    inputs: [
-      { indexed: true,  internalType: "address", name: "vaultOwner",         type: "address"  },
-      { indexed: true,  internalType: "address", name: "vault",              type: "address"  },
-      { indexed: false, internalType: "uint256", name: "implementationIndex", type: "uint256" }
-    ],
-    name: "VaultCreated",
-    type: "event"
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
+    name: "deletePins",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "iban", type: "string" },
+        { internalType: "string", name: "bic", type: "string" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" }
+      ],
+      internalType: "struct VaultContract2.BankAccountUpsert[]",
+      name: "data",
+      type: "tuple[]"
+    }],
+    name: "upsertBankAccounts",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "readBankAccounts",
+    outputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "iban", type: "string" },
+        { internalType: "string", name: "bic", type: "string" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" },
+        { internalType: "uint256", name: "timestamp", type: "uint256" }
+      ],
+      internalType: "struct VaultContract2.BankAccount[]",
+      name: "",
+      type: "tuple[]"
+    }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
+    name: "deleteBankAccounts",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "number", type: "string" },
+        { internalType: "string", name: "expiration", type: "string" },
+        { internalType: "string", name: "cvv", type: "string" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" }
+      ],
+      internalType: "struct VaultContract2.CreditCardUpsert[]",
+      name: "data",
+      type: "tuple[]"
+    }],
+    name: "upsertCreditCards",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "readCreditCards",
+    outputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "number", type: "string" },
+        { internalType: "string", name: "expiration", type: "string" },
+        { internalType: "string", name: "cvv", type: "string" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" },
+        { internalType: "uint256", name: "timestamp", type: "uint256" }
+      ],
+      internalType: "struct VaultContract2.CreditCard[]",
+      name: "",
+      type: "tuple[]"
+    }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
+    name: "deleteCreditCards",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  }
+];
+
+const vault3Abi = [
+  {
+    inputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "phone", type: "string" },
+        { internalType: "string", name: "email", type: "string" },
+        { internalType: "string", name: "relation", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" }
+      ],
+      internalType: "struct InsurancesUpsert[]",
+      name: "data",
+      type: "tuple[]"
+    }],
+    name: "upsertInsurances",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "readInsurances",
+    outputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "phone", type: "string" },
+        { internalType: "string", name: "email", type: "string" },
+        { internalType: "string", name: "relation", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" },
+        { internalType: "uint256", name: "timestamp", type: "uint256" }
+      ],
+      internalType: "struct Insurances[]",
+      name: "",
+      type: "tuple[]"
+    }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
+    name: "deleteInsurances",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "phone", type: "string" },
+        { internalType: "string", name: "email", type: "string" },
+        { internalType: "string", name: "relation", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" }
+      ],
+      internalType: "struct IdentitiesUpsert[]",
+      name: "data",
+      type: "tuple[]"
+    }],
+    name: "upsertIdentities",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "readIdentities",
+    outputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "phone", type: "string" },
+        { internalType: "string", name: "email", type: "string" },
+        { internalType: "string", name: "relation", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" },
+        { internalType: "uint256", name: "timestamp", type: "uint256" }
+      ],
+      internalType: "struct Identities[]",
+      name: "",
+      type: "tuple[]"
+    }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
+    name: "deleteIdentities",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "phone", type: "string" },
+        { internalType: "string", name: "email", type: "string" },
+        { internalType: "string", name: "relation", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" }
+      ],
+      internalType: "struct LegalDocumentsUpsert[]",
+      name: "data",
+      type: "tuple[]"
+    }],
+    name: "upsertLegalDocuments",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "readLegalDocuments",
+    outputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "phone", type: "string" },
+        { internalType: "string", name: "email", type: "string" },
+        { internalType: "string", name: "relation", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" },
+        { internalType: "uint256", name: "timestamp", type: "uint256" }
+      ],
+      internalType: "struct LegalDocuments[]",
+      name: "",
+      type: "tuple[]"
+    }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
+    name: "deleteLegalDocuments",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  }
+];
+
+const vault4Abi = [
+  {
+    inputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "amount", type: "string" },
+        { internalType: "string", name: "due", type: "string" },
+        { internalType: "string", name: "interval", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" }
+      ],
+      internalType: "struct AssetsUpsert[]",
+      name: "data",
+      type: "tuple[]"
+    }],
+    name: "upsertAssets",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "readAssets",
+    outputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "amount", type: "string" },
+        { internalType: "string", name: "due", type: "string" },
+        { internalType: "string", name: "interval", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" },
+        { internalType: "uint256", name: "timestamp", type: "uint256" }
+      ],
+      internalType: "struct Assets[]",
+      name: "",
+      type: "tuple[]"
+    }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
+    name: "deleteAssets",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "amount", type: "string" },
+        { internalType: "string", name: "due", type: "string" },
+        { internalType: "string", name: "interval", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" }
+      ],
+      internalType: "struct ContactsUpsert[]",
+      name: "data",
+      type: "tuple[]"
+    }],
+    name: "upsertContacts",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "readContacts",
+    outputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "amount", type: "string" },
+        { internalType: "string", name: "due", type: "string" },
+        { internalType: "string", name: "interval", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" },
+        { internalType: "uint256", name: "timestamp", type: "uint256" }
+      ],
+      internalType: "struct Contacts[]",
+      name: "",
+      type: "tuple[]"
+    }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
+    name: "deleteContacts",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "amount", type: "string" },
+        { internalType: "string", name: "due", type: "string" },
+        { internalType: "string", name: "interval", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" }
+      ],
+      internalType: "struct SubscriptionsUpsert[]",
+      name: "data",
+      type: "tuple[]"
+    }],
+    name: "upsertSubscriptions",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "readSubscriptions",
+    outputs: [{
+      components: [
+        { internalType: "uint256", name: "id", type: "uint256" },
+        { internalType: "string", name: "name", type: "string" },
+        { internalType: "string", name: "amount", type: "string" },
+        { internalType: "string", name: "due", type: "string" },
+        { internalType: "string", name: "interval", type: "string" },
+        { internalType: "string", name: "remarks", type: "string" },
+        { internalType: "uint256", name: "timestamp", type: "uint256" }
+      ],
+      internalType: "struct Subscriptions[]",
+      name: "",
+      type: "tuple[]"
+    }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "uint256[]", name: "ids", type: "uint256[]" }],
+    name: "deleteSubscriptions",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
   }
 ];
 
@@ -255,9 +670,11 @@ let web3Modal;
 let provider;       // ethers provider
 let signer;         // ethers signer
 let walletAddress;  // connected wallet
-let userVault = "";
 let sessionPassword = null;
 let walletDerivedKey = null;
+let userVaults = [];
+
+// ==== Vault 1 (Credentials, Notes, Wallets, TOTPs)
 let pendingCredentials = [];
 let pendingNotes = [];
 let pendingWallets = [];
@@ -266,6 +683,30 @@ let editingOriginalCredential = null;
 let editingOriginalNote = null;
 let editingOriginalWallet = null;
 let editingOriginalTotp = null;
+
+// === Vault 2 (PINs, Bank Accounts, Credit Cards)
+let pendingPins = [];
+let pendingBankAccounts = [];
+let pendingCreditCards = [];
+let editingOriginalPin = null;
+let editingOriginalBankAccount = null;
+let editingOriginalCreditCard = null;
+
+// === Vault 3 (Insurances, Identities, Legal Docs)
+let pendingInsurances = [];
+let pendingIdentities = [];
+let pendingLegalDocuments = [];
+let editingOriginalInsurance = null;
+let editingOriginalIdentity = null;
+let editingOriginalLegalDocument = null;
+
+// === Vault 4 (Assets, Contacts, Subscriptions)
+let pendingAssets = [];
+let pendingContacts = [];
+let pendingSubscriptions = [];
+let editingOriginalAsset = null;
+let editingOriginalContact = null;
+let editingOriginalSubscription = null;
 
 // ==== Utilities ====
 
@@ -321,6 +762,60 @@ function clearWalletForm() {
 
 function clearTotpForm() {
   ["totpName", "totpKey", "totpAlgorithm", "totpInterval"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+
+function clearPinForm() {
+  ["pinValue", "pinRemarks"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+
+function clearBankAccountForm() {
+  ["bankIban", "bankBic", "bankName", "bankRemarks"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+
+function clearCreditCardForm() {
+  ["cardNumber", "cardExpiration", "cardCVV", "cardName", "cardRemarks"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+
+function clearInsuranceForm() {
+  ["insuranceName", "insurancePhone", "insuranceEmail", "insuranceRelation", "insuranceRemarks"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+
+function clearIdentityForm() {
+  ["identityName", "identityPhone", "identityEmail", "identityRelation", "identityRemarks"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+
+function clearLegalDocumentForm() {
+  ["legalName", "legalPhone", "legalEmail", "legalRelation", "legalRemarks"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+
+function clearAssetForm() {
+  ["assetName", "assetAmount", "assetDue", "assetInterval", "assetRemarks"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+
+function clearContactForm() {
+  ["contactName", "contactAmount", "contactDue", "contactInterval", "contactRemarks"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+}
+
+function clearSubscriptionForm() {
+  ["subscriptionName", "subscriptionAmount", "subscriptionDue", "subscriptionInterval", "subscriptionRemarks"].forEach(id => {
     document.getElementById(id).value = "";
   });
 }
@@ -393,11 +888,12 @@ function showCostModal() {
   document.getElementById("costInfoModal").classList.remove("hidden");
 }
 
-function toggleVaultSection(sectionId) {
-  const section = document.getElementById(sectionId);
-  if (!section) return;
-
-  section.classList.toggle("displayNone");
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showAlert("Copied to clipboard!", "success");
+  }).catch(() => {
+    showAlert("Failed to copy.", "error");
+  });
 }
 
 function showAlert(message, type = "info", onClose = null) {
@@ -698,68 +1194,65 @@ async function hideOrShowCreateVault() {
 
   try {
     const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
-    const vaultAddress = await retryReadVaultMapping(factory, walletAddress);
-    vaultAddress == "0x0000000000000000000000000000000000000000" 
-      ? userAddress = null
-      : userVault = vaultAddress;
-      if (userVault && userVault.startsWith("0x")) {
-        createVaultSection.classList.add("hidden");
-      
-        // 1) Display the vault address, a copy icon, and a link icon
-        const vaultAddressEl = document.getElementById("vaultAddress");
-        vaultAddressEl.innerHTML = `
-          Vault address:
-          <span>${shortenAddress(userVault)}</span>
-          <a href="https://cronoscan.com/address/${userVault}"
-             target="_blank"
-             rel="noopener"
-             class="icon-btn"
-             title="View on Cronoscan"
-             style="margin-left: 6px;">
-             <i class="fas fa-external-link-alt"></i>
-          </a>
+    const vaultAddresses = await factory.getVaultsByOwner(walletAddress);
+    userVaults = vaultAddresses.filter(addr => addr && addr !== "0x0000000000000000000000000000000000000000");
+
+    if (userVaults.length === 4) {
+      document.getElementById("createVaultSection").classList.add("hidden");
+
+      const vaultAddressEl = document.getElementById("vaultAddress");
+      vaultAddressEl.innerHTML = "<strong>Vaults:</strong><br>";
+
+      userVaults.forEach((vault, index) => {
+        vaultAddressEl.innerHTML += `
+          <div>
+            <span>Vault ${index + 1}:</span>
+            <span>${shortenAddress(vault)}</span>
+            <a href="https://cronoscan.com/address/${vault}" target="_blank" class="icon-btn" title="View on Cronoscan" style="margin-left: 6px;">
+              <i class="fas fa-external-link-alt"></i>
+            </a>
+            <button class="icon-btn" title="Copy Address" onclick="copyToClipboard('${vault}')">
+              <i class="fas fa-copy white"></i>
+            </button>
+          </div>
         `;
-        unlockAndLoadAllSections();
-      } else {
-        createVaultSection.classList.remove("hidden");
-        document.getElementById("vaultDataSection").classList.add("displayNone");
-      }
-      
+      });
+
+      unlockAndLoadAllSections(); // ✅ Optionally call unlock here
+    } else {
+      document.getElementById("createVaultSection").classList.remove("hidden");
+      document.getElementById("vaultDataSection").classList.add("displayNone");
+    } 
       
   } catch {
     createVaultSection.classList.add("hidden"); // fallback: hide
   }
 }
 
-async function unlockAndLoadAllSections() {
-  if (sessionPassword) {
-    return loadAllSections();
-  }
+async function unlockAndLoadAllSections(index = 0) {
+  const vaultAddress = userVaults[index];
+  if (!vaultAddress || !vaultAddress.startsWith("0x")) return;
 
-  if (userVault && userVault.startsWith("0x")) {
-    try {
-      const signer = provider.getSigner();
-      const vault  = new ethers.Contract(userVault, vaultAbi, signer);
+  try {
+    const signer = provider.getSigner();
+    const abi = index === 0 ? vault1Abi : index === 1 ? vault2Abi : index === 2 ? vault3Abi : vault4Abi;
+    const vault = new ethers.Contract(vaultAddress, abi, signer);
 
-      const [creds, notes, wallets, totps] = await retryReadDataWithTimeout(vault);
-      if (
-        creds.length   === 0 &&
-        notes.length   === 0 &&
-        wallets.length === 0 &&
-        totps.length   === 0
-      ) {
-        newVault = true;
-        await deriveWalletKey();
-        document.getElementById("vaultDataSection").classList.remove("displayNone");
-        return;
-      }
-    } catch {}
-  }
+    const [creds, notes, wallets, totps] = await retryReadDataWithTimeout(vault);
+    const hasData = creds.length || notes.length || wallets.length || totps.length;
+
+    if (!hasData) {
+      newVault = true;
+      await deriveWalletKey();
+      document.getElementById("vaultDataSection").classList.remove("displayNone");
+      return;
+    }
+  } catch {}
 
   showUnlockModal(async (pw) => {
     sessionPassword = pw;
     await deriveWalletKey();
-    await loadAllSections(); // ✅ only called AFTER pw is set
+    await loadAllSections(index); // ✅ pass index
   });
 }
 
@@ -994,6 +1487,8 @@ async function retryReadDataWithTimeout(vault, maxRetries = 10, timeoutMs = 1000
   }
 }
 
+// ==== Load and show functions Vault 1 ====
+
 async function loadAndShowCredentials() {
   if (!sessionPassword) return;
   let creds
@@ -1018,10 +1513,10 @@ async function loadAndShowCredentials() {
   document.getElementById("retryUnlockBtn")?.classList.add("displayNone");
 
   // If there is no session password or vault address, return early
-  if (!sessionPassword || !userVault || !userVault.startsWith("0x")) return;
+  if (!sessionPassword || !userVaults[0] || !userVaults[0].startsWith("0x")) return;
 
   const signer = provider.getSigner();
-  const vault = new ethers.Contract(userVault, vaultAbi, signer);
+  const vault = new ethers.Contract(userVaults[0], vault1Abi, signer);
 
   try {
     creds = await vault.readCredentials();
@@ -1060,10 +1555,10 @@ async function loadAndShowCredentials() {
 
 async function loadAndShowNotes() {
   if (!sessionPassword) return;
-  if (!userVault || !userVault.startsWith("0x")) return;
+  if (!userVaults[0] || !userVaults[0].startsWith("0x")) return;
 
   const signer = provider.getSigner();
-  const vault = new ethers.Contract(userVault, vaultAbi, signer);
+  const vault = new ethers.Contract(userVaults[0], vault1Abi, signer);
   let notes = [];
 
   try {
@@ -1100,10 +1595,10 @@ async function loadAndShowNotes() {
 
 async function loadAndShowWallets() {
   if (!sessionPassword) return;
-  if (!userVault || !userVault.startsWith("0x")) return;
+  if (!userVaults[0] || !userVaults[0].startsWith("0x")) return;
 
   const signer = provider.getSigner();
-  const vault = new ethers.Contract(userVault, vaultAbi, signer);
+  const vault = new ethers.Contract(userVaults[0], vault1Abi, signer);
   let wallets = [];
 
   try {
@@ -1144,10 +1639,10 @@ async function loadAndShowWallets() {
 
 async function loadAndShowTotps() {
   if (!sessionPassword) return;
-  if (!userVault || !userVault.startsWith("0x")) return;
+  if (!userVaults[0] || !userVaults[0].startsWith("0x")) return;
 
   const signer = provider.getSigner();
-  const vault = new ethers.Contract(userVault, vaultAbi, signer);
+  const vault = new ethers.Contract(userVaults[0], vault1Abi, signer);
   let totps = [];
 
   try {
@@ -1183,8 +1678,362 @@ async function loadAndShowTotps() {
   updateTotpPendingUI();
 }
 
+// ==== Load and show functions Vault 2 ====
+
+async function loadAndShowPins() {
+  if (!sessionPassword || !userVaults[1]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[1], vault2Abi, signer);
+  let pins = [];
+
+  try {
+    pins = await vault.readPins();
+  } catch {
+    return;
+  }
+
+  const container = document.getElementById("pinReadItems");
+  container.innerHTML = "";
+  document.getElementById("pinCount").textContent = pins.length;
+
+  for (const pin of pins) {
+    let decrypted;
+    try {
+      decrypted = {
+        id: pin.id,
+        pin: (await decryptWithPassword(sessionPassword, JSON.parse(pin.pin))).pin,
+        remarks: (await decryptWithPassword(sessionPassword, JSON.parse(pin.remarks))).remarks,
+        timestamp: pin.timestamp,
+      };
+    } catch (e) {
+      showWrongPasswordModal();
+      return;
+    }
+
+    renderPinItem(decrypted, false);
+  }
+  updatePinPendingUI();
+}
+
+async function loadAndShowBankAccounts() {
+  if (!sessionPassword || !userVaults[1]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[1], vault2Abi, signer);
+  let banks = [];
+
+  try {
+    banks = await vault.readBankAccounts();
+  } catch {
+    return;
+  }
+
+  const container = document.getElementById("bankReadItems");
+  container.innerHTML = "";
+  document.getElementById("bankCount").textContent = banks.length;
+
+  for (const bank of banks) {
+    let decrypted;
+    try {
+      decrypted = {
+        id: bank.id,
+        iban: (await decryptWithPassword(sessionPassword, JSON.parse(bank.iban))).iban,
+        bic: (await decryptWithPassword(sessionPassword, JSON.parse(bank.bic))).bic,
+        name: (await decryptWithPassword(sessionPassword, JSON.parse(bank.name))).name,
+        remarks: (await decryptWithPassword(sessionPassword, JSON.parse(bank.remarks))).remarks,
+        timestamp: bank.timestamp,
+      };
+    } catch (e) {
+      showWrongPasswordModal();
+      return;
+    }
+
+    renderBankAccountItem(decrypted, false);
+  }
+  updateBankAccountPendingUI();
+}
+
+async function loadAndShowCreditCards() {
+  if (!sessionPassword || !userVaults[1]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[1], vault2Abi, signer);
+  let cards = [];
+
+  try {
+    cards = await vault.readCreditCards();
+  } catch {
+    return;
+  }
+
+  const container = document.getElementById("cardReadItems");
+  container.innerHTML = "";
+  document.getElementById("cardCount").textContent = cards.length;
+
+  for (const card of cards) {
+    let decrypted;
+    try {
+      decrypted = {
+        id: card.id,
+        number: (await decryptWithPassword(sessionPassword, JSON.parse(card.number))).number,
+        expiration: (await decryptWithPassword(sessionPassword, JSON.parse(card.expiration))).expiration,
+        cvv: (await decryptWithPassword(sessionPassword, JSON.parse(card.cvv))).cvv,
+        name: (await decryptWithPassword(sessionPassword, JSON.parse(card.name))).name,
+        remarks: (await decryptWithPassword(sessionPassword, JSON.parse(card.remarks))).remarks,
+        timestamp: card.timestamp,
+      };
+    } catch (e) {
+      showWrongPasswordModal();
+      return;
+    }
+
+    renderCreditCardItem(decrypted, false);
+  }
+  updateCreditCardPendingUI();
+}
+
+// ==== Load and show functions Vault 3 ====
+
+async function loadAndShowInsurances() {
+  if (!sessionPassword || !userVaults[2]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[2], vault3Abi, signer);
+  let insurances = [];
+
+  try {
+    insurances = await vault.readInsurances();
+  } catch {
+    return;
+  }
+
+  const container = document.getElementById("insuranceReadItems");
+  container.innerHTML = "";
+  document.getElementById("insuranceCount").textContent = insurances.length;
+
+  for (const insurance of insurances) {
+    let decrypted;
+    try {
+      decrypted = {
+        id: insurance.id,
+        name: (await decryptWithPassword(sessionPassword, JSON.parse(insurance.name))).name,
+        phone: (await decryptWithPassword(sessionPassword, JSON.parse(insurance.phone))).phone,
+        email: (await decryptWithPassword(sessionPassword, JSON.parse(insurance.email))).email,
+        relation: (await decryptWithPassword(sessionPassword, JSON.parse(insurance.relation))).relation,
+        remarks: (await decryptWithPassword(sessionPassword, JSON.parse(insurance.remarks))).remarks,
+        timestamp: insurance.timestamp,
+      };
+    } catch (e) {
+      showWrongPasswordModal();
+      return;
+    }
+
+    renderInsuranceItem(decrypted, false);
+  }
+  updateInsurancePendingUI();
+}
+
+async function loadAndShowIdentities() {
+  if (!sessionPassword || !userVaults[2]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[2], vault3Abi, signer);
+  let identities = [];
+
+  try {
+    identities = await vault.readIdentities();
+  } catch {
+    return;
+  }
+
+  const container = document.getElementById("identityReadItems");
+  container.innerHTML = "";
+  document.getElementById("identityCount").textContent = identities.length;
+
+  for (const identity of identities) {
+    let decrypted;
+    try {
+      decrypted = {
+        id: identity.id,
+        name: (await decryptWithPassword(sessionPassword, JSON.parse(identity.name))).name,
+        phone: (await decryptWithPassword(sessionPassword, JSON.parse(identity.phone))).phone,
+        email: (await decryptWithPassword(sessionPassword, JSON.parse(identity.email))).email,
+        relation: (await decryptWithPassword(sessionPassword, JSON.parse(identity.relation))).relation,
+        remarks: (await decryptWithPassword(sessionPassword, JSON.parse(identity.remarks))).remarks,
+        timestamp: identity.timestamp,
+      };
+    } catch (e) {
+      showWrongPasswordModal();
+      return;
+    }
+
+    renderIdentityItem(decrypted, false);
+  }
+  updateIdentityPendingUI();
+}
+
+async function loadAndShowLegalDocuments() {
+  if (!sessionPassword || !userVaults[2]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[2], vault3Abi, signer);
+  let legalDocs = [];
+
+  try {
+    legalDocs = await vault.readLegalDocuments();
+  } catch {
+    return;
+  }
+
+  const container = document.getElementById("legalReadItems");
+  container.innerHTML = "";
+  document.getElementById("legalCount").textContent = legalDocs.length;
+
+  for (const legal of legalDocs) {
+    let decrypted;
+    try {
+      decrypted = {
+        id: legal.id,
+        name: (await decryptWithPassword(sessionPassword, JSON.parse(legal.name))).name,
+        phone: (await decryptWithPassword(sessionPassword, JSON.parse(legal.phone))).phone,
+        email: (await decryptWithPassword(sessionPassword, JSON.parse(legal.email))).email,
+        relation: (await decryptWithPassword(sessionPassword, JSON.parse(legal.relation))).relation,
+        remarks: (await decryptWithPassword(sessionPassword, JSON.parse(legal.remarks))).remarks,
+        timestamp: legal.timestamp,
+      };
+    } catch (e) {
+      showWrongPasswordModal();
+      return;
+    }
+
+    renderLegalDocumentItem(decrypted, false);
+  }
+  updateLegalDocumentPendingUI();
+}
+
+// ==== Load and show functions Vault 4 ====
+
+async function loadAndShowAssets() {
+  if (!sessionPassword || !userVaults[3]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[3], vault4Abi, signer);
+  let assets = [];
+
+  try {
+    assets = await vault.readAssets();
+  } catch {
+    return;
+  }
+
+  const container = document.getElementById("assetReadItems");
+  container.innerHTML = "";
+  document.getElementById("assetCount").textContent = assets.length;
+
+  for (const asset of assets) {
+    let decrypted;
+    try {
+      decrypted = {
+        id: asset.id,
+        name: (await decryptWithPassword(sessionPassword, JSON.parse(asset.name))).name,
+        amount: (await decryptWithPassword(sessionPassword, JSON.parse(asset.amount))).amount,
+        due: (await decryptWithPassword(sessionPassword, JSON.parse(asset.due))).due,
+        interval: (await decryptWithPassword(sessionPassword, JSON.parse(asset.interval))).interval,
+        remarks: (await decryptWithPassword(sessionPassword, JSON.parse(asset.remarks))).remarks,
+        timestamp: asset.timestamp,
+      };
+    } catch (e) {
+      showWrongPasswordModal();
+      return;
+    }
+
+    renderAssetItem(decrypted, false);
+  }
+  updateAssetPendingUI();
+}
+
+async function loadAndShowContacts() {
+  if (!sessionPassword || !userVaults[3]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[3], vault4Abi, signer);
+  let contacts = [];
+
+  try {
+    contacts = await vault.readContacts();
+  } catch {
+    return;
+  }
+
+  const container = document.getElementById("contactReadItems");
+  container.innerHTML = "";
+  document.getElementById("contactCount").textContent = contacts.length;
+
+  for (const contact of contacts) {
+    let decrypted;
+    try {
+      decrypted = {
+        id: contact.id,
+        name: (await decryptWithPassword(sessionPassword, JSON.parse(contact.name))).name,
+        amount: (await decryptWithPassword(sessionPassword, JSON.parse(contact.amount))).amount,
+        due: (await decryptWithPassword(sessionPassword, JSON.parse(contact.due))).due,
+        interval: (await decryptWithPassword(sessionPassword, JSON.parse(contact.interval))).interval,
+        remarks: (await decryptWithPassword(sessionPassword, JSON.parse(contact.remarks))).remarks,
+        timestamp: contact.timestamp,
+      };
+    } catch (e) {
+      showWrongPasswordModal();
+      return;
+    }
+
+    renderContactItem(decrypted, false);
+  }
+  updateContactPendingUI();
+}
+
+async function loadAndShowSubscriptions() {
+  if (!sessionPassword || !userVaults[3]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[3], vault4Abi, signer);
+  let subs = [];
+
+  try {
+    subs = await vault.readSubscriptions();
+  } catch {
+    return;
+  }
+
+  const container = document.getElementById("subscriptionReadItems");
+  container.innerHTML = "";
+  document.getElementById("subscriptionCount").textContent = subs.length;
+
+  for (const sub of subs) {
+    let decrypted;
+    try {
+      decrypted = {
+        id: sub.id,
+        name: (await decryptWithPassword(sessionPassword, JSON.parse(sub.name))).name,
+        amount: (await decryptWithPassword(sessionPassword, JSON.parse(sub.amount))).amount,
+        due: (await decryptWithPassword(sessionPassword, JSON.parse(sub.due))).due,
+        interval: (await decryptWithPassword(sessionPassword, JSON.parse(sub.interval))).interval,
+        remarks: (await decryptWithPassword(sessionPassword, JSON.parse(sub.remarks))).remarks,
+        timestamp: sub.timestamp,
+      };
+    } catch (e) {
+      showWrongPasswordModal();
+      return;
+    }
+
+    renderSubscriptionItem(decrypted, false);
+  }
+  updateSubscriptionPendingUI();
+}
+
 // ==== Data write to blockchain ====
-async function estimateSaveAllFees() {
+
+async function estimateSaveAllFees(index = 0) {
   if (newVault) {
     showPasswordModal(async (pw) => {
       sessionPassword = pw;          // ❶ store it
@@ -1194,13 +2043,14 @@ async function estimateSaveAllFees() {
     });
     return; // important: stop the first run here
   }
-  if (!sessionPassword || !userVault || !userVault.startsWith("0x")) {
+  if (!sessionPassword || !userVaults[0] || !userVaults[0].startsWith("0x")) {
     showAlert("Vault is not unlocked or connected.", "info");
     return;
   }
 
   const signer = provider.getSigner();
-  const vault = new ethers.Contract(userVault, vaultAbi, signer);
+  const abi = index === 0 ? vault1Abi : index === 1 ? vault2Abi : index === 2 ? vault3Abi : vault4Abi;
+  const vault = new ethers.Contract(userVaults[index], abi, signer);
 
   try {
     let totalGas = ethers.BigNumber.from(0);
@@ -1293,7 +2143,7 @@ async function estimateSaveAllFees() {
   }
 }
 
-async function saveAllPendingItems() {
+async function saveAllPendingItems(index = 0) {
   if (!sessionPassword) {
     showPasswordModal(async (pw) => {
       sessionPassword = pw;
@@ -1302,8 +2152,11 @@ async function saveAllPendingItems() {
     });
     return;
   }
+
   const signer = provider.getSigner();
-  const vault = new ethers.Contract(userVault, vaultAbi, signer);
+  const abi = index === 0 ? vault1Abi : index === 1 ? vault2Abi : index === 2 ? vault3Abi : vault4Abi;
+  const vault = new ethers.Contract(userVaults[index], abi, signer);
+
   try {
     let credentialsFailed = false;
     let notesFailed       = false;
@@ -1473,16 +2326,16 @@ async function saveAllPendingItems() {
   }
 }
 
-// ==== Data delete from blockchain ====
+// ==== Data delete from blockchain Vault 1 ====
 
 async function deleteCredentials(ids = []) {
-  if (!userVault || !userVault.startsWith("0x")) return;
+  if (!userVaults[0] || !userVaults[0].startsWith("0x")) return;
   if (!ids.length) return;
 
   try {
     showSpinner("Deleting credential...");
     const signer = provider.getSigner();
-    const vault = new ethers.Contract(userVault, vaultAbi, signer);
+    const vault = new ethers.Contract(userVaults[0], vault1Abi, signer);
 
     const tx = await vault.deleteCredentials(ids);
     await tx.wait();
@@ -1502,13 +2355,13 @@ async function deleteCredentials(ids = []) {
 }
 
 async function deleteNotes(ids = []) {
-  if (!userVault || !userVault.startsWith("0x")) return;
+  if (!userVaults[0] || !userVaults[0].startsWith("0x")) return;
   if (!ids.length) return;
 
   try {
     showSpinner("Deleting note...");
     const signer = provider.getSigner();
-    const vault = new ethers.Contract(userVault, vaultAbi, signer);
+    const vault = new ethers.Contract(userVaults[0], vault1Abi, signer);
 
     const tx = await vault.deleteNotes(ids);
     await tx.wait();
@@ -1528,13 +2381,13 @@ async function deleteNotes(ids = []) {
 }
 
 async function deleteWallets(ids = []) {
-  if (!userVault || !userVault.startsWith("0x")) return;
+  if (!userVaults[0] || !userVaults[0].startsWith("0x")) return;
   if (!ids.length) return;
 
   try {
     showSpinner("Deleting wallet...");
     const signer = provider.getSigner();
-    const vault = new ethers.Contract(userVault, vaultAbi, signer);
+    const vault = new ethers.Contract(userVaults[0], vault1Abi, signer);
 
     const tx = await vault.deleteWalletAddresses(ids);
     await tx.wait();
@@ -1554,13 +2407,13 @@ async function deleteWallets(ids = []) {
 }
 
 async function deleteTotps(ids = []) {
-  if (!userVault || !userVault.startsWith("0x")) return;
+  if (!userVaults[0] || !userVaults[0].startsWith("0x")) return;
   if (!ids.length) return;
 
   try {
     showSpinner("Deleting TOTP...");
     const signer = provider.getSigner();
-    const vault = new ethers.Contract(userVault, vaultAbi, signer);
+    const vault = new ethers.Contract(userVaults[0], vault1Abi, signer);
 
     const tx = await vault.deleteTOTP(ids);
     await tx.wait();
@@ -1579,8 +2432,178 @@ async function deleteTotps(ids = []) {
   }
 }
 
+// ==== Data delete from blockchain Vault 2 ====
+
+async function deletePin(id) {
+  if (!userVaults[1]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[1], vault2Abi, signer);
+
+  try {
+    showSpinner("Deleting...");
+    await vault.deletePins([id]);
+    await loadAndShowPins();
+    showAlert("PIN deleted successfully.", "success");
+  } catch (e) {
+    showAlert("Error deleting PIN.", "error");
+  } finally {
+    hideSpinner();
+  }
+}
+
+async function deleteBankAccount(id) {
+  if (!userVaults[1]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[1], vault2Abi, signer);
+
+  try {
+    showSpinner("Deleting...");
+    await vault.deleteBankAccounts([id]);
+    await loadAndShowBankAccounts();
+    showAlert("Bank account deleted successfully.", "success");
+  } catch (e) {
+    showAlert("Error deleting bank account.", "error");
+  } finally {
+    hideSpinner();
+  }
+}
+
+async function deleteCreditCard(id) {
+  if (!userVaults[1]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[1], vault2Abi, signer);
+
+  try {
+    showSpinner("Deleting...");
+    await vault.deleteCreditCards([id]);
+    await loadAndShowCreditCards();
+    showAlert("Credit card deleted successfully.", "success");
+  } catch (e) {
+    showAlert("Error deleting credit card.", "error");
+  } finally {
+    hideSpinner();
+  }
+}
+
+// ==== Data delete from blockchain Vault 3 ====
+
+async function deleteInsurance(id) {
+  if (!userVaults[2]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[2], vault3Abi, signer);
+
+  try {
+    showSpinner("Deleting...");
+    await vault.deleteInsurances([id]);
+    await loadAndShowInsurances();
+    showAlert("Insurance deleted successfully.", "success");
+  } catch (e) {
+    showAlert("Error deleting insurance.", "error");
+  } finally {
+    hideSpinner();
+  }
+}
+
+async function deleteIdentity(id) {
+  if (!userVaults[2]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[2], vault3Abi, signer);
+
+  try {
+    showSpinner("Deleting...");
+    await vault.deleteIdentities([id]);
+    await loadAndShowIdentities();
+    showAlert("Identity deleted successfully.", "success");
+  } catch (e) {
+    showAlert("Error deleting identity.", "error");
+  } finally {
+    hideSpinner();
+  }
+}
+
+async function deleteLegalDocument(id) {
+  if (!userVaults[2]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[2], vault3Abi, signer);
+
+  try {
+    showSpinner("Deleting...");
+    await vault.deleteLegalDocuments([id]);
+    await loadAndShowLegalDocuments();
+    showAlert("Legal document deleted successfully.", "success");
+  } catch (e) {
+    showAlert("Error deleting legal document.", "error");
+  } finally {
+    hideSpinner();
+  }
+}
+
+// ==== Data delete from blockchain Vault 4 ====
+
+async function deleteAsset(id) {
+  if (!userVaults[3]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[3], vault4Abi, signer);
+
+  try {
+    showSpinner("Deleting...");
+    await vault.deleteAssets([id]);
+    await loadAndShowAssets();
+    showAlert("Asset deleted successfully.", "success");
+  } catch (e) {
+    showAlert("Error deleting asset.", "error");
+  } finally {
+    hideSpinner();
+  }
+}
+
+async function deleteContact(id) {
+  if (!userVaults[3]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[3], vault4Abi, signer);
+
+  try {
+    showSpinner("Deleting...");
+    await vault.deleteContacts([id]);
+    await loadAndShowContacts();
+    showAlert("Contact deleted successfully.", "success");
+  } catch (e) {
+    showAlert("Error deleting contact.", "error");
+  } finally {
+    hideSpinner();
+  }
+}
+
+async function deleteSubscription(id) {
+  if (!userVaults[3]) return;
+
+  const signer = provider.getSigner();
+  const vault = new ethers.Contract(userVaults[3], vault4Abi, signer);
+
+  try {
+    showSpinner("Deleting...");
+    await vault.deleteSubscriptions([id]);
+    await loadAndShowSubscriptions();
+    showAlert("Subscription deleted successfully.", "success");
+  } catch (e) {
+    showAlert("Error deleting subscription.", "error");
+  } finally {
+    hideSpinner();
+  }
+}
+
 // ==== Data editors client side new data====
- 
+
+// ==== editPending Vault 1 ====
+
 function editPendingCredential(index) {
   const cred = pendingCredentials[index];
 
@@ -1599,18 +2622,6 @@ function editPendingCredential(index) {
   updateCredentialPendingUI();
 }
 
-function deletePendingCredential(index) {
-  showConfirm("Are you sure you want to discard this pending credential?", () => {
-    const removed = pendingCredentials.splice(index, 1)[0];
-  
-    if (removed._original && removed.id === removed._original.id) {
-      renderCredentialItem(removed._original);
-    }
-  
-    updateCredentialPendingUI();
-  });
-}
-
 function editPendingNote(index) {
   const note = pendingNotes[index];
 
@@ -1625,18 +2636,6 @@ function editPendingNote(index) {
 
   pendingNotes.splice(index, 1);
   updateNotePendingUI();
-}
-
-function deletePendingNote(index) {
-  showConfirmModal("Are you sure you want to discard this pending note?", () => {
-    const removed = pendingNotes.splice(index, 1)[0];
-  
-    if (removed._original && removed.id === removed._original.id) {
-      renderNoteItem(removed._original);
-    }
-  
-    updateNotePendingUI();
-  }); 
 }
 
 function editPendingWallet(index) {
@@ -1655,18 +2654,6 @@ function editPendingWallet(index) {
 
   pendingWallets.splice(index, 1);
   updateWalletPendingUI();
-}
-
-function deletePendingWallet(index) {
-  showConfirm("Are you sure you want to discard this pending wallet?", () => {
-    const removed = pendingWallets.splice(index, 1)[0];
-  
-    if (removed._original && removed.id === removed._original.id) {
-      renderWalletItem(removed._original);
-    }
-  
-    updateWalletPendingUI();
-  }); 
 }
 
 function editPendingTotp(index) {
@@ -1691,12 +2678,213 @@ function editPendingTotp(index) {
   updateTotpPendingUI();
 }
 
+// ==== editPending Vault 2 ====
+
+function editPendingPin(index) {
+  const item = pendingPins[index];
+  if (!item) return;
+
+  document.getElementById("pinValue").value = item.pin;
+  document.getElementById("pinRemarks").value = item.remarks;
+  editingOriginalPin = item;
+}
+
+function editPendingBankAccount(index) {
+  const item = pendingBankAccounts[index];
+  if (!item) return;
+
+  document.getElementById("bankIban").value = item.iban;
+  document.getElementById("bankBic").value = item.bic;
+  document.getElementById("bankName").value = item.name;
+  document.getElementById("bankRemarks").value = item.remarks;
+  editingOriginalBankAccount = item;
+}
+
+function editPendingCreditCard(index) {
+  const item = pendingCreditCards[index];
+  if (!item) return;
+
+  document.getElementById("cardNumber").value = item.number;
+  document.getElementById("cardExpiration").value = item.expiration;
+  document.getElementById("cardCVV").value = item.cvv;
+  document.getElementById("cardName").value = item.name;
+  document.getElementById("cardRemarks").value = item.remarks;
+  editingOriginalCreditCard = item;
+}
+
+// ==== editPending Vault 3 ====
+
+function editPendingInsurance(index) {
+  const item = pendingInsurances[index];
+  if (!item) return;
+
+  document.getElementById("insuranceName").value = item.name;
+  document.getElementById("insurancePhone").value = item.phone;
+  document.getElementById("insuranceEmail").value = item.email;
+  document.getElementById("insuranceRelation").value = item.relation;
+  document.getElementById("insuranceRemarks").value = item.remarks;
+  editingOriginalInsurance = item;
+}
+
+function editPendingIdentity(index) {
+  const item = pendingIdentities[index];
+  if (!item) return;
+
+  document.getElementById("identityName").value = item.name;
+  document.getElementById("identityPhone").value = item.phone;
+  document.getElementById("identityEmail").value = item.email;
+  document.getElementById("identityRelation").value = item.relation;
+  document.getElementById("identityRemarks").value = item.remarks;
+  editingOriginalIdentity = item;
+}
+
+function editPendingLegalDocument(index) {
+  const item = pendingLegalDocuments[index];
+  if (!item) return;
+
+  document.getElementById("legalName").value = item.name;
+  document.getElementById("legalPhone").value = item.phone;
+  document.getElementById("legalEmail").value = item.email;
+  document.getElementById("legalRelation").value = item.relation;
+  document.getElementById("legalRemarks").value = item.remarks;
+  editingOriginalLegalDocument = item;
+}
+
+// ==== editPending Vault 4 ====
+
+function editPendingAsset(index) {
+  const item = pendingAssets[index];
+  if (!item) return;
+
+  document.getElementById("assetName").value = item.name;
+  document.getElementById("assetAmount").value = item.amount;
+  document.getElementById("assetDue").value = item.due;
+  document.getElementById("assetInterval").value = item.interval;
+  document.getElementById("assetRemarks").value = item.remarks;
+  editingOriginalAsset = item;
+}
+
+function editPendingContact(index) {
+  const item = pendingContacts[index];
+  if (!item) return;
+
+  document.getElementById("contactName").value = item.name;
+  document.getElementById("contactAmount").value = item.amount;
+  document.getElementById("contactDue").value = item.due;
+  document.getElementById("contactInterval").value = item.interval;
+  document.getElementById("contactRemarks").value = item.remarks;
+  editingOriginalContact = item;
+}
+
+function editPendingSubscription(index) {
+  const item = pendingSubscriptions[index];
+  if (!item) return;
+
+  document.getElementById("subscriptionName").value = item.name;
+  document.getElementById("subscriptionAmount").value = item.amount;
+  document.getElementById("subscriptionDue").value = item.due;
+  document.getElementById("subscriptionInterval").value = item.interval;
+  document.getElementById("subscriptionRemarks").value = item.remarks;
+  editingOriginalSubscription = item;
+}
+
+// ==== deletePending Vault 1 ====
+
+function deletePendingCredential(index) {
+  showConfirm("Are you sure you want to discard this pending credential?", () => {
+    const removed = pendingCredentials.splice(index, 1)[0];
+  
+    if (removed._original && removed.id === removed._original.id) {
+      renderCredentialItem(removed._original);
+    }
+  
+    updateCredentialPendingUI();
+  });
+}
+
+function deletePendingNote(index) {
+  showConfirmModal("Are you sure you want to discard this pending note?", () => {
+    const removed = pendingNotes.splice(index, 1)[0];
+  
+    if (removed._original && removed.id === removed._original.id) {
+      renderNoteItem(removed._original);
+    }
+  
+    updateNotePendingUI();
+  }); 
+}
+
+function deletePendingWallet(index) {
+  showConfirm("Are you sure you want to discard this pending wallet?", () => {
+    const removed = pendingWallets.splice(index, 1)[0];
+  
+    if (removed._original && removed.id === removed._original.id) {
+      renderWalletItem(removed._original);
+    }
+  
+    updateWalletPendingUI();
+  }); 
+}
+
 function deletePendingTotp(index) {
   showConfirm("Are you sure you want to discard this pending TOTP secret?", () => {
     pendingTotps.splice(index, 1);
     updateTotpPendingUI();
   });  
 }
+
+// ==== deletePending Vault 2 ====
+
+function deletePendingPin(index) {
+  pendingPins.splice(index, 1);
+  updatePinPendingUI();
+}
+
+function deletePendingBankAccount(index) {
+  pendingBankAccounts.splice(index, 1);
+  updateBankAccountPendingUI();
+}
+
+function deletePendingCreditCard(index) {
+  pendingCreditCards.splice(index, 1);
+  updateCreditCardPendingUI();
+}
+
+// ==== deletePending Vault 3 ====
+
+function deletePendingInsurance(index) {
+  pendingInsurances.splice(index, 1);
+  updateInsurancePendingUI();
+}
+
+function deletePendingIdentity(index) {
+  pendingIdentities.splice(index, 1);
+  updateIdentityPendingUI();
+}
+
+function deletePendingLegalDocument(index) {
+  pendingLegalDocuments.splice(index, 1);
+  updateLegalDocumentPendingUI();
+}
+
+// ==== deletePending Vault 4 ====
+
+function deletePendingAsset(index) {
+  pendingAssets.splice(index, 1);
+  updateAssetPendingUI();
+}
+
+function deletePendingContact(index) {
+  pendingContacts.splice(index, 1);
+  updateContactPendingUI();
+}
+
+function deletePendingSubscription(index) {
+  pendingSubscriptions.splice(index, 1);
+  updateSubscriptionPendingUI();
+}
+
+// ==== updatePending Vault 1 ====
 
 function updateCredentialPendingUI() {
   const credentialItems = document.getElementById("credentialPendingItems");
@@ -1718,7 +2906,7 @@ function updateCredentialPendingUI() {
       <div><strong>Username:</strong> ${cred.username}</div>
       <div>
         <strong>Password:</strong>
-        <span class="hidden-password">********</span>
+        <span class="hidden-password">••••••••</span>
         <span class="real-password displayNone">${cred.password}</span>
         <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
       </div>
@@ -1761,15 +2949,6 @@ function updateCredentialPendingUI() {
     });
   });
   updateGlobalSaveButtonVisibility();
-}
-
-function updateCredentialCountDisplay() {
-  const readCount = document.querySelectorAll('#credentialReadItems .vault-data-item').length;
-  const pendingCount = pendingCredentials.length;
-  document.getElementById("credCount").innerHTML =
-    pendingCount > 0
-      ? `${readCount} + <span class="pending-count">${pendingCount}</span>`
-      : `${readCount}`;
 }
 
 function updateNotePendingUI() {
@@ -1818,15 +2997,6 @@ function updateNotePendingUI() {
   updateGlobalSaveButtonVisibility()
 }
 
-function updateNoteCountDisplay() {
-  const readCount = document.querySelectorAll('#noteReadItems .vault-data-item').length;
-  const pendingCount = pendingNotes.length;
-  document.getElementById("noteCount").innerHTML =
-    pendingCount > 0
-      ? `${readCount} + <span class="pending-count">${pendingCount}</span>`
-      : `${readCount}`;
-}
-
 function updateWalletPendingUI() {
   const walletItems = document.getElementById("walletPendingItems");
   walletItems.innerHTML = "";
@@ -1846,12 +3016,12 @@ function updateWalletPendingUI() {
     detail.innerHTML = `
       <div><strong>Address:</strong> ${wallet.walletAddress}</div>
       <div><strong>Private Key:</strong>
-        <span class="hidden-password">********</span>
+        <span class="hidden-password">••••••••</span>
         <span class="real-password displayNone">${wallet.privateKey}</span>
         <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
       </div>
       <div><strong>Seed Phrase:</strong>
-        <span class="hidden-password">********</span>
+        <span class="hidden-password">••••••••</span>
         <span class="real-password displayNone">${wallet.seedPhrase}</span>
         <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
       </div>
@@ -1893,15 +3063,6 @@ function updateWalletPendingUI() {
     });
   });
   updateGlobalSaveButtonVisibility()
-}
-
-function updateWalletCountDisplay() {
-  const readCount = document.querySelectorAll('#walletReadItems .vault-data-item').length;
-  const pendingCount = pendingWallets.length;
-  document.getElementById("walletCount").innerHTML =
-    pendingCount > 0
-      ? `${readCount} + <span class="pending-count">${pendingCount}</span>`
-      : `${readCount}`;
 }
 
 function updateTotpPendingUI() {
@@ -1951,6 +3112,105 @@ function updateTotpPendingUI() {
   updateGlobalSaveButtonVisibility();
 }
 
+// ==== updatePending Vault 2 ====
+
+function updatePinPendingUI() {
+  const container = document.getElementById("pinPendingItems");
+  container.innerHTML = "";
+  pendingPins.forEach((item, index) => renderPinItem(item, true, index));
+  updatePinCountDisplay();
+}
+
+function updateBankAccountPendingUI() {
+  const container = document.getElementById("bankPendingItems");
+  container.innerHTML = "";
+  pendingBankAccounts.forEach((item, index) => renderBankAccountItem(item, true, index));
+  updateBankAccountCountDisplay();
+}
+
+function updateCreditCardPendingUI() {
+  const container = document.getElementById("cardPendingItems");
+  container.innerHTML = "";
+  pendingCreditCards.forEach((item, index) => renderCreditCardItem(item, true, index));
+  updateCreditCardCountDisplay();
+}
+
+// ==== updatePending Vault 3 ====
+
+function updateInsurancePendingUI() {
+  const container = document.getElementById("insurancePendingItems");
+  container.innerHTML = "";
+  pendingInsurances.forEach((item, index) => renderInsuranceItem(item, true, index));
+  updateInsuranceCountDisplay();
+}
+
+function updateIdentityPendingUI() {
+  const container = document.getElementById("identityPendingItems");
+  container.innerHTML = "";
+  pendingIdentities.forEach((item, index) => renderIdentityItem(item, true, index));
+  updateIdentityCountDisplay();
+}
+
+function updateLegalDocumentPendingUI() {
+  const container = document.getElementById("legalPendingItems");
+  container.innerHTML = "";
+  pendingLegalDocuments.forEach((item, index) => renderLegalDocumentItem(item, true, index));
+  updateLegalDocumentCountDisplay();
+}
+
+// ==== updatePending Vault 4 ====
+
+function updateAssetPendingUI() {
+  const container = document.getElementById("assetPendingItems");
+  container.innerHTML = "";
+  pendingAssets.forEach((item, index) => renderAssetItem(item, true, index));
+  updateAssetCountDisplay();
+}
+
+function updateContactPendingUI() {
+  const container = document.getElementById("contactPendingItems");
+  container.innerHTML = "";
+  pendingContacts.forEach((item, index) => renderContactItem(item, true, index));
+  updateContactCountDisplay();
+}
+
+function updateSubscriptionPendingUI() {
+  const container = document.getElementById("subscriptionPendingItems");
+  container.innerHTML = "";
+  pendingSubscriptions.forEach((item, index) => renderSubscriptionItem(item, true, index));
+  updateSubscriptionCountDisplay();
+}
+
+// ==== updateCountDisplay Vault 1 ====
+
+
+function updateCredentialCountDisplay() {
+  const readCount = document.querySelectorAll('#credentialReadItems .vault-data-item').length;
+  const pendingCount = pendingCredentials.length;
+  document.getElementById("credCount").innerHTML =
+    pendingCount > 0
+      ? `${readCount} + <span class="pending-count">${pendingCount}</span>`
+      : `${readCount}`;
+}
+
+function updateNoteCountDisplay() {
+  const readCount = document.querySelectorAll('#noteReadItems .vault-data-item').length;
+  const pendingCount = pendingNotes.length;
+  document.getElementById("noteCount").innerHTML =
+    pendingCount > 0
+      ? `${readCount} + <span class="pending-count">${pendingCount}</span>`
+      : `${readCount}`;
+}
+
+function updateWalletCountDisplay() {
+  const readCount = document.querySelectorAll('#walletReadItems .vault-data-item').length;
+  const pendingCount = pendingWallets.length;
+  document.getElementById("walletCount").innerHTML =
+    pendingCount > 0
+      ? `${readCount} + <span class="pending-count">${pendingCount}</span>`
+      : `${readCount}`;
+}
+
 function updateTotpCountDisplay() {
   const readCount = document.querySelectorAll('#totpReadItems .vault-data-item').length;
   const pendingCount = pendingTotps.length;
@@ -1961,7 +3221,58 @@ function updateTotpCountDisplay() {
       : `${readCount}`;
 }
 
-// Check if forms have unsaved data
+// ==== updateCountDisplay Vault 2 ====
+
+function updatePinCountDisplay() {
+  const count = document.getElementById("pinCount");
+  count.innerHTML = `${pinReadCount} ${pendingPins.length ? `+ <span class="pending-count">${pendingPins.length}</span>` : ""}`;
+}
+
+function updatePinCountDisplay() {
+  const count = document.getElementById("pinCount");
+  count.innerHTML = `${pinReadCount} ${pendingPins.length ? `+ <span class="pending-count">${pendingPins.length}</span>` : ""}`;
+}
+
+function updateCreditCardCountDisplay() {
+  const count = document.getElementById("cardCount");
+  count.innerHTML = `${cardReadCount} ${pendingCreditCards.length ? `+ <span class="pending-count">${pendingCreditCards.length}</span>` : ""}`;
+}
+
+// ==== updateCountDisplay Vault 3 ====
+
+function updateInsuranceCountDisplay() {
+  const count = document.getElementById("insuranceCount");
+  count.innerHTML = `${insuranceReadCount} ${pendingInsurances.length ? `+ <span class="pending-count">${pendingInsurances.length}</span>` : ""}`;
+}
+
+function updateIdentityCountDisplay() {
+  const count = document.getElementById("identityCount");
+  count.innerHTML = `${identityReadCount} ${pendingIdentities.length ? `+ <span class="pending-count">${pendingIdentities.length}</span>` : ""}`;
+}
+
+function updateLegalDocumentCountDisplay() {
+  const count = document.getElementById("legalCount");
+  count.innerHTML = `${legalDocumentReadCount} ${pendingLegalDocuments.length ? `+ <span class="pending-count">${pendingLegalDocuments.length}</span>` : ""}`;
+}
+
+// ==== updateCountDisplay Vault 4 ====
+
+function updateAssetCountDisplay() {
+  const count = document.getElementById("assetCount");
+  count.innerHTML = `${assetReadCount} ${pendingAssets.length ? `+ <span class="pending-count">${pendingAssets.length}</span>` : ""}`;
+}
+
+function updateContactCountDisplay() {
+  const count = document.getElementById("contactCount");
+  count.innerHTML = `${contactReadCount} ${pendingContacts.length ? `+ <span class="pending-count">${pendingContacts.length}</span>` : ""}`;
+}
+
+function updateSubscriptionCountDisplay() {
+  const count = document.getElementById("subscriptionCount");
+  count.innerHTML = `${subscriptionReadCount} ${pendingSubscriptions.length ? `+ <span class="pending-count">${pendingSubscriptions.length}</span>` : ""}`;
+}
+
+// ==== Check if forms have unsaved data Vault 1 ====
 
 function hasUnsavedCredential() {
   return ["credName", "credUsername", "credPassword", "credRemarks"]
@@ -1982,6 +3293,50 @@ function hasUnsavedTotp() {
   return ["totpName", "totpKey", "totpAlgorithm", "totpInterval"]
     .some(id => document.getElementById(id).value.trim() !== "");
 }
+
+// ==== Check if forms have unsaved data Vault 2 ====
+
+function hasUnsavedPins() {
+  return pendingPins.length > 0;
+}
+
+function hasUnsavedBankAccounts() {
+  return pendingBankAccounts.length > 0;
+}
+
+function hasUnsavedCreditCards() {
+  return pendingCreditCards.length > 0;
+}
+
+// ==== Check if forms have unsaved data Vault 3 ====
+
+function hasUnsavedInsurances() {
+  return pendingInsurances.length > 0;
+}
+
+function hasUnsavedIdentities() {
+  return pendingIdentities.length > 0;
+}
+
+function hasUnsavedLegalDocuments() {
+  return pendingLegalDocuments.length > 0;
+}
+
+// ==== Check if forms have unsaved data Vault 4 ====
+
+function hasUnsavedAssets() {
+  return pendingAssets.length > 0;
+}
+
+function hasUnsavedContacts() {
+  return pendingContacts.length > 0;
+}
+
+function hasUnsavedSubscriptions() {
+  return pendingSubscriptions.length > 0;
+}
+
+// ==== Render functions Vault 1 ====
 
 function renderCredentialItem(cred, shouldUpdateUI = true) {
   const container = document.getElementById("credentialReadItems");
@@ -2005,7 +3360,7 @@ function renderCredentialItem(cred, shouldUpdateUI = true) {
     </div>
     <div>
       <strong>Password:</strong>
-      <span class="hidden-password">********</span>
+      <span class="hidden-password">••••••••</span>
       <span class="real-password displayNone">${cred.password}</span>
       <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
       <button class="icon-btn" title="Copy Password" onclick="copyToClipboard('${cred.password}')">
@@ -2156,7 +3511,7 @@ function renderWalletItem(wallet, shouldUpdateUI = true) {
     </div>
     <div>
       <strong>Private Key:</strong> 
-      <span class="hidden-password">********</span>
+      <span class="hidden-password">••••••••</span>
       <span class="real-password displayNone">${wallet.privateKey}</span>
       <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
       <button class="icon-btn" title="Copy Private Key" onclick="copyToClipboard('${wallet.privateKey}')">
@@ -2164,7 +3519,7 @@ function renderWalletItem(wallet, shouldUpdateUI = true) {
       </button>
     </div>
     <div><strong>Seed Phrase:</strong> 
-      <span class="hidden-password">********</span>
+      <span class="hidden-password">••••••••</span>
       <span class="real-password displayNone">${wallet.seedPhrase}</span>
       <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
       <button class="icon-btn" title="Copy Seed Phrase" onclick="copyToClipboard('${wallet.seedPhrase}')">
@@ -2248,7 +3603,7 @@ function renderTotpItem(totp, shouldUpdateUI = true) {
   detail.innerHTML = `
     <div>
       <strong>Key:</strong>
-      <span class="hidden-password">********</span>
+      <span class="hidden-password">••••••••</span>
       <span class="real-password displayNone">${totp.key}</span>
       <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
       <button class="icon-btn" title="Copy Key" onclick="copyToClipboard('${totp.key}')">
@@ -2318,6 +3673,692 @@ function renderTotpItem(totp, shouldUpdateUI = true) {
     });
   });
   
+}
+
+// ==== Render functions Vault 2 ====
+
+function renderPinItem(pin, shouldUpdateUI = true) {
+  const container = document.getElementById("pinReadItems");
+  const item = document.createElement("div");
+  item.className = "vault-data-item";
+
+  const header = document.createElement("div");
+  header.className = "data-header";
+  header.innerHTML = `<i class="fas fa-key"></i> <span class="vault-label-text">${truncate(pin.pin)}</span>`;
+  header.onclick = () => detail.classList.toggle("displayNone");
+
+  const detail = document.createElement("div");
+  detail.className = "data-details displayNone";
+  detail.id = `pin-${pin.id}`;
+  detail.innerHTML = `
+    <div>
+      <strong>PIN:</strong> 
+      <span class="hidden-password">••••••••</span>
+      <span class="real-password displayNone">${pin.pin}</span>
+      <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
+      <button class="icon-btn" title="Copy PIN" onclick="copyToClipboard('${pin.pin}')">
+        <i class="fas fa-copy white"></i>
+      </button>
+    </div>
+    <div><strong>Remarks:</strong> ${pin.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(pin.timestamp)}</div>
+  `;
+
+  const actionBar = document.createElement("div");
+  actionBar.className = "action-icons";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn primary";
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = "Edit";
+  editBtn.onclick = () => {
+    document.getElementById("pinValue").value = pin.pin;
+    document.getElementById("pinRemarks").value = pin.remarks;
+    document.getElementById("newPinForm").classList.remove("slide-hidden");
+    document.getElementById("pinReadSection").classList.remove("displayNone");
+
+    editingOriginalPin = { ...pin };
+    pendingPins = pendingPins.filter(p => p.id !== pin.id);
+
+    const readCard = document.getElementById(`pin-${pin.id}`)?.parentElement;
+    if (readCard) container.removeChild(readCard);
+    if (shouldUpdateUI) {
+      updatePinPendingUI();
+    }
+  };
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "icon-btn danger";
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = "Delete";
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete PIN?`, async () => {
+      await deletePin(pin.id);
+    });
+  };
+
+  actionBar.appendChild(editBtn);
+  actionBar.appendChild(deleteBtn);
+  detail.appendChild(actionBar);
+
+  item.appendChild(header);
+  item.appendChild(detail);
+  container.appendChild(item);
+
+  item.querySelectorAll(".toggle-password").forEach(button => {
+    button.addEventListener("click", () => {
+      const hidden = button.previousElementSibling.previousElementSibling;
+      const revealed = button.previousElementSibling;
+      hidden.classList.toggle("displayNone");
+      revealed.classList.toggle("displayNone");
+      button.querySelector("i").classList.toggle("fa-eye");
+      button.querySelector("i").classList.toggle("fa-eye-slash");
+      button.title = hidden.classList.contains("displayNone") ? "Hide" : "Show";
+    });
+  });
+}
+
+function renderBankAccountItem(bank, shouldUpdateUI = true) {
+  const container = document.getElementById("bankReadItems");
+  const item = document.createElement("div");
+  item.className = "vault-data-item";
+
+  const header = document.createElement("div");
+  header.className = "data-header";
+  header.innerHTML = `<i class="fas fa-university"></i> <span class="vault-label-text">${truncate(bank.iban)}</span>`;
+  header.onclick = () => detail.classList.toggle("displayNone");
+
+  const detail = document.createElement("div");
+  detail.className = "data-details displayNone";
+  detail.id = `bank-${bank.id}`;
+  detail.innerHTML = `
+    <div>
+      <strong>IBAN:</strong> ${bank.iban}
+      <button class="icon-btn" title="Copy IBAN" onclick="copyToClipboard('${bank.iban}')">
+        <i class="fas fa-copy white"></i>
+      </button>
+    </div>
+    <div><strong>BIC:</strong> ${bank.bic}</div>
+    <div><strong>Bank Name:</strong> ${bank.name}</div>
+    <div><strong>Remarks:</strong> ${bank.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(bank.timestamp)}</div>
+  `;
+
+  const actionBar = document.createElement("div");
+  actionBar.className = "action-icons";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn primary";
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = "Edit";
+  editBtn.onclick = () => {
+    document.getElementById("bankIban").value = bank.iban;
+    document.getElementById("bankBic").value = bank.bic;
+    document.getElementById("bankName").value = bank.name;
+    document.getElementById("bankRemarks").value = bank.remarks;
+    document.getElementById("newBankForm").classList.remove("slide-hidden");
+    document.getElementById("bankReadSection").classList.remove("displayNone");
+
+    editingOriginalBankAccount = { ...bank };
+    pendingBankAccounts = pendingBankAccounts.filter(b => b.id !== bank.id);
+
+    const readCard = document.getElementById(`bank-${bank.id}`)?.parentElement;
+    if (readCard) container.removeChild(readCard);
+    if (shouldUpdateUI) {
+      updateBankAccountPendingUI();
+    }
+  };
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "icon-btn danger";
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = "Delete";
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete bank account?`, async () => {
+      await deleteBankAccount(bank.id);
+    });
+  };
+
+  actionBar.appendChild(editBtn);
+  actionBar.appendChild(deleteBtn);
+  detail.appendChild(actionBar);
+
+  item.appendChild(header);
+  item.appendChild(detail);
+  container.appendChild(item);
+}
+
+function renderCreditCardItem(card, shouldUpdateUI = true) {
+  const container = document.getElementById("cardReadItems");
+  const item = document.createElement("div");
+  item.className = "vault-data-item";
+
+  const header = document.createElement("div");
+  header.className = "data-header";
+  header.innerHTML = `<i class="fas fa-credit-card"></i> <span class="vault-label-text">${truncate(card.number)}</span>`;
+  header.onclick = () => detail.classList.toggle("displayNone");
+
+  const detail = document.createElement("div");
+  detail.className = "data-details displayNone";
+  detail.id = `card-${card.id}`;
+  detail.innerHTML = `
+    <div>
+      <strong>Card Number:</strong> 
+      <span class="hidden-password">••••••••</span>
+      <span class="real-password displayNone">${card.number}</span>
+      <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
+      <button class="icon-btn" title="Copy Number" onclick="copyToClipboard('${card.number}')">
+        <i class="fas fa-copy white"></i>
+      </button>
+    </div>
+    <div>
+      <strong>Expiration:</strong> ${card.expiration}
+    </div>
+    <div>
+      <strong>CVV:</strong> 
+      <span class="hidden-password">•••</span>
+      <span class="real-password displayNone">${card.cvv}</span>
+      <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
+      <button class="icon-btn" title="Copy CVV" onclick="copyToClipboard('${card.cvv}')">
+        <i class="fas fa-copy white"></i>
+      </button>
+    </div>
+    <div><strong>Name:</strong> ${card.name}</div>
+    <div><strong>Remarks:</strong> ${card.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(card.timestamp)}</div>
+  `;
+
+  const actionBar = document.createElement("div");
+  actionBar.className = "action-icons";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn primary";
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = "Edit";
+  editBtn.onclick = () => {
+    document.getElementById("cardNumber").value = card.number;
+    document.getElementById("cardExpiration").value = card.expiration;
+    document.getElementById("cardCVV").value = card.cvv;
+    document.getElementById("cardName").value = card.name;
+    document.getElementById("cardRemarks").value = card.remarks;
+    document.getElementById("newCardForm").classList.remove("slide-hidden");
+    document.getElementById("cardReadSection").classList.remove("displayNone");
+
+    editingOriginalCreditCard = { ...card };
+    pendingCreditCards = pendingCreditCards.filter(c => c.id !== card.id);
+
+    const readCard = document.getElementById(`card-${card.id}`)?.parentElement;
+    if (readCard) container.removeChild(readCard);
+    if (shouldUpdateUI) {
+      updateCreditCardPendingUI();
+    }
+  };
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "icon-btn danger";
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = "Delete";
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete credit card?`, async () => {
+      await deleteCreditCard(card.id);
+    });
+  };
+
+  actionBar.appendChild(editBtn);
+  actionBar.appendChild(deleteBtn);
+  detail.appendChild(actionBar);
+
+  item.appendChild(header);
+  item.appendChild(detail);
+  container.appendChild(item);
+
+  item.querySelectorAll(".toggle-password").forEach(button => {
+    button.addEventListener("click", () => {
+      const hidden = button.previousElementSibling.previousElementSibling;
+      const revealed = button.previousElementSibling;
+      hidden.classList.toggle("displayNone");
+      revealed.classList.toggle("displayNone");
+      button.querySelector("i").classList.toggle("fa-eye");
+      button.querySelector("i").classList.toggle("fa-eye-slash");
+      button.title = hidden.classList.contains("displayNone") ? "Hide" : "Show";
+    });
+  });
+}
+
+// ==== Render functions Vault 3 ====
+
+function renderCreditCardItem(card, shouldUpdateUI = true) {
+  const container = document.getElementById("cardReadItems");
+  const item = document.createElement("div");
+  item.className = "vault-data-item";
+
+  const header = document.createElement("div");
+  header.className = "data-header";
+  header.innerHTML = `<i class="fas fa-credit-card"></i> <span class="vault-label-text">${truncate(card.number)}</span>`;
+  header.onclick = () => detail.classList.toggle("displayNone");
+
+  const detail = document.createElement("div");
+  detail.className = "data-details displayNone";
+  detail.id = `card-${card.id}`;
+  detail.innerHTML = `
+    <div>
+      <strong>Card Number:</strong> 
+      <span class="hidden-password">••••••••</span>
+      <span class="real-password displayNone">${card.number}</span>
+      <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
+      <button class="icon-btn" title="Copy Number" onclick="copyToClipboard('${card.number}')">
+        <i class="fas fa-copy white"></i>
+      </button>
+    </div>
+    <div>
+      <strong>Expiration:</strong> ${card.expiration}
+    </div>
+    <div>
+      <strong>CVV:</strong> 
+      <span class="hidden-password">•••</span>
+      <span class="real-password displayNone">${card.cvv}</span>
+      <button class="toggle-password icon-btn eye" title="Show/Hide"><i class="fas fa-eye"></i></button>
+      <button class="icon-btn" title="Copy CVV" onclick="copyToClipboard('${card.cvv}')">
+        <i class="fas fa-copy white"></i>
+      </button>
+    </div>
+    <div><strong>Name:</strong> ${card.name}</div>
+    <div><strong>Remarks:</strong> ${card.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(card.timestamp)}</div>
+  `;
+
+  const actionBar = document.createElement("div");
+  actionBar.className = "action-icons";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn primary";
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = "Edit";
+  editBtn.onclick = () => {
+    document.getElementById("cardNumber").value = card.number;
+    document.getElementById("cardExpiration").value = card.expiration;
+    document.getElementById("cardCVV").value = card.cvv;
+    document.getElementById("cardName").value = card.name;
+    document.getElementById("cardRemarks").value = card.remarks;
+    document.getElementById("newCardForm").classList.remove("slide-hidden");
+    document.getElementById("cardReadSection").classList.remove("displayNone");
+
+    editingOriginalCreditCard = { ...card };
+    pendingCreditCards = pendingCreditCards.filter(c => c.id !== card.id);
+
+    const readCard = document.getElementById(`card-${card.id}`)?.parentElement;
+    if (readCard) container.removeChild(readCard);
+    if (shouldUpdateUI) {
+      updateCreditCardPendingUI();
+    }
+  };
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "icon-btn danger";
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = "Delete";
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete credit card?`, async () => {
+      await deleteCreditCard(card.id);
+    });
+  };
+
+  actionBar.appendChild(editBtn);
+  actionBar.appendChild(deleteBtn);
+  detail.appendChild(actionBar);
+
+  item.appendChild(header);
+  item.appendChild(detail);
+  container.appendChild(item);
+
+  item.querySelectorAll(".toggle-password").forEach(button => {
+    button.addEventListener("click", () => {
+      const hidden = button.previousElementSibling.previousElementSibling;
+      const revealed = button.previousElementSibling;
+      hidden.classList.toggle("displayNone");
+      revealed.classList.toggle("displayNone");
+      button.querySelector("i").classList.toggle("fa-eye");
+      button.querySelector("i").classList.toggle("fa-eye-slash");
+      button.title = hidden.classList.contains("displayNone") ? "Hide" : "Show";
+    });
+  });
+}
+
+function renderIdentityItem(identity, shouldUpdateUI = true) {
+  const container = document.getElementById("identityReadItems");
+  const item = document.createElement("div");
+  item.className = "vault-data-item";
+
+  const header = document.createElement("div");
+  header.className = "data-header";
+  header.innerHTML = `<i class="fas fa-id-card"></i> <span class="vault-label-text">${identity.name}</span>`;
+  header.onclick = () => detail.classList.toggle("displayNone");
+
+  const detail = document.createElement("div");
+  detail.className = "data-details displayNone";
+  detail.id = `identity-${identity.id}`;
+  detail.innerHTML = `
+    <div><strong>Name:</strong> ${identity.name}</div>
+    <div><strong>Phone:</strong> ${identity.phone}</div>
+    <div><strong>Email:</strong> ${identity.email}</div>
+    <div><strong>Relation:</strong> ${identity.relation}</div>
+    <div><strong>Remarks:</strong> ${identity.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(identity.timestamp)}</div>
+  `;
+
+  const actionBar = document.createElement("div");
+  actionBar.className = "action-icons";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn primary";
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = "Edit";
+  editBtn.onclick = () => {
+    document.getElementById("identityName").value = identity.name;
+    document.getElementById("identityPhone").value = identity.phone;
+    document.getElementById("identityEmail").value = identity.email;
+    document.getElementById("identityRelation").value = identity.relation;
+    document.getElementById("identityRemarks").value = identity.remarks;
+    document.getElementById("newIdentityForm").classList.remove("slide-hidden");
+    document.getElementById("identityReadSection").classList.remove("displayNone");
+
+    editingOriginalIdentity = { ...identity };
+    pendingIdentities = pendingIdentities.filter(i => i.id !== identity.id);
+
+    const readCard = document.getElementById(`identity-${identity.id}`)?.parentElement;
+    if (readCard) container.removeChild(readCard);
+    if (shouldUpdateUI) {
+      updateIdentityPendingUI();
+    }
+  };
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "icon-btn danger";
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = "Delete";
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete identity "${identity.name}"?`, async () => {
+      await deleteIdentity(identity.id);
+    });
+  };
+
+  actionBar.appendChild(editBtn);
+  actionBar.appendChild(deleteBtn);
+  detail.appendChild(actionBar);
+
+  item.appendChild(header);
+  item.appendChild(detail);
+  container.appendChild(item);
+}
+
+function renderLegalDocumentItem(legal, shouldUpdateUI = true) {
+  const container = document.getElementById("legalPendingItems") || document.getElementById("legalReadItems");
+  const item = document.createElement("div");
+  item.className = "vault-data-item";
+
+  const header = document.createElement("div");
+  header.className = "data-header";
+  header.innerHTML = `<i class="fas fa-file-contract"></i> <span class="vault-label-text">${legal.name}</span>`;
+  header.onclick = () => detail.classList.toggle("displayNone");
+
+  const detail = document.createElement("div");
+  detail.className = "data-details displayNone";
+  detail.id = `legal-${legal.id}`;
+  detail.innerHTML = `
+    <div><strong>Name:</strong> ${legal.name}</div>
+    <div><strong>Phone:</strong> ${legal.phone}</div>
+    <div><strong>Email:</strong> ${legal.email}</div>
+    <div><strong>Relation:</strong> ${legal.relation}</div>
+    <div><strong>Remarks:</strong> ${legal.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(legal.timestamp)}</div>
+  `;
+
+  const actionBar = document.createElement("div");
+  actionBar.className = "action-icons";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn primary";
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = "Edit";
+  editBtn.onclick = () => {
+    document.getElementById("legalName").value = legal.name;
+    document.getElementById("legalPhone").value = legal.phone;
+    document.getElementById("legalEmail").value = legal.email;
+    document.getElementById("legalRelation").value = legal.relation;
+    document.getElementById("legalRemarks").value = legal.remarks;
+    document.getElementById("newLegalForm").classList.remove("slide-hidden");
+    document.getElementById("legalReadSection").classList.remove("displayNone");
+
+    editingOriginalLegalDocument = { ...legal };
+    pendingLegalDocuments = pendingLegalDocuments.filter(l => l.id !== legal.id);
+
+    const readCard = document.getElementById(`legal-${legal.id}`)?.parentElement;
+    if (readCard) container.removeChild(readCard);
+    if (shouldUpdateUI) {
+      updateLegalDocumentPendingUI();
+    }
+  };
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "icon-btn danger";
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = "Delete";
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete legal document "${legal.name}"?`, async () => {
+      await deleteLegalDocument(legal.id);
+    });
+  };
+
+  actionBar.appendChild(editBtn);
+  actionBar.appendChild(deleteBtn);
+  detail.appendChild(actionBar);
+
+  item.appendChild(header);
+  item.appendChild(detail);
+  container.appendChild(item);
+}
+
+// ==== Render functions Vault 4 ====
+
+function renderAssetItem(asset, shouldUpdateUI = true) {
+  const container = document.getElementById("assetReadItems");
+  const item = document.createElement("div");
+  item.className = "vault-data-item";
+
+  const header = document.createElement("div");
+  header.className = "data-header";
+  header.innerHTML = `<i class="fas fa-building"></i> <span class="vault-label-text">${asset.name}</span>`;
+  header.onclick = () => detail.classList.toggle("displayNone");
+
+  const detail = document.createElement("div");
+  detail.className = "data-details displayNone";
+  detail.id = `asset-${asset.id}`;
+  detail.innerHTML = `
+    <div><strong>Name:</strong> ${asset.name}</div>
+    <div><strong>Amount:</strong> ${asset.amount}</div>
+    <div><strong>Due:</strong> ${asset.due}</div>
+    <div><strong>Interval:</strong> ${asset.interval}</div>
+    <div><strong>Remarks:</strong> ${asset.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(asset.timestamp)}</div>
+  `;
+
+  const actionBar = document.createElement("div");
+  actionBar.className = "action-icons";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn primary";
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = "Edit";
+  editBtn.onclick = () => {
+    document.getElementById("assetName").value = asset.name;
+    document.getElementById("assetAmount").value = asset.amount;
+    document.getElementById("assetDue").value = asset.due;
+    document.getElementById("assetInterval").value = asset.interval;
+    document.getElementById("assetRemarks").value = asset.remarks;
+    document.getElementById("newAssetForm").classList.remove("slide-hidden");
+    document.getElementById("assetReadSection").classList.remove("displayNone");
+
+    editingOriginalAsset = { ...asset };
+    pendingAssets = pendingAssets.filter(a => a.id !== asset.id);
+
+    const readCard = document.getElementById(`asset-${asset.id}`)?.parentElement;
+    if (readCard) container.removeChild(readCard);
+    if (shouldUpdateUI) {
+      updateAssetPendingUI();
+    }
+  };
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "icon-btn danger";
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = "Delete";
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete asset "${asset.name}"?`, async () => {
+      await deleteAsset(asset.id);
+    });
+  };
+
+  actionBar.appendChild(editBtn);
+  actionBar.appendChild(deleteBtn);
+  detail.appendChild(actionBar);
+
+  item.appendChild(header);
+  item.appendChild(detail);
+  container.appendChild(item);
+}
+
+function renderContactItem(contact, shouldUpdateUI = true) {
+  const container = document.getElementById("contactReadItems");
+  const item = document.createElement("div");
+  item.className = "vault-data-item";
+
+  const header = document.createElement("div");
+  header.className = "data-header";
+  header.innerHTML = `<i class="fas fa-address-book"></i> <span class="vault-label-text">${contact.name}</span>`;
+  header.onclick = () => detail.classList.toggle("displayNone");
+
+  const detail = document.createElement("div");
+  detail.className = "data-details displayNone";
+  detail.id = `contact-${contact.id}`;
+  detail.innerHTML = `
+    <div><strong>Name:</strong> ${contact.name}</div>
+    <div><strong>Amount:</strong> ${contact.amount}</div>
+    <div><strong>Due:</strong> ${contact.due}</div>
+    <div><strong>Interval:</strong> ${contact.interval}</div>
+    <div><strong>Remarks:</strong> ${contact.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(contact.timestamp)}</div>
+  `;
+
+  const actionBar = document.createElement("div");
+  actionBar.className = "action-icons";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn primary";
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = "Edit";
+  editBtn.onclick = () => {
+    document.getElementById("contactName").value = contact.name;
+    document.getElementById("contactAmount").value = contact.amount;
+    document.getElementById("contactDue").value = contact.due;
+    document.getElementById("contactInterval").value = contact.interval;
+    document.getElementById("contactRemarks").value = contact.remarks;
+    document.getElementById("newContactForm").classList.remove("slide-hidden");
+    document.getElementById("contactReadSection").classList.remove("displayNone");
+
+    editingOriginalContact = { ...contact };
+    pendingContacts = pendingContacts.filter(c => c.id !== contact.id);
+
+    const readCard = document.getElementById(`contact-${contact.id}`)?.parentElement;
+    if (readCard) container.removeChild(readCard);
+    if (shouldUpdateUI) {
+      updateContactPendingUI();
+    }
+  };
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "icon-btn danger";
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = "Delete";
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete contact "${contact.name}"?`, async () => {
+      await deleteContact(contact.id);
+    });
+  };
+
+  actionBar.appendChild(editBtn);
+  actionBar.appendChild(deleteBtn);
+  detail.appendChild(actionBar);
+
+  item.appendChild(header);
+  item.appendChild(detail);
+  container.appendChild(item);
+}
+
+function renderSubscriptionItem(subscription, shouldUpdateUI = true) {
+  const container = document.getElementById("subscriptionReadItems");
+  const item = document.createElement("div");
+  item.className = "vault-data-item";
+
+  const header = document.createElement("div");
+  header.className = "data-header";
+  header.innerHTML = `<i class="fas fa-sync-alt"></i> <span class="vault-label-text">${subscription.name}</span>`;
+  header.onclick = () => detail.classList.toggle("displayNone");
+
+  const detail = document.createElement("div");
+  detail.className = "data-details displayNone";
+  detail.id = `subscription-${subscription.id}`;
+  detail.innerHTML = `
+    <div><strong>Name:</strong> ${subscription.name}</div>
+    <div><strong>Amount:</strong> ${subscription.amount}</div>
+    <div><strong>Due:</strong> ${subscription.due}</div>
+    <div><strong>Interval:</strong> ${subscription.interval}</div>
+    <div><strong>Remarks:</strong> ${subscription.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(subscription.timestamp)}</div>
+  `;
+
+  const actionBar = document.createElement("div");
+  actionBar.className = "action-icons";
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "icon-btn primary";
+  editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+  editBtn.title = "Edit";
+  editBtn.onclick = () => {
+    document.getElementById("subscriptionName").value = subscription.name;
+    document.getElementById("subscriptionAmount").value = subscription.amount;
+    document.getElementById("subscriptionDue").value = subscription.due;
+    document.getElementById("subscriptionInterval").value = subscription.interval;
+    document.getElementById("subscriptionRemarks").value = subscription.remarks;
+    document.getElementById("newSubscriptionForm").classList.remove("slide-hidden");
+    document.getElementById("subscriptionReadSection").classList.remove("displayNone");
+
+    editingOriginalSubscription = { ...subscription };
+    pendingSubscriptions = pendingSubscriptions.filter(s => s.id !== subscription.id);
+
+    const readCard = document.getElementById(`subscription-${subscription.id}`)?.parentElement;
+    if (readCard) container.removeChild(readCard);
+    if (shouldUpdateUI) {
+      updateSubscriptionPendingUI();
+    }
+  };
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "icon-btn danger";
+  deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+  deleteBtn.title = "Delete";
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete subscription "${subscription.name}"?`, async () => {
+      await deleteSubscription(subscription.id);
+    });
+  };
+
+  actionBar.appendChild(editBtn);
+  actionBar.appendChild(deleteBtn);
+  detail.appendChild(actionBar);
+
+  item.appendChild(header);
+  item.appendChild(detail);
+  container.appendChild(item);
 }
 
 // ==== IDLE TIMEOUT HANDLING ====
