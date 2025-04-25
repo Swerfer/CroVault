@@ -1,10 +1,10 @@
 // ==== Config and ABIs ====
 const costManagerAddress  = "0x50E2c7201d5714e018a33203FbD92979BC51eee4";
-const factoryAddress      = "0x3a2649A49c8Bb5A9d0500bF0e43af27B706D084F";
+let factoryAddress;
 
 // ==== topic0 = Event VaultCreated in CostManager contract Topics 0 ====
 const topic0              = "0x0b045af6aff86dd2cda5342fd0329a354dc66759ff1eda00d7ecf13a76c7fb3b";
-const fetchVaultCountUrl  = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=${factoryAddress}&topic0=${topic0}`;
+const fetchVaultCountUrl  = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=factoryAddress&topic0=${topic0}`;
 const cronosRpcUrl        = "https://evm-cronos.crypto.org";
 const cronoScanUrl        = "https://cronoscan.com";
 
@@ -22,7 +22,20 @@ const costManagerAbi = [
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function"
-  }
+  },
+  {
+    inputs: [],
+    name: "vaultFactory",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
 ];
 
 const vaultAbi = [
@@ -321,7 +334,7 @@ async function fetchVaultCount() {
   const path = window.location.pathname.toLowerCase();
   if (!(path.endsWith("/") || path.endsWith("/index") || path.endsWith("/index.html"))) return;
   try {
-    const response = await fetch(fetchVaultCountUrl);
+    const response = await fetch(fetchVaultCountUrl.replace("factoryAddress", factoryAddress));
     const data = await response.json();
     // Check if data looks good
     if (data && data.status === "1" && Array.isArray(data.result)) {
@@ -364,6 +377,19 @@ async function fetchAndCacheCosts() {
     }
 
   } catch {}
+}
+
+async function getFactoryAddress() {
+  const costManager = new ethers.Contract(costManagerAddress, costManagerAbi, provider);
+  for (let i = 0; i < 10; i++) {
+    try {
+      factoryAddress = await costManager.vaultFactory();
+      return;
+    } catch (e) {
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  throw new Error("Unable to fetch factory address");
 }
 
 async function getVaultCreationCost() {
@@ -2400,6 +2426,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   provider = provider || new ethers.providers.JsonRpcProvider(cronosRpcUrl);
 
+  await getFactoryAddress();
   await fetchVaultCount();    // ✅ Always fetch vault count
   await fetchAndCacheCosts(); // ✅ Always fetch cost info
   // ⛔ Skip the rest for index page

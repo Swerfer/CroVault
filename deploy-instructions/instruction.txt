@@ -2,7 +2,7 @@ npm init -y (in project folder)
 npm install --save-dev hardhat@latest
 npm install --save-dev @nomicfoundation/hardhat-toolbox
 
-npx hardhat run scripts/deployVaulContract.js --network cronos
+npx hardhat run scripts/deployVaultContract.js --network cronos
 npx hardhat run scripts/deployCostManager.js --network cronos
 npx hardhat run scripts/deployVaultFactory.js --network cronos
 

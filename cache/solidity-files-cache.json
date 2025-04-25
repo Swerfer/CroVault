@@ -421,6 +421,126 @@
       "artifacts": [
         "Create2"
       ]
+    },
+    "C:\\Users\\denni\\OneDrive\\CroVault\\contracts\\VaultContract2.sol": {
+      "lastModificationDate": 1745577740114,
+      "contentHash": "d8a95206005128b29e27f496822fa739",
+      "sourceName": "contracts/VaultContract2.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
+        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "./CostManager.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.28"
+      ],
+      "artifacts": [
+        "VaultContract2"
+      ]
+    },
+    "C:\\Users\\denni\\OneDrive\\CroVault\\contracts\\VaultContract3.sol": {
+      "lastModificationDate": 1745577894053,
+      "contentHash": "d6d5c920946e091bb9f6629d6d73ccb2",
+      "sourceName": "contracts/VaultContract3.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
+        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "./CostManager.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.28"
+      ],
+      "artifacts": [
+        "VaultContract3"
+      ]
+    },
+    "C:\\Users\\denni\\OneDrive\\CroVault\\contracts\\VaultContract4.sol": {
+      "lastModificationDate": 1745577883379,
+      "contentHash": "049a27c7813af2886712017069a644eb",
+      "sourceName": "contracts/VaultContract4.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
+        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "./CostManager.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.28"
+      ],
+      "artifacts": [
+        "VaultContract4"
+      ]
     }
   }
 }
