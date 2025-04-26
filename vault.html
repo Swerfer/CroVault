@@ -54,9 +54,6 @@
                 <span class="loader"></span>
               </span>
             </button>
-            <button id="retrySignBtn" class="btn-custom small your-vault-buttons displayNone">
-              <i class="fas fa-pen-nib"></i> Sign
-            </button>
             <button id="retryUnlockBtn" class="btn-custom small your-vault-buttons displayNone">
               <i class="fas fa-unlock"></i> Unlock
             </button>
@@ -84,7 +81,7 @@
 
       <section id="vaultDataSection" class="section displayNone">
 
-        <div class="flex-between">
+        <div class="flex-between"  id="Save buttons">
 
           <h3 class="vault-section-title">Your Vault</h3>
           <div>
@@ -217,6 +214,281 @@
           </div>
         </div>
 
+        <!-- === PIN Section === -->
+        <div class="vault-section" id="pinSection">
+            <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="pinList"><i class="fas fa-key"></i> PINs (<span id="pinCount">0</span>)</h4>
+            <button id="addPinBtn" class="icon-only-btn" title="Add PIN"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="pinList" class="vault-content displayNone">
+            <!-- New PIN Form -->
+            <div id="newPinForm" class="vault-card vault-pin slide-hidden">
+                <div>
+                <h4 id="pinFormTitle"><i class="fas fa-key"></i> New PIN</h4>
+                <p id="upsertPinPrice" class="gold mt-2"></p>
+                </div>
+                <div class="dataDiv">
+                <input type="text" id="pinName" placeholder="Name (max 64 chars)" maxlength="64">
+                <input type="text" id="pinLinkedTo" placeholder="Linked To (max 64 chars)" maxlength="64">
+                <input type="text" id="pinValue" placeholder="PIN Code (max 32 chars)" maxlength="32">
+                <input type="text" id="pinRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+                </div>
+                <div class="buttonDiv">
+                <button id="savePinBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelPinBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </div>
+            <div id="pinReadItems"></div>
+            <div id="pinPendingItems"></div>
+            </div>
+        </div>
+  
+        <!-- === Bank Accounts Section === -->
+        <div class="vault-section" id="bankSection">
+            <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="bankList"><i class="fas fa-university"></i> Bank Accounts (<span id="bankCount">0</span>)</h4>
+            <button id="addBankBtn" class="icon-only-btn" title="Add Bank Account"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="bankList" class="vault-content displayNone">
+            <!-- New Bank Account Form -->
+            <div id="newBankForm" class="vault-card vault-bank slide-hidden">
+                <div>
+                <h4 id="bankFormTitle"><i class="fas fa-university"></i> New Bank Account</h4>
+                <p id="upsertBankPrice" class="gold mt-2"></p>
+                </div>
+                <div class="dataDiv">
+                <input type="text" id="bankName" placeholder="Bank Account Name (max 64 chars)" maxlength="64">
+                <input type="text" id="bankAccountNumber" placeholder="Account Number (max 64 chars)" maxlength="64">
+                <input type="text" id="bankIban" placeholder="IBAN (max 64 chars)" maxlength="64">
+                <input type="text" id="bankSwift" placeholder="SWIFT (max 64 chars)" maxlength="64">
+                <input type="text" id="bankBankName" placeholder="Bank Name (max 64 chars)" maxlength="64">
+                <input type="text" id="bankCountry" placeholder="Country (max 64 chars)" maxlength="64">
+                <input type="text" id="bankRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+                </div>
+                <div class="buttonDiv">
+                <button id="saveBankBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelBankBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </div> 
+            <div id="bankReadItems"></div>
+            <div id="bankPendingItems"></div>
+            </div>
+        </div>
+  
+        <!-- === Credit Cards Section === -->
+        <div class="vault-section" id="cardSection">
+            <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="cardList"><i class="fas fa-credit-card"></i> Credit Cards (<span id="cardCount">0</span>)</h4>
+            <button id="addCardBtn" class="icon-only-btn" title="Add Credit Card"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="cardList" class="vault-content displayNone">
+            <!-- New Credit Card Form -->
+            <div id="newCardForm" class="vault-card vault-card-entry slide-hidden">
+                <div>
+                <h4 id="cardFormTitle"><i class="fas fa-credit-card"></i> New Credit Card</h4>
+                <p id="upsertCardPrice" class="gold mt-2"></p>
+                </div>
+                <div class="dataDiv">
+                <input type="text" id="cardName" placeholder="Card Name (max 64 chars)" maxlength="64">
+                <input type="text" id="cardNumber" placeholder="Card Number (max 64 chars)" maxlength="64">
+                <input type="text" id="cardHolder" placeholder="Card Holder (max 64 chars)" maxlength="64">
+                <input type="text" id="cardExpiration" placeholder="Expiration Date (MM/YY)" maxlength="8">
+                <input type="text" id="cardCVV" placeholder="CVV" maxlength="6">
+                <input type="text" id="cardLinkedTo" placeholder="Linked To (max 64 chars)" maxlength="64">
+                <input type="text" id="cardRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+                </div>
+                <div class="buttonDiv">
+                <button id="saveCardBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelCardBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </div>  
+            <div id="cardReadItems"></div>
+            <div id="cardPendingItems"></div>
+            </div>
+        </div>
+  
+        <!-- === Insurances Section === -->
+        <div class="vault-section" id="insuranceSection">
+            <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="insuranceList"><i class="fas fa-file-medical"></i> Insurances (<span id="insuranceCount">0</span>)</h4>
+            <button id="addInsuranceBtn" class="icon-only-btn" title="Add Insurance"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="insuranceList" class="vault-content displayNone">
+            <!-- New Insurance Form -->
+            <div id="newInsuranceForm" class="vault-card vault-insurance slide-hidden">
+                <div>
+                <h4 id="insuranceFormTitle"><i class="fas fa-file-medical"></i> New Insurance</h4>
+                <p id="upsertInsurancePrice" class="gold mt-2"></p>
+                </div>
+                <div class="dataDiv">
+                <input type="text" id="insuranceName" placeholder="Insurance Name (max 64 chars)" maxlength="64">
+                <input type="text" id="insuranceProvider" placeholder="Provider (max 64 chars)" maxlength="64">
+                <input type="text" id="insurancePolicyNumber" placeholder="Policy Number (max 64 chars)" maxlength="64">
+                <input type="text" id="insuranceExpiryDate" placeholder="Expiry Date (YYYY-MM-DD)" maxlength="16">
+                <input type="text" id="insuranceLinkedTo" placeholder="Linked To (max 64 chars)" maxlength="64">
+                <input type="text" id="insuranceRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+                </div>
+                <div class="buttonDiv">
+                <button id="saveInsuranceBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelInsuranceBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </div>  
+            <div id="insuranceReadItems"></div>
+            <div id="insurancePendingItems"></div>
+            </div>
+        </div>
+  
+        <!-- === Identities Section === -->
+        <div class="vault-section" id="identitySection">
+            <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="identityList"><i class="fas fa-id-card"></i> Identities (<span id="identityCount">0</span>)</h4>
+            <button id="addIdentityBtn" class="icon-only-btn" title="Add Identity"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="identityList" class="vault-content displayNone">
+            <!-- New Identity Form -->
+            <div id="newIdentityForm" class="vault-card vault-identity slide-hidden">
+                <div>
+                <h4 id="identityFormTitle"><i class="fas fa-id-card"></i> New Identity</h4>
+                <p id="upsertIdentityPrice" class="gold mt-2"></p>
+                </div>
+                <div class="dataDiv">
+                <input type="text" id="identityName" placeholder="Document Name (max 64 chars)" maxlength="64">
+                <input type="text" id="identityDocumentType" placeholder="Document Type (Passport, ID, etc.)" maxlength="64">
+                <input type="text" id="identityDocumentNumber" placeholder="Document Number" maxlength="64">
+                <input type="text" id="identityCountry" placeholder="Issuing Country" maxlength="64">
+                <input type="text" id="identityExpiryDate" placeholder="Expiry Date (YYYY-MM-DD)" maxlength="16">
+                <input type="text" id="identityRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+                </div>
+                <div class="buttonDiv">
+                <button id="saveIdentityBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelIdentityBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </div>  
+            <div id="identityReadItems"></div>
+            <div id="identityPendingItems"></div>
+            </div>
+        </div>
+  
+        <!-- === Legal Documents Section === -->
+        <div class="vault-section" id="legalSection">
+            <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="legalList"><i class="fas fa-file-contract"></i> Legal Documents (<span id="legalCount">0</span>)</h4>
+            <button id="addLegalBtn" class="icon-only-btn" title="Add Legal Document"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="legalList" class="vault-content displayNone">
+            <!-- New Legal Document Form -->
+            <div id="newLegalForm" class="vault-card vault-legal slide-hidden">
+                <div>
+                <h4 id="legalFormTitle"><i class="fas fa-file-contract"></i> New Legal Document</h4>
+                <p id="upsertLegalPrice" class="gold mt-2"></p>
+                </div>
+                <div class="dataDiv">
+                <input type="text" id="legalName" placeholder="Document Name (max 64 chars)" maxlength="64">
+                <input type="text" id="legalDocumentType" placeholder="Document Type (Will, Contract, etc.)" maxlength="64">
+                <input type="text" id="legalStorageLocation" placeholder="Storage Location (e.g., Safe, IPFS)" maxlength="128">
+                <input type="text" id="legalLinkedTo" placeholder="Linked To (Person/Asset)" maxlength="64">
+                <input type="text" id="legalRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+                </div>
+                <div class="buttonDiv">
+                <button id="saveLegalBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelLegalBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </div>  
+            <div id="legalReadItems"></div>
+            <div id="legalPendingItems"></div>
+            </div>
+        </div>
+  
+        <!-- === Assets Section === -->
+        <div class="vault-section" id="assetSection">
+            <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="assetList"><i class="fas fa-building"></i> Assets (<span id="assetCount">0</span>)</h4>
+            <button id="addAssetBtn" class="icon-only-btn" title="Add Asset"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="assetList" class="vault-content displayNone">
+            <!-- New Asset Form -->
+            <div id="newAssetForm" class="vault-card vault-asset slide-hidden">
+                <div>
+                <h4 id="assetFormTitle"><i class="fas fa-building"></i> New Asset</h4>
+                <p id="upsertAssetPrice" class="gold mt-2"></p>
+                </div>
+                <div class="dataDiv">
+                <input type="text" id="assetType" placeholder="Asset Type (House, Car, etc.)" maxlength="64">
+                <input type="text" id="assetOwnershipId" placeholder="Ownership ID (VIN, Deed, etc.)" maxlength="64">
+                <input type="text" id="assetValueEstimate" placeholder="Value Estimate (optional)" maxlength="64">
+                <input type="text" id="assetLinkedTo" placeholder="Linked To (Owner, Company, etc.)" maxlength="64">
+                <input type="text" id="assetRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+                </div>
+                <div class="buttonDiv">
+                <button id="saveAssetBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelAssetBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </div>  
+            <div id="assetReadItems"></div>
+            <div id="assetPendingItems"></div>
+            </div>
+        </div>
+  
+        <!-- === Contacts Section === -->
+        <div class="vault-section" id="contactSection">
+            <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="contactList"><i class="fas fa-address-book"></i> Contacts (<span id="contactCount">0</span>)</h4>
+            <button id="addContactBtn" class="icon-only-btn" title="Add Contact"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="contactList" class="vault-content displayNone">
+            <!-- New Contact Form -->
+            <div id="newContactForm" class="vault-card vault-contact slide-hidden">
+                <div>
+                <h4 id="contactFormTitle"><i class="fas fa-address-book"></i> New Contact</h4>
+                <p id="upsertContactPrice" class="gold mt-2"></p>
+                </div>
+                <div class="dataDiv">
+                <input type="text" id="contactName" placeholder="Full Name (max 64 chars)" maxlength="64">
+                <input type="text" id="contactRelation" placeholder="Relation (e.g., Lawyer, Spouse)" maxlength="64">
+                <input type="email" id="contactEmail" placeholder="Email Address" maxlength="64">
+                <input type="text" id="contactPhone" placeholder="Phone Number" maxlength="32">
+                <input type="text" id="contactRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+                </div>
+                <div class="buttonDiv">
+                <button id="saveContactBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelContactBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </div>  
+            <div id="contactReadItems"></div>
+            <div id="contactPendingItems"></div>
+            </div>
+        </div>
+  
+        <!-- === Subscriptions Section === -->
+        <div class="vault-section" id="subscriptionSection">
+            <div class="vault-section-header">
+            <h4 class="vault-toggle" data-target="subscriptionList"><i class="fas fa-sync-alt"></i> Subscriptions (<span id="subscriptionCount">0</span>)</h4>
+            <button id="addSubscriptionBtn" class="icon-only-btn" title="Add Subscription"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="subscriptionList" class="vault-content displayNone">
+            <!-- New Subscription Form -->
+            <div id="newSubscriptionForm" class="vault-card vault-subscription slide-hidden">
+                <div>
+                <h4 id="subscriptionFormTitle"><i class="fas fa-sync-alt"></i> New Subscription</h4>
+                <p id="upsertSubscriptionPrice" class="gold mt-2"></p>
+                </div>
+                <div class="dataDiv">
+                <input type="text" id="subscriptionServiceName" placeholder="Service Name (Netflix, AWS, etc.)" maxlength="64">
+                <input type="text" id="subscriptionBillingAccount" placeholder="Billing Account Used" maxlength="64">
+                <input type="text" id="subscriptionFrequency" placeholder="Frequency (Monthly, Yearly)" maxlength="32">
+                <input type="text" id="subscriptionLinkedTo" placeholder="Linked To (Card or Bank Account)" maxlength="64">
+                <input type="text" id="subscriptionRemarks" placeholder="Remarks (max 1024 chars)" maxlength="1024">
+                </div>
+                <div class="buttonDiv">
+                <button id="saveSubscriptionBtn" class="btn-custom green"><i class="fas fa-plus"></i> Add</button>
+                <button id="cancelSubscriptionBtn" class="btn-custom red"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+            </div>  
+            <div id="subscriptionReadItems"></div>
+            <div id="subscriptionPendingItems"></div>
+            </div>
+        </div>
+  
       </section>
 
       <footer>

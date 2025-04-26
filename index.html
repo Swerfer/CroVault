@@ -4,10 +4,11 @@
   <!-- Basic meta tags -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="CroVault is a secure decentralized blockchain-based password manager and digital inheritance vault. 
-      Easily store credentials, seed phrases, and more and share access with trusted contacts.">
-  <meta name="keywords" content="CroVault, secure password manager, encrypted digital vault, privacy vault, digital inheritance, immutable,
-      credentials, blockchain vault, seed phrase storage, secure wallet, decentralized vault, web3 vault, private key manager">
+  <meta name="description" content="CroVault is a decentralized blockchain vault. Securely store credentials, wallets, PINs, bank accounts, 
+    credit cards, insurances, identities, legal documents, assets, emergency contacts, and subscriptions. Plan your digital inheritance.">
+  <meta name="keywords" content="CroVault, secure password manager, encrypted digital vault, privacy vault, digital inheritance, immutable, 
+    credentials, blockchain vault, seed phrase storage, secure wallet, decentralized vault, web3 vault, private key manager, 
+    digital legacy, blockchain inheritance, decentralized inheritance, backup after death, legacy planning blockchain">    
   <meta name="author" content="CroVault Team">
   <meta name="theme-color" content="#051126">
   <meta name="robots" content="index, follow"> 
@@ -26,7 +27,7 @@
   <meta name="twitter:image" content="https://crovault.com/assets/images/phone/crovault-dapp.webp">
   <meta name="twitter:site" content="@CroVault">
 
-  <title>CroVault – Blockchain Password Manager and Secure Vault for Your Private Data</title>
+  <title>CroVault – Decentralized Legacy Vault and Blockchain Password Manager</title>
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -85,11 +86,12 @@
         <div id="overlay" onclick="closeMenu()"></div>
     
         <!-- Combined nav menu -->
-        <div class="nav-menu px-4 mt-2" id="navMenu">
-          <a href="/blog" class="fs-5">Blog</a> 
-          <a href="/instructions" class="fs-5">Instructions</a>
-          <a href="/real-life-story" class="fs-5">Real life story</a>
-          <a href="/whitepaper" class="fs-5">Whitepaper</a>
+        <div class="nav-menu px-4 mt-2"     id="navMenu">
+          <a href="/blog"                   class="fs-5">Blog</a> 
+          <a href="/instructions"           class="fs-5">Owner instructions</a>
+          <a href="/instructions-for-heirs" class="fs-5">Heirs' instructions</a>
+          <a href="/real-life-story"        class="fs-5">Real life story</a>
+          <a href="/whitepaper"             class="fs-5">Whitepaper</a>
         </div>
       </div>
     
@@ -99,16 +101,17 @@
     <div class="py-3 content">
       
       <section id="intro">
-        <h1 class="h1-index">Blockchain password manager. <br>Secure your digital legacy.</h1>
+        <h1 class="h1-index">Secure your digital life and legacy on the blockchain.</h1>
 
         <h2 class="h2-index">
           <div class="text-start d-inline-block">
-            <span>CroVault is a blockchain password manager and encrypted vault.</span><br/>
-            <span>Store passwords, wallet addresses, notes, and seed phrases.</span><br/>
-            <span>Data is encrypted client-side using your password and wallet.</span><br/>
-            <span>Your vault is stored on the Cronos blockchain — not on servers.</span><br/>
-            <span>Use it for secure backup, or plan digital inheritance easily.</span><br/>
-            <span>Decentralized, no servers to hack, immutable backup.</span><br/>
+            <span>CroVault is a decentralized blockchain vault and encrypted legacy manager.</span><br/>
+            <span>Store credentials, wallet addresses, notes, TOTP secrets, and seed phrases.</span><br/>
+            <span>Also store PIN codes, bank accounts, credit cards, emergency contacts,</span><br/> 
+            <span>subscriptions, insurance policies, legal and identity documents, and assets.</span><br/>
+            <span>Data is encrypted client-side using your password and wallet signature.</span><br/>
+            <span>Your vaults are stored immutably on the Cronos blockchain — not on servers.</span><br/>
+            <span>Use it for secure backup, digital inheritance, and legacy planning.</span><br/>
           </div>
         </h2>               
 
@@ -183,6 +186,7 @@
             <p><i class="fas fa-user-shield"></i> <strong>True Ownership:</strong> Data is stored in your own personal vault contract on the blockchain.</p>
             <p><i class="fas fa-globe"></i> <strong>Access Anywhere:</strong> Use any device — nothing stored locally or server-side.</p>
             <p><i class="fas fa-users"></i> <strong>Share Selectively:</strong> Enable legacy access with trusted parties if desired.</p>
+            <p><i class="fas fa-user-friends"></i> <strong>Beyond passwords:</strong> CroVault secures your full digital footprint — financial records, legal documents, and family contacts.</p>
           </div>
         </div>  
       </section>
@@ -303,7 +307,106 @@
                 </details>
               </div>
             </div>
-      
+
+            <!-- CATEGORY: Functionality -->
+            <div class="faq-category">
+              <button class="faq-category-header">Functionality</button>
+              <div class="faq-questions">
+                <details>
+                  <summary>What types of data can I store in CroVault?</summary>
+                  <p>
+                    Beyond passwords and wallet addresses, you can store PINs, bank accounts, credit cards, insurance policies, 
+                    identity documents, legal documents, assets, emergency contacts, and recurring subscriptions.
+                  </p>
+                </details>
+                <details>
+                  <summary>Can I batch-save multiple entries at once?</summary>
+                  <p>
+                    Yes. CroVault lets you add multiple credentials, notes, wallets, and other entries before submitting them all together with a single "Save All" transaction. 
+                    This reduces gas fees and improves efficiency.
+                  </p>
+                </details>
+                <details>
+                  <summary>What happens if I add pending items but close the page?</summary>
+                  <p>
+                    Pending items are stored temporarily in your browser’s memory. If you refresh or close the page before clicking "Save All," any unsaved data will be lost. 
+                    Make sure to save before leaving.
+                  </p>
+                </details>
+                <details>
+                  <summary>Does CroVault show gas fee estimates before saving?</summary>
+                  <p>
+                    Yes. You can click the "Estimate Fees" button to calculate the approximate CRO gas cost before confirming a save transaction. 
+                    This helps you plan and optimize your usage. However, the "Estimate Fees" function does not display the CroVault fee. 
+                    The CroVault fee is added to each category that is saved and is shown in your wallet before you confirm the transaction(s).
+                  </p>
+                  <div class="text-center mb-3">
+                    <button class="btn-custom maxwidth" onclick="showCostModal()">
+                      <i class="fas fa-info-circle"></i> View Current Fees
+                    </button>
+                  </div>
+                </details>
+                <details>
+                  <summary>Can I store encrypted financial and legal documents?</summary>
+                  <p>
+                    No. CroVault does not store the actual documents, but supports storing structured data for insurance policies, identity documents, 
+                    legal agreements, asset records, and more. Each entry is encrypted client-side and secured on-chain.
+                  </p>
+                </details>                                                           
+              </div>
+            </div>
+
+            <!-- CATEGORY: Legacy & Inheritance -->
+            <div class="faq-category">
+              <button class="faq-category-header">Legacy & Inheritance</button>
+              <div class="faq-questions">
+                <details>
+                  <summary>How can I plan my legacy with CroVault?</summary>
+                  <p>
+                    CroVault allows you to store encrypted financial, legal, and personal data on the blockchain. You can share access to your vault 
+                    with trusted parties like family or attorneys by securely sharing your password and wallet instructions.
+                  </p>
+                </details>
+                <details>
+                  <summary>Can my heirs access my CroVault vault?</summary>
+                  <p>
+                    If you provide your heirs with your vault password and wallet access instructions, they can securely access your encrypted data — 
+                    even long after you're gone. No lawyers, no centralized servers, just blockchain-based access.
+                  </p>
+                  <a href="/instructions-for-heirs" class="fs-5">Heirs' instructions</a>
+                </details>
+              </div>
+            </div>   
+
+            <!-- CATEGORY: Pricing & Fees -->
+            <div class="faq-category">
+              <button class="faq-category-header">Pricing & Fees</button>
+              <div class="faq-questions">
+                <details>
+                  <summary>How much does it cost to save data?</summary>
+                  <p>You pay a Cronos network fee and a small CroVault fee when saving. Deleting data cost a small Cronos network fee and reading data is always free.</p>
+                  <div class="text-center mb-3">
+                    <button class="btn-custom maxwidth" onclick="showCostModal()">
+                      <i class="fas fa-info-circle"></i> View Current Fees
+                    </button>
+                  </div>
+                </details>
+                <details>
+                  <summary>Are there any subscription fees?</summary>
+                  <p>No, CroVault does not have subscription fees. You only pay per transaction when saving data.</p>
+                </details>
+                <details>
+                  <summary>Can fees change over time?</summary>
+                  <p>Yes, Cronos network fees can vary based on network congestion. CroVault fees may be adjusted according to market conditions, but changes are always transparent.</p>
+                  <div class="text-center mb-3">
+                    <button class="btn-custom maxwidth" onclick="showCostModal()">
+                      <i class="fas fa-info-circle"></i> View Current Fees
+                    </button>
+                  </div>
+                </details>
+              </div>
+            </div>
+
             <!-- CATEGORY: Blockchain & Vault -->
             <div class="faq-category">
               <button class="faq-category-header">Blockchain & Vault</button>
@@ -324,35 +427,61 @@
               </div>
             </div>
       
-            <!-- CATEGORY: Pricing & Fees -->
+            <!-- CATEGORY: Best practise -->
             <div class="faq-category">
-              <button class="faq-category-header">Pricing & Fees</button>
+              <button class="faq-category-header">Best practice</button>
               <div class="faq-questions">
                 <details>
-                  <summary>How much does it cost to save data?</summary>
-                  <p>You pay a Cronos network fee and a small CroVault fee when saving. Reading and deleting data is always free.</p>
-                  <div class="text-center">
-                    <button class="btn-custom maxwidth" onclick="showCostModal()">
-                      <i class="fas fa-info-circle"></i> View Current Fees
-                    </button>
-                  </div>
+                  <summary>What wallet is best to use with CroVault?</summary>
+                  <p>
+                    We recommend creating a brand-new wallet address dedicated solely to your CroVault vault. 
+                    This wallet should not be used for storing cryptocurrency (except a small amount of CRO for transaction fees), NFTs, or interacting with other dApps.
+                  </p>
+                  <p>
+                    Keeping your CroVault wallet isolated reduces security risks and ensures your vault remains private and tamper-proof.
+                  </p>
+                </details>                
+                <details>
+                  <summary>Where should I store the seed phrase for my CroVault wallet?</summary>
+                  <p>
+                    The seed phrase of your CroVault wallet is the most critical backup you have. 
+                    It protects access to all your vault contents. 
+                  </p>
+                  <p>
+                    We recommend storing your CroVault seed phrase in <strong>two geographically separated locations</strong>, hidden securely from others.
+                    For maximum protection, consider splitting your 12 or 24-word phrase into two parts per location (for example: first half in one safe, second half in another). 
+                    Store them preferably on fireproof materials such as etched steel plates.
+                  </p>
+                  <p>
+                    You can also create a trusted third backup plan with your heirs or trusted contacts, 
+                    who would safely store your seed phrase and unlock password in secure, independent locations.
+                  </p>
                 </details>
                 <details>
-                  <summary>Are there any subscription fees?</summary>
-                  <p>No, CroVault does not have subscription fees. You only pay per transaction when saving data.</p>
-                </details>
+                  <summary>Can I split my CroVault wallet seed phrase safely?</summary>
+                  <p>
+                    Yes, you can split your CroVault wallet seed phrase into two separate parts to increase security. 
+                    For example, store the first 6 or 12 words in one location, and the remaining words in another location.
+                  </p>
+                  <p>
+                    This way, if one backup is ever compromised, an attacker still cannot reconstruct the full seed phrase.
+                    However, be cautious: you must maintain access to both parts yourself or ensure your heirs know how to recover both locations if needed.
+                  </p>
+                </details>                
                 <details>
-                  <summary>Can fees change over time?</summary>
-                  <p>Yes, Cronos network fees can vary based on network congestion. CroVault fees may be adjusted according to market conditions, but changes are always transparent.</p>
-                  <div class="text-center">
-                    <button class="btn-custom maxwidth" onclick="showCostModal()">
-                      <i class="fas fa-info-circle"></i> View Current Fees
-                    </button>
-                  </div>
+                  <summary>What happens if I lose access to my CroVault wallet?</summary>
+                  <p>
+                    If you lose access to your CroVault wallet (for example, you lose your seed phrase or your wallet gets destroyed), 
+                    you will permanently lose access to your encrypted vault data stored on the blockchain.
+                  </p>
+                  <p>
+                    CroVault is fully decentralized — there are no servers, no customer support recovery, and no way for anyone (including CroVault developers) to retrieve your vault. 
+                    This is why securely backing up your wallet seed phrase and unlock password is absolutely critical.
+                  </p>
                 </details>
               </div>
             </div>
-      
+
             <!-- CATEGORY: Troubleshooting -->
             <div class="faq-category">
               <button class="faq-category-header">Troubleshooting</button>

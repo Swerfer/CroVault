@@ -105,10 +105,11 @@
             </ul>
           </li>
           <li>We attempt to switch or add the Cronos chain (<code>chainId: 0x19</code>).</li>
-          <li>We call <code>hideOrShowCreateVault()</code> to check for an existing vault in the factory:
+          <li>Check vaults via <code>factory.ownerToVault(address)</code> for all 4 vaults (VaultContract1-4):
             <ul>
-              <li>If none, show the “Create Vault” button.</li>
-              <li>If found, we hide that button and load data via <code>loadAndShowCredentials()</code>.</li>
+              <li>If no vaults found, show "Create Vault" button.</li>
+              <li>If vaults exist, store addresses and call <code>unlockAndLoadAllSections()</code> to load Credentials, Notes, Wallets, 
+                TOTP, PINs, Banks, Credit Cards, Insurances, Identities, Legal Documents, Assets, Contacts, and Subscriptions.</li>
             </ul>
           </li>
         </ul>
@@ -122,9 +123,9 @@
           Clicking it calls <code>createNewVault()</code>:
         </p>
         <ul>
-          <li>Calls <code>factory.createVault()</code> with <code>value = creationCost</code>.</li>
-          <li>On success, the transaction emits a “VaultCreated” event with the new vault address.</li>
-          <li>We store that address in <code>userVault</code>, hide the create button, and proceed (the user can set a password when they first add data).</li>
+          <li>Calls <code>factory.createVault()</code> four times, each cloning a different VaultContract (Vault 1 to Vault 4).</li>
+          <li>Each vault stores different types of encrypted data (credentials, pins, bank accounts, legal docs, etc.).</li>
+          <li>After deployment, we store all vault addresses and proceed to password setup.</li>
         </ul>
       </section>
 
@@ -166,28 +167,42 @@
         <h2>7. Viewing, Adding, Editing, or Deleting Data</h2>
         <ul>
           <li><strong>Read from chain:</strong> 
-            <code>readCredentials()</code>, <code>readNote()</code>, <code>readWalletAddress()</code> and <code>readTotp()</code> retrieve each item as an encrypted JSON string.
+            <code>readCredentials()</code>, <code>readNote()</code>, <code>readWalletAddress()</code>, <code>readTOTP()</code>,
+            <code>readPins()</code>, <code>readBankAccounts()</code>, <code>readCreditCards()</code>,
+            <code>readInsurances()</code>, <code>readIdentities()</code>, <code>readLegalDocuments()</code>,
+            <code>readAssets()</code>, <code>readContacts()</code>, and <code>readSubscriptions()</code>
+            retrieve each item as an encrypted JSON string.
             We parse/decrypt with <code>decryptWithPassword(sessionPassword, ...)</code>.
           </li>
+      
           <li><strong>Add/Edit data:</strong>
             <ul>
-              <li>Items go into <code>pendingCredentials</code> / <code>pendingNotes</code> / <code>pendingWallets</code> / <code>pendingTotps</code>.</li>
+              <li>Items go into <code>pendingCredentials</code>, <code>pendingNotes</code>, <code>pendingWallets</code>, <code>pendingTotps</code>,</li>
+              <li><code>pendingPins</code>, <code>pendingBankAccounts</code>, <code>pendingCreditCards</code>,</li>
+              <li><code>pendingInsurances</code>, <code>pendingIdentities</code>, <code>pendingLegalDocuments</code>,</li>
+              <li><code>pendingAssets</code>, <code>pendingContacts</code>, <code>pendingSubscriptions</code>.</li>
               <li>The user sees these as “(Pending)” until they click “Save All.”</li>
             </ul>
           </li>
+      
           <li><strong>Save All:</strong>
             <ul>
-              <li>Encrypt each pending item with <code>encryptWithPassword()</code> (AES-GCM) and send to the contract’s <code>upsert</code> methods with <code>value = upsertCost</code>.</li>
+              <li>Encrypt each pending item with <code>encryptWithPassword()</code> (AES-GCM) and send to the appropriate contract’s <code>upsert</code> methods with <code>value = upsertCost</code>.</li>
               <li>After mining, we re-fetch and re-decrypt the data so the UI is up to date.</li>
             </ul>
           </li>
+      
           <li><strong>Delete items:</strong>
             <ul>
-              <li>Calls <code>deleteCredentials(ids)</code>, etc., then re-loads from chain to refresh the UI.</li>
+              <li>Calls <code>deleteCredentials(ids)</code>, <code>deleteNotes(ids)</code>, <code>deleteWalletAddresses(ids)</code>, <code>deleteTOTP(ids)</code>,</li>
+              <li><code>deletePins(ids)</code>, <code>deleteBankAccounts(ids)</code>, <code>deleteCreditCards(ids)</code>,</li>
+              <li><code>deleteInsurances(ids)</code>, <code>deleteIdentities(ids)</code>, <code>deleteLegalDocuments(ids)</code>,</li>
+              <li><code>deleteAssets(ids)</code>, <code>deleteContacts(ids)</code>, <code>deleteSubscriptions(ids)</code>.</li>
+              <li>Then re-loads from chain to refresh the UI.</li>
             </ul>
           </li>
         </ul>
-      </section>
+      </section>      
 
       <!-- 8) Idle Timeout & Session Reset -->
       <section class="section">
@@ -257,10 +272,14 @@ afterWalletConnect():
  └────────────────────────────────────────────────────────┘
 
 Create Vault Flow:
- ┌────────────────────────────────────────────────────────┐
- │ createVault(value=creationCost) -> event => userVault  │
- │ user must sign + set password when they add data.      │
- └────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────┐
+ │ createVault (VaultContract1 clone) │
+ │ createVault (VaultContract2 clone) │
+ │ createVault (VaultContract3 clone) │
+ │ createVault (VaultContract4 clone) │
+ │ -> Store all vault addresses       │
+ │ -> Show "Your Vault" UI            │
+ └────────────────────────────────────┘
 
 Unlock Flow:
  ┌────────────────────────────────────────────────────────┐

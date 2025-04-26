@@ -1,9 +1,10 @@
 // ==== Config and ABIs ====
-const costManagerAddress  = "0xcBB5409246532Ac3935598Bc4d50baed60fe0EF6";
-const factoryAddress      = "0x6324CfA3c13b690d135B69886BB06C736e6aCf52";
+const costManagerAddress  = "0x50E2c7201d5714e018a33203FbD92979BC51eee4";
+let factoryAddress;
+
 // ==== topic0 = Event VaultCreated in CostManager contract Topics 0 ====
-const topic0              = "0x5d9c31ffa0fecffd7cf379989a3c7af252f0335e0d2a1320b55245912c781f53";
-const fetchVaultCountUrl  = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=${factoryAddress}&topic0=${topic0}`;
+const topic0              = "0x0b045af6aff86dd2cda5342fd0329a354dc66759ff1eda00d7ecf13a76c7fb3b";
+const fetchVaultCountUrl  = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=18000000&toBlock=latest&address=factoryAddress&topic0=${topic0}`;
 const cronosRpcUrl        = "https://evm-cronos.crypto.org";
 const cronoScanUrl        = "https://cronoscan.com";
 
@@ -21,7 +22,20 @@ const costManagerAbi = [
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function"
-  }
+  },
+  {
+    inputs: [],
+    name: "vaultFactory",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
 ];
 
 const vaultAbi = [
@@ -202,8 +216,40 @@ const vaultAbi = [
   }  
 ];
 
+const factoryAbi = [
+  {
+    inputs: [],
+    name: "createVaultsForAllImplementations",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "user", type: "address" }
+    ],
+    name: "getVaultsByOwner",
+    outputs: [
+      { internalType: "address[]", name: "", type: "address[]" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true,  internalType: "address", name: "vaultOwner",         type: "address"  },
+      { indexed: true,  internalType: "address", name: "vault",              type: "address"  },
+      { indexed: false, internalType: "uint256", name: "implementationIndex", type: "uint256" }
+    ],
+    name: "VaultCreated",
+    type: "event"
+  }
+];
+
 // ==== State ====
 
+let newVault = false;
 let cachedCosts = { creation: null, upsert: null };
 let web3Modal;
 let provider;       // ethers provider
@@ -232,10 +278,15 @@ function b64ToUint8(base64) {
   return Uint8Array.from(binary, c => c.charCodeAt(0));
 }
 
+function formatTimestamp(timestamp) {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString();
+}
+
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text)
-    .then(() => alert("Copied to clipboard"))
-    .catch(err => console.error("Failed to copy text:", err));
+    .then(() => showAlert("Copied to clipboard", "success"))
+    .catch(() => {});
 }
 
 function showSpinner(text = "Saving to blockchain...") {
@@ -283,66 +334,29 @@ async function fetchVaultCount() {
   const path = window.location.pathname.toLowerCase();
   if (!(path.endsWith("/") || path.endsWith("/index") || path.endsWith("/index.html"))) return;
   try {
-    const response = await fetch(fetchVaultCountUrl);
+    const response = await fetch(fetchVaultCountUrl.replace("factoryAddress", factoryAddress));
     const data = await response.json();
-
     // Check if data looks good
     if (data && data.status === "1" && Array.isArray(data.result)) {
       const count = data.result.length;
       document.getElementById("activeVaults").textContent = "Number of active vaults: " + count;
     }
-  } catch (err) {
-    console.error("Failed to fetch vault count:", err);
-    document.getElementById("activeVaults").textContent = "Error";
+  } catch {
+    document.getElementById("activeVaults").textContent = "";
   }
 }
 
-async function fetchAndCacheCosts() {
-  if (!provider) return;
-  try {
-    await getVaultUpsertCost(); // sets cachedCosts.upsert
-    await getVaultCreationCost(); // sets cachedCosts.creation
-    let costText = `Creating a vault will cost you <strong>${cachedCosts.creation} CRO</strong> plus a small transaction fee.`;
-    let priceDisplay = document.getElementById("createVaultPrice");
-    if (priceDisplay) {
-      priceDisplay.innerHTML = costText;
-    }
-    costText = `Updating or editing data will cost <strong>${cachedCosts.upsert} CRO</strong> plus a network fee.<br>
-      The network fee varies with data size and network conditions.<br>
-      <strong>Tip:</strong> Batching updates doesn’t increase the CRO fee and can reduce the total network fee per item.`;
-    priceDisplay = document.getElementById("upsertCredentialPrice");
-    if (priceDisplay) {
-      priceDisplay.innerHTML = costText;
-    }
-    priceDisplay = document.getElementById("upsertNotePrice");
-    if (priceDisplay) {
-      priceDisplay.innerHTML = costText;
-    }
-    priceDisplay = document.getElementById("upsertWalletPrice");
-    if (priceDisplay) {
-      priceDisplay.innerHTML = costText;
-    }
-    priceDisplay = document.getElementById("upsertTotpPrice");
-    if (priceDisplay) {
-      priceDisplay.innerHTML = costText;
-    }
-
-  } catch (e) {
-    console.error("Error fetching costs:", e.message);
-  }
-}
-
-async function getVaultCreationCost() {
+async function getFactoryAddress() {
   const costManager = new ethers.Contract(costManagerAddress, costManagerAbi, provider);
   for (let i = 0; i < 10; i++) {
     try {
-      cachedCosts.creation = ethers.utils.formatEther(await costManager.vaultCreationCost());
-      return cachedCosts.creation;
+      factoryAddress = await costManager.vaultFactory();
+      return;
     } catch (e) {
       await new Promise(r => setTimeout(r, 1000));
     }
   }
-  throw new Error("Unable to fetch vault creation cost");
+  throw new Error("Unable to fetch factory address");
 }
 
 async function getVaultUpsertCost() {
@@ -375,28 +389,86 @@ function updateGlobalSaveButtonVisibility() {
 }
 
 function showCostModal() {
-  document.getElementById("feeCreate").textContent = cachedCosts.creation || "Loading...";
   document.getElementById("feeUpsert").textContent = cachedCosts.upsert || "Loading...";
   document.getElementById("costInfoModal").classList.remove("hidden");
 }
 
-// ==== Encryption / Decryption ====
+function toggleVaultSection(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
 
-async function deriveWalletKey() {
-  if (walletDerivedKey) return; // Already derived
-  try {
-    const signer = provider.getSigner();
-    const message = "I authorize access to my CroVault data on the blockchain";
-    const signature = await signer.signMessage(message);
-    const rawKey = await crypto.subtle.digest("SHA-256", strToUint8(signature));
-    walletDerivedKey = new Uint8Array(rawKey);
-  } catch (err) {
-    console.error("Signature cancelled or failed:", err);
-    const retryBtn = document.getElementById("retrySignBtn");
-    if (retryBtn) retryBtn.classList.remove("displayNone");
-    throw err; // rethrow to let caller know
-  }  
+  section.classList.toggle("displayNone");
 }
+
+function showAlert(message, type = "info", onClose = null) {
+  document.getElementById("modalOverlay")?.classList.remove("hidden");
+  const modal = document.getElementById("alertModal");
+  const title = document.getElementById("alertModalTitle");
+  const text = document.getElementById("alertModalText");
+  const closeBtn = document.getElementById("alertModalCloseBtn");
+
+  // Reset classes
+  modal.className = "modal";
+  modal.classList.add(type); // e.g. "success", "warning"
+
+  // Set title and icon
+  const iconMap = {
+    info: "fas fa-info-circle",
+    success: "fas fa-check-circle",
+    warning: "fas fa-exclamation-triangle",
+    error: "fas fa-times-circle"
+  };
+  const iconClass = iconMap[type] || iconMap.info;
+  title.innerHTML = `<i class="${iconClass}"></i> ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+
+  // Set message
+  text.innerHTML = message;
+  modal.classList.remove("hidden");
+
+  function closeHandler() {
+    modal.classList.add("hidden");
+    document.getElementById("modalOverlay")?.classList.add("hidden");
+    closeBtn.removeEventListener("click", closeHandler);
+    if (onClose) onClose();
+  }
+
+  closeBtn.addEventListener("click", closeHandler);
+}
+
+function showConfirm(message, onConfirm, onCancel = null) {
+  document.getElementById("modalOverlay")?.classList.remove("hidden");
+  const modal = document.getElementById("confirmModal");
+  const title = document.getElementById("confirmModalTitle");
+  const text = document.getElementById("confirmModalText");
+  const yesBtn = document.getElementById("confirmModalYesBtn");
+  const noBtn = document.getElementById("confirmModalNoBtn");
+
+  text.innerHTML = message;
+  title.innerHTML = `<i class="fas fa-question-circle"></i> Confirm`;
+  modal.classList.remove("hidden");
+
+  function cleanup() {
+    modal.classList.add("hidden");
+    document.getElementById("modalOverlay")?.classList.add("hidden");
+    yesBtn.removeEventListener("click", yesHandler);
+    noBtn.removeEventListener("click", noHandler);
+  }
+
+  function yesHandler() {
+    cleanup();
+    if (onConfirm) onConfirm();
+  }
+
+  function noHandler() {
+    cleanup();
+    if (onCancel) onCancel();
+  }
+
+  yesBtn.addEventListener("click", yesHandler);
+  noBtn.addEventListener("click", noHandler);
+}
+
+// ==== Encryption / Decryption ====
 
 async function encryptWithPassword(password, data) {
   if (!walletDerivedKey) {
@@ -459,6 +531,13 @@ function shortenAddress(addr) {
 
 // ==== Helpers ====
 
+async function waitForTxWithTimeout(tx, timeoutMs = 15000) {
+  return Promise.race([
+    tx.wait(), // resolves when confirmed
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Transaction timed out")), timeoutMs))
+  ]);
+}
+
 async function retryWeb3ConnectWithTimeout(maxRetries = 10, timeoutMs = 1000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -479,7 +558,9 @@ async function retryWeb3ConnectWithTimeout(maxRetries = 10, timeoutMs = 1000) {
 async function retryReadVaultMapping(factory, walletAddress, maxRetries = 10, delayMs = 1000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const vaultAddress = await factory.callStatic["ownerToVault(address)"](walletAddress);
+        // Just the first result of the array. Future modify to itterate multiple vault contracts.
+        const vaults = await factory.getVaultsByOwner(walletAddress);
+        const vaultAddress = vaults.length > 0 ? vaults[0] : null;
       return vaultAddress;
     } catch (err) {
       if (attempt === maxRetries) throw err;
@@ -499,25 +580,31 @@ function closeOtherForms(excludeSection) {
   forms.forEach(({ section, form, hasData, clear }) => {
     const formElement = document.getElementById(form);
     if (section !== excludeSection && !formElement.classList.contains("slide-hidden")) {
-      if (hasData() && !confirm("You have unsaved data, discard?")) return;
-      formElement.classList.add("slide-hidden");
-      clear();
+      if (hasData()) {
+        showConfirm("You have unsaved data, discard?", () => {
+          formElement.classList.add("slide-hidden");
+          clear();
+        });
+      } else {
+        formElement.classList.add("slide-hidden");
+        clear();
+      }      
     }
   });
 }
 
-function unlockAndLoadAllSections() {
-  if (sessionPassword) {
-    return loadAllSections();
-  }
+async function updateBalanceDisplay() {
+  if (!provider || !walletAddress) return;
 
-  showUnlockModal(async (pw) => {
-    sessionPassword = pw;
-    await deriveWalletKey();
-    await loadAllSections(); // ✅ only called AFTER pw is set
-  });
+  try {
+    const balanceBigInt = await provider.getBalance(walletAddress);
+    const balanceInEth = ethers.utils.formatEther(balanceBigInt);
+    const balanceEl = document.getElementById("balance");
+    if (balanceEl) {
+      balanceEl.textContent = `Balance: ${parseFloat(balanceInEth).toFixed(2)} CRO`;
+    }
+  } catch {}
 }
-
 
 // ==== Connect wallet flow ====
 
@@ -532,11 +619,9 @@ async function connectWallet() {
     const instance = await retryWeb3ConnectWithTimeout(10, 1000); // 10 tries max, 1s timeout each
     if (!instance) {
       throw new Error("Wallet connection failed after multiple timed-out attempts");
-      return;
     }
     await afterWalletConnect(instance);
   } catch (err) {
-    console.error("Wallet connect error:", err);
     connectBtnText.textContent = "Connect Wallet";
   } finally {
     walletLoader.classList.remove("visibleInline");
@@ -597,46 +682,11 @@ async function afterWalletConnect(instance) {
             blockExplorerUrls: [cronoScanUrl]
           }],
         });
-      } catch (addError) {
-        console.error("Failed to add Cronos chain:", addError);
-      }
-    } else {
-      console.error("Failed to switch to Cronos chain:", switchError);
-    }
+      } catch {}
+    } 
   }
   updateBalanceDisplay();
 }
-
-async function loadAllSections() {
-  if (!sessionPassword) {
-    console.warn("Skipping loadAllSections: sessionPassword not set");
-    return;
-  }
-
-  await Promise.all([
-    loadAndShowCredentials(),
-    loadAndShowNotes(),
-    loadAndShowWallets(),
-    loadAndShowTotps()
-  ]);
-}
-
-async function updateBalanceDisplay() {
-  if (!provider || !walletAddress) return;
-
-  try {
-    const balanceBigInt = await provider.getBalance(walletAddress);
-    const balanceInEth = ethers.utils.formatEther(balanceBigInt);
-    const balanceEl = document.getElementById("balance");
-    if (balanceEl) {
-      balanceEl.textContent = `Balance: ${parseFloat(balanceInEth).toFixed(2)} CRO`;
-    }
-  } catch (err) {
-    console.error("Failed to fetch wallet balance:", err);
-  }
-}
-
-// ==== Vault Creation ====
 
 async function hideOrShowCreateVault() {
   const createVaultSection = document.getElementById("createVaultSection");
@@ -647,14 +697,7 @@ async function hideOrShowCreateVault() {
   }
 
   try {
-    // VaultFactory address and ABI
-    //const factoryJson = await fetch("contracts/VaultFactory.json").then(r => r.json());
-    //const factoryAbi = factoryJson.abi;
-    //const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
-    const minimalAbi = [
-      "function ownerToVault(address) view returns (address)"
-    ];
-    const factory = new ethers.Contract(factoryAddress, minimalAbi, provider);
+    const factory = new ethers.Contract(factoryAddress, factoryAbi, provider);
     const vaultAddress = await retryReadVaultMapping(factory, walletAddress);
     vaultAddress == "0x0000000000000000000000000000000000000000" 
       ? userAddress = null
@@ -676,74 +719,77 @@ async function hideOrShowCreateVault() {
              <i class="fas fa-external-link-alt"></i>
           </a>
         `;
-      
         unlockAndLoadAllSections();
-      
       } else {
         createVaultSection.classList.remove("hidden");
         document.getElementById("vaultDataSection").classList.add("displayNone");
       }
       
       
-  } catch (err) {
-    console.error("Vault check failed:", err);
+  } catch {
     createVaultSection.classList.add("hidden"); // fallback: hide
   }
 }
 
-async function createNewVault() {
-  const createVaultBtn = document.getElementById("createVaultBtn");
-  const deployLoader   = document.getElementById("deployLoader");
-  const deployResult   = document.getElementById("deployResult");
-
-  deployResult.textContent = "";
-  deployLoader.classList.add("visibleInline");
-  createVaultBtn.disabled = true;
-
-  try {
-    if (!walletAddress) {
-      throw new Error("Wallet not connected!");
-    }
-
-    // 1) Fetch the compiled contract from /contracts/VaultContract.json
-    //    You must place the contract ABI/bytecode in that file.
-    const vaultJson = await fetch("contracts/VaultContract.json").then(r => r.json());
-    const vaultAbi = vaultJson.abi;
-    const vaultBytecode = vaultJson.bytecode;
-    if (!vaultAbi || !vaultBytecode) {
-      throw new Error("Invalid or missing ABI/bytecode in VaultContract.json");
-    }
-
-      // 1. Load factory ABI
-      const factoryJson = await fetch("contracts/VaultFactory.json").then(r => r.json());
-      const factoryAbi = factoryJson.abi;
-
-      const factory = new ethers.Contract(factoryAddress, factoryAbi, signer);
-
-      showSpinner("Deploying your vault...");
-      // 2. Call createVault
-      const tx = await factory.createVault({
-      value: ethers.utils.parseEther(cachedCosts.creation),
-      });
-
-      const receipt = await tx.wait();
-      try {
-        // 3. Extract new vault address from event
-        const vaultEvent = receipt.events.find(e => e.event === "VaultCreated");
-        const deployedAddress = vaultEvent.args.vault;
-        deployResult.textContent = "Vault deployed at: " + deployedAddress;
-        alert("Vault deployed at: " + deployedAddress);
-        hideSpinner();
-      } catch {}
-      hideOrShowCreateVault();
-
-  } catch (err) {
-    console.error(err);
-    deployResult.textContent = "Error: " + err.message;
-  } finally {
-    deployLoader.classList.remove("visibleInline");
-    createVaultBtn.disabled = false;
+async function unlockAndLoadAllSections() {
+  if (sessionPassword) {
+    return loadAllSections();
   }
+
+  if (userVault && userVault.startsWith("0x")) {
+    try {
+      const signer = provider.getSigner();
+      const vault  = new ethers.Contract(userVault, vaultAbi, signer);
+
+      const [creds, notes, wallets, totps] = await retryReadDataWithTimeout(vault);
+      if (
+        creds.length   === 0 &&
+        notes.length   === 0 &&
+        wallets.length === 0 &&
+        totps.length   === 0
+      ) {
+        newVault = true;
+        await deriveWalletKey();
+        document.getElementById("vaultDataSection").classList.remove("displayNone");
+        return;
+      }
+    } catch {}
+  }
+
+  showUnlockModal(async (pw) => {
+    sessionPassword = pw;
+    await deriveWalletKey();
+    await loadAllSections(); // ✅ only called AFTER pw is set
+  });
+}
+
+async function loadAllSections() {
+  if (!sessionPassword) {
+    return;
+  }
+
+  await Promise.all([
+    loadAndShowCredentials(),
+    loadAndShowNotes(),
+    loadAndShowWallets(),
+    loadAndShowTotps()
+  ]);
+}
+
+async function deriveWalletKey() {
+  const retryBtn = document.getElementById("retrySignBtn");
+  if (walletDerivedKey) return; // Already derived
+  try {
+    const signer = provider.getSigner();
+    const message = "I authorize access to my CroVault data on the blockchain";
+    const signature = await signer.signMessage(message);
+    const rawKey = await crypto.subtle.digest("SHA-256", strToUint8(signature));
+    walletDerivedKey = new Uint8Array(rawKey);
+    if (retryBtn) retryBtn.classList.add("displayNone");
+  } catch (err) {
+    if (retryBtn) retryBtn.classList.remove("displayNone");
+    throw err; // rethrow to let caller know
+  }  
 }
 
 // ==== Vault Unlock Modal ====
@@ -765,7 +811,7 @@ function showUnlockModal(onConfirm) {
 
   confirmBtn.onclick = () => {
     const pw = passInput.value;
-    if (!pw || pw.length < 12) return alert("Password too short");
+    if (!pw || pw.length < 12) return showAlert("Password too short", "warning");
   
     modal.classList.add("hidden");
     document.removeEventListener("keydown", handleKey);
@@ -785,6 +831,49 @@ function showUnlockModal(onConfirm) {
   document.addEventListener("keydown", handleKey);
 }
 
+// ==== Create new vault ====
+
+async function createNewVault() {
+  const createVaultBtn = document.getElementById("createVaultBtn");
+  const deployLoader   = document.getElementById("deployLoader");
+  const deployResult   = document.getElementById("deployResult");
+
+  deployResult.textContent = "";
+  deployLoader.classList.add("visibleInline");
+  createVaultBtn.disabled = true;
+
+  try {
+    if (!walletAddress) {
+      throw new Error("Wallet not connected!");
+    }
+
+      const factory = new ethers.Contract(factoryAddress, factoryAbi, signer);
+      showSpinner("Deploying your vault...");
+      // 2. Call createVault
+      const tx = await factory.createVaultsForAllImplementations({
+      value: ethers.utils.parseEther(cachedCosts.creation),
+      });
+
+      const receipt = await tx.wait();
+      try {
+        // 3. Extract new vault address from event
+        // Change later for future extra vault contracts
+        const vaultEvent = receipt.events.find(e => e.event === "VaultCreated");
+        const deployedAddress = vaultEvent.args.vault;
+        deployResult.textContent = "Vault deployed at: " + deployedAddress;
+        showAlert("Vault deployed at: " + deployedAddress, "success");
+      } catch {}
+      hideSpinner();
+      hideOrShowCreateVault();
+
+  } catch (err) {
+    deployResult.textContent = "Error: " + err.message;
+  } finally {
+    deployLoader.classList.remove("visibleInline");
+    createVaultBtn.disabled = false;
+  }
+}
+
 // ==== Password Creation Modal ====
 
 function showPasswordModal(onConfirm) {
@@ -801,11 +890,9 @@ function showPasswordModal(onConfirm) {
   passInput.focus();
 
   const strengthText = document.getElementById("invalidPasswordStrength");
-
   function validateInputs() {
     const p1 = passInput.value;
     const p2 = passConfirm.value;
-
     if (!p1 || p1.length < 12) {
       strengthText.textContent = "Password must be at least 12 characters.";
       confirmBtn.disabled = true;
@@ -907,9 +994,9 @@ async function retryReadDataWithTimeout(vault, maxRetries = 10, timeoutMs = 1000
   }
 }
 
-async function loadAndShowCredentials(deleted = false) {
+async function loadAndShowCredentials() {
   if (!sessionPassword) return;
-  let creds, notes, wallets
+  let creds
 
   // Check if there is a vault address
   if (!walletDerivedKey) {
@@ -938,8 +1025,7 @@ async function loadAndShowCredentials(deleted = false) {
 
   try {
     creds = await vault.readCredentials();
-  } catch (err) {
-    console.error("Error reading credentials:", err);
+  } catch {
     return;
   }
 
@@ -960,6 +1046,7 @@ async function loadAndShowCredentials(deleted = false) {
         username: (await decryptWithPassword(sessionPassword, JSON.parse(cred.username))).username,
         password: (await decryptWithPassword(sessionPassword, JSON.parse(cred.password))).password,
         remarks: (await decryptWithPassword(sessionPassword, JSON.parse(cred.remarks))).remarks,
+        timestamp: cred.timestamp,
       };
     } catch (e) {
       showWrongPasswordModal();
@@ -971,8 +1058,6 @@ async function loadAndShowCredentials(deleted = false) {
   updateCredentialPendingUI();
 }
 
-// ==== Updated Note Reader ====
-
 async function loadAndShowNotes() {
   if (!sessionPassword) return;
   if (!userVault || !userVault.startsWith("0x")) return;
@@ -983,8 +1068,7 @@ async function loadAndShowNotes() {
 
   try {
     notes = await vault.readNote();
-  } catch (err) {
-    console.error("Error reading notes:", err);
+  } catch {
     return;
   }
 
@@ -1002,6 +1086,7 @@ async function loadAndShowNotes() {
         id: note.id,
         name: (await decryptWithPassword(sessionPassword, JSON.parse(note.name))).name,
         note: (await decryptWithPassword(sessionPassword, JSON.parse(note.note))).note,
+        timestamp: note.timestamp,
       };
     } catch (e) {
       showWrongPasswordModal();
@@ -1013,8 +1098,6 @@ async function loadAndShowNotes() {
   updateNotePendingUI();
 }
 
-// ==== Updated Wallet Reader ====
-
 async function loadAndShowWallets() {
   if (!sessionPassword) return;
   if (!userVault || !userVault.startsWith("0x")) return;
@@ -1025,8 +1108,7 @@ async function loadAndShowWallets() {
 
   try {
     wallets = await vault.readWalletAddress();
-  } catch (err) {
-    console.error("Error reading wallet addresses:", err);
+  } catch {
     return;
   }
 
@@ -1048,6 +1130,7 @@ async function loadAndShowWallets() {
         privateKey: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.privateKey))).privateKey,
         seedPhrase: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.seedPhrase))).seedPhrase,
         remarks: (await decryptWithPassword(sessionPassword, JSON.parse(wallet.remarks))).remarks,
+        timestamp: wallet.timestamp,
       };
     } catch (e) {
       showWrongPasswordModal();
@@ -1069,9 +1152,8 @@ async function loadAndShowTotps() {
 
   try {
     totps = await vault.readTOTP();
-  } catch (err) {
-    console.error("Error reading TOTP:", err);
-    return;
+  } catch {
+      return;
   }
 
   const container = document.getElementById("totpReadItems");
@@ -1088,7 +1170,8 @@ async function loadAndShowTotps() {
         name: (await decryptWithPassword(sessionPassword, JSON.parse(totp.name))).name,
         key: (await decryptWithPassword(sessionPassword, JSON.parse(totp.key))).key,
         algorithm: (await decryptWithPassword(sessionPassword, JSON.parse(totp.algorithm))).algorithm,
-        interval: totp.interval
+        interval: totp.interval,
+        timestamp: totp.timestamp,
       };
     } catch (e) {
       showWrongPasswordModal();
@@ -1100,17 +1183,19 @@ async function loadAndShowTotps() {
   updateTotpPendingUI();
 }
 
-function toggleVaultSection(sectionId) {
-  const section = document.getElementById(sectionId);
-  if (!section) return;
-
-  section.classList.toggle("displayNone");
-}
-
 // ==== Data write to blockchain ====
 async function estimateSaveAllFees() {
+  if (newVault) {
+    showPasswordModal(async (pw) => {
+      sessionPassword = pw;          // ❶ store it
+      await deriveWalletKey();       // ❷ derive key
+      newVault = false;              // ❸ it’s not new any more
+      await estimateSaveAllFees();   // ❹ retry with a real password
+    });
+    return; // important: stop the first run here
+  }
   if (!sessionPassword || !userVault || !userVault.startsWith("0x")) {
-    alert("Vault is not unlocked or connected.");
+    showAlert("Vault is not unlocked or connected.", "info");
     return;
   }
 
@@ -1143,7 +1228,7 @@ async function estimateSaveAllFees() {
       const notes = [];
       for (const n of pendingNotes) {
         notes.push({
-          id: 0,
+          id: n.id || 0,
           name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: n.name })),
           note: JSON.stringify(await encryptWithPassword(sessionPassword, { note: n.note }))
         });
@@ -1202,10 +1287,9 @@ async function estimateSaveAllFees() {
     }
     summary += `Total estimated fee: ~${parseFloat(totalFee).toFixed(2)} CRO`;
 
-    alert(summary);
+    showAlert(summary, "info");
   } catch (err) {
-    console.error("Gas estimation failed:", err);
-    alert("Failed to estimate gas: " + err.message);
+    showAlert("Failed to estimate gas: " + err.message, "error");
   }
 }
 
@@ -1218,10 +1302,13 @@ async function saveAllPendingItems() {
     });
     return;
   }
-  alert("If the fee shown in your wallet is low (<1 CRO), then reject the transaction and try again.");
   const signer = provider.getSigner();
   const vault = new ethers.Contract(userVault, vaultAbi, signer);
   try {
+    let credentialsFailed = false;
+    let notesFailed       = false;
+    let walletsFailed    = false;
+    let totpsFailed       = false;
     if (pendingCredentials.length > 0) {
       const creds = [];
       for (const c of pendingCredentials) {
@@ -1234,28 +1321,45 @@ async function saveAllPendingItems() {
         });
       }
       showSpinner("Saving credential(s) to blockchain...");
-      const tx = await vault.upsertCredentials(creds, {
-        value: ethers.utils.parseEther(cachedCosts.upsert),
-        gasLimit: 5_000_000 
-      });
-      await tx.wait();
+      try {
+        const tx = await vault.upsertCredentials(creds, {
+          value: ethers.utils.parseEther(cachedCosts.upsert),
+          gasLimit: 5_000_000 
+        });
+      
+        await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
+        newVault = false;
+      } catch {
+        credentialsFailed = true;
+        showAlert("Transaction timed out or failed. Please try again.", "error");
+        hideSpinner();
+      }
+     
     }
 
     if (pendingNotes.length > 0) {
       const notes = [];
       for (const n of pendingNotes) {
         notes.push({
-          id: 0,
+          id: n.id || 0,
           name: JSON.stringify(await encryptWithPassword(sessionPassword, { name: n.name })),
           note: JSON.stringify(await encryptWithPassword(sessionPassword, { note: n.note }))
         });
       }
       showSpinner("Saving note(s) to blockchain...");
-      const tx = await vault.upsertNotes(notes, {
-        value: ethers.utils.parseEther(cachedCosts.upsert),
-        gasLimit: 5_000_000 
-      });
-      await tx.wait();
+      try {
+        const tx = await vault.upsertNotes(notes, {
+          value: ethers.utils.parseEther(cachedCosts.upsert),
+          gasLimit: 5_000_000 
+        });
+      
+        await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
+        newVault = false;
+      } catch {
+        notesFailed = true;
+        showAlert("Transaction timed out or failed. Please try again.", "error");
+        hideSpinner();
+      }      
     }
 
     if (pendingWallets.length > 0) {
@@ -1272,11 +1376,20 @@ async function saveAllPendingItems() {
         
       }
       showSpinner("Saving wallet(s) to blockchain...");
-      const tx = await vault.upsertWalletAddress(wallets, {
-        value: ethers.utils.parseEther(cachedCosts.upsert),
-        gasLimit: 5_000_000 
-      });
-      await tx.wait();
+      try {
+        const tx = await vault.upsertWalletAddress(wallets, {
+          value: ethers.utils.parseEther(cachedCosts.upsert),
+          gasLimit: 5_000_000 
+        });
+      
+        await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
+        newVault = false;
+      } catch {
+        walletsFailed = true;
+        showAlert("Transaction timed out or failed. Please try again.", "error");
+        hideSpinner();
+      }
+      
     }
 
     if (pendingTotps.length > 0) {
@@ -1291,37 +1404,70 @@ async function saveAllPendingItems() {
         });
       }
       showSpinner("Saving TOTP(s) to blockchain...");
-      const tx = await vault.upsertTOTP(totps, {
-        value: ethers.utils.parseEther(cachedCosts.upsert),
-        gasLimit: 5_000_000
-      });
-      await tx.wait();
+      try {
+        const tx = await vault.upsertTOTP(totps, {
+          value: ethers.utils.parseEther(cachedCosts.upsert),
+          gasLimit: 5_000_000 
+        });
+      
+        await waitForTxWithTimeout(tx, 15000); // 15 sec timeout
+        newVault = false;
+      } catch {
+        totpsFailed = true;
+        showAlert("Transaction timed out or failed. Please try again.", "error");
+        hideSpinner();
+      }
+      
     }
     
-    alert("All pending data saved!");
-    // Clear pending entries first
-    pendingCredentials = [];
-    pendingNotes = [];
-    pendingWallets = [];
-    pendingTotps = [];
+    const failureMessages = [];
+
+    if (credentialsFailed) {
+      failureMessages.push("Saving credentials failed.");
+    } else {
+      pendingCredentials = [];
+    }
+
+    if (notesFailed) {
+      failureMessages.push("Saving notes failed.");
+    } else {
+      pendingNotes = [];
+    }
+
+    if (walletsFailed) {
+      failureMessages.push("Saving wallets failed.");
+    } else {
+      pendingWallets = [];
+    }
+
+    if (totpsFailed) {
+      failureMessages.push("Saving TOTPs failed.");
+    } else {
+      pendingTotps = [];
+    }
+
+    let alertMessage = "All pending data saved!";
+    if (failureMessages.length) {
+      alertMessage += "\n\nHowever, the following failed:\n" + failureMessages.join("\n");
+    }
+    showAlert(alertMessage, "info");
 
     // Immediately update UI to remove yellow pending items before redraw
-    updateCredentialPendingUI();
-    updateNotePendingUI();
-    updateWalletPendingUI();
-    updateTotpPendingUI();
+    if (!credentialsFailed) updateCredentialPendingUI();
+    if (!notesFailed)       updateNotePendingUI();
+    if (!walletsFailed)     updateWalletPendingUI();
+    if (!totpsFailed)       updateTotpPendingUI();
     updateGlobalSaveButtonVisibility();
 
     // Now reload all sections from the chain
     updateBalanceDisplay();
-    await loadAndShowCredentials();
-    await loadAndShowNotes();
-    await loadAndShowWallets();
-    await loadAndShowTotps();
+    if (!credentialsFailed) await loadAndShowCredentials();
+    if (!notesFailed)       await loadAndShowNotes();
+    if (!walletsFailed)     await loadAndShowWallets();
+    if (!totpsFailed)       await loadAndShowTotps();
 
   } catch (err) {
-    console.error("Error saving pending data:", err);
-    alert("Saving failed: " + err.message);
+    showAlert("Saving failed: " + err.message, "error");
   } finally {
     hideSpinner();
   }
@@ -1341,16 +1487,15 @@ async function deleteCredentials(ids = []) {
     const tx = await vault.deleteCredentials(ids);
     await tx.wait();
 
-    alert("Credential(s) deleted!");
+    showAlert("Credential(s) deleted!", "success");
 
     updateCredentialPendingUI();           // ✅ Refresh pending display (optional but safe)
     updateCredentialCountDisplay();        // ✅ <-- Add this RIGHT HERE
     updateGlobalSaveButtonVisibility();    // ✅ Optional: ensure Save All button hides if needed
-    await loadAndShowCredentials(true);    // ✅ Reload read items
+    await loadAndShowCredentials();        // ✅ Reload read items
 
-  } catch (e) {
-    console.error("Error deleting credentials:", e);
-    alert("Failed to delete credential(s).");
+  } catch {
+    showAlert("Failed to delete credential(s).", "error");
   } finally {
     hideSpinner();
   }
@@ -1368,16 +1513,15 @@ async function deleteNotes(ids = []) {
     const tx = await vault.deleteNotes(ids);
     await tx.wait();
 
-    alert("Note(s) deleted!");
+    showAlert("Note(s) deleted!", "success");
 
     updateNotePendingUI();
     updateNoteCountDisplay();
     updateGlobalSaveButtonVisibility();
     await loadAndShowNotes();
 
-  } catch (e) {
-    console.error("Error deleting notes:", e);
-    alert("Failed to delete note(s).");
+  } catch {
+    showAlert("Failed to delete note(s).", "error");
   } finally {
     hideSpinner();
   }
@@ -1385,7 +1529,7 @@ async function deleteNotes(ids = []) {
 
 async function deleteWallets(ids = []) {
   if (!userVault || !userVault.startsWith("0x")) return;
-  if (!addresses.length) return;
+  if (!ids.length) return;
 
   try {
     showSpinner("Deleting wallet...");
@@ -1395,16 +1539,15 @@ async function deleteWallets(ids = []) {
     const tx = await vault.deleteWalletAddresses(ids);
     await tx.wait();
 
-    alert("Wallet(s) deleted!");
+    showAlert("Wallet(s) deleted!", "success");
 
     updateWalletPendingUI();
     updateWalletCountDisplay();
     updateGlobalSaveButtonVisibility();
     await loadAndShowWallets();
 
-  } catch (e) {
-    console.error("Error deleting wallet address(es):", e);
-    alert("Failed to delete wallet address(es).");
+  } catch {
+    showAlert("Failed to delete wallet address(es).", "error");
   } finally {
     hideSpinner();
   }
@@ -1422,16 +1565,15 @@ async function deleteTotps(ids = []) {
     const tx = await vault.deleteTOTP(ids);
     await tx.wait();
 
-    alert("TOTP secret(s) deleted!");
+    showAlert("TOTP secret(s) deleted!", "success");
 
     updateTotpPendingUI();
     updateTotpCountDisplay();
     updateGlobalSaveButtonVisibility();
     await loadAndShowTotps();
 
-  } catch (e) {
-    console.error("Error deleting TOTP:", e);
-    alert("Failed to delete TOTP.");
+  } catch {
+    showAlert("Failed to delete TOTP.", "error");
   } finally {
     hideSpinner();
   }
@@ -1458,14 +1600,15 @@ function editPendingCredential(index) {
 }
 
 function deletePendingCredential(index) {
-  if (!confirm("Are you sure you want to discard this pending credential?")) return;
-  const removed = pendingCredentials.splice(index, 1)[0];
-
-  if (removed._original && removed.id === removed._original.id) {
-    renderCredentialItem(removed._original);
-  }  
-
-  updateCredentialPendingUI();
+  showConfirm("Are you sure you want to discard this pending credential?", () => {
+    const removed = pendingCredentials.splice(index, 1)[0];
+  
+    if (removed._original && removed.id === removed._original.id) {
+      renderCredentialItem(removed._original);
+    }
+  
+    updateCredentialPendingUI();
+  });
 }
 
 function editPendingNote(index) {
@@ -1485,14 +1628,15 @@ function editPendingNote(index) {
 }
 
 function deletePendingNote(index) {
-  if (!confirm("Are you sure you want to discard this pending note?")) return;
-  const removed = pendingNotes.splice(index, 1)[0];
-
-  if (removed._original && removed.id === removed._original.id) {
-    renderNoteItem(removed._original);
-  }
-
-  updateNotePendingUI();
+  showConfirmModal("Are you sure you want to discard this pending note?", () => {
+    const removed = pendingNotes.splice(index, 1)[0];
+  
+    if (removed._original && removed.id === removed._original.id) {
+      renderNoteItem(removed._original);
+    }
+  
+    updateNotePendingUI();
+  }); 
 }
 
 function editPendingWallet(index) {
@@ -1514,14 +1658,15 @@ function editPendingWallet(index) {
 }
 
 function deletePendingWallet(index) {
-  if (!confirm("Are you sure you want to discard this pending wallet?")) return;
-
-  const removed = pendingWallets.splice(index, 1)[0];
-  if (removed._original && removed.walletAddress === removed._original.walletAddress) {
-    renderWalletItem(removed._original);
-  }
-
-  updateWalletPendingUI();
+  showConfirm("Are you sure you want to discard this pending wallet?", () => {
+    const removed = pendingWallets.splice(index, 1)[0];
+  
+    if (removed._original && removed.id === removed._original.id) {
+      renderWalletItem(removed._original);
+    }
+  
+    updateWalletPendingUI();
+  }); 
 }
 
 function editPendingTotp(index) {
@@ -1547,9 +1692,10 @@ function editPendingTotp(index) {
 }
 
 function deletePendingTotp(index) {
-  if (!confirm("Are you sure you want to discard this pending TOTP secret?")) return;
-  pendingTotps.splice(index, 1);
-  updateTotpPendingUI();
+  showConfirm("Are you sure you want to discard this pending TOTP secret?", () => {
+    pendingTotps.splice(index, 1);
+    updateTotpPendingUI();
+  });  
 }
 
 function updateCredentialPendingUI() {
@@ -1869,6 +2015,7 @@ function renderCredentialItem(cred, shouldUpdateUI = true) {
     <div>
       <strong>Remarks:</strong> ${cred.remarks}
     </div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(cred.timestamp)}</div>
   `;
 
   const actionBar = document.createElement("div");
@@ -1899,11 +2046,11 @@ function renderCredentialItem(cred, shouldUpdateUI = true) {
   deleteBtn.className = "icon-btn danger";
   deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
   deleteBtn.title = "Delete";
-  deleteBtn.onclick = async () => {
-    if (confirm(`Delete credential "${cred.name}"?`)) {
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete credential "${cred.name}"?`, async () => {
       await deleteCredentials([cred.id]);
-    }
-  };
+    });
+  }; 
 
   actionBar.appendChild(editBtn);
   actionBar.appendChild(deleteBtn);
@@ -1943,6 +2090,7 @@ function renderNoteItem(note, shouldUpdateUI = true) {
     <div>
       <strong>Note:</strong> ${note.note.replace(/\n/g, "<br>")}
     </div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(note.timestamp)}</div>
   `;
 
   const actionBar = document.createElement("div");
@@ -1971,10 +2119,10 @@ function renderNoteItem(note, shouldUpdateUI = true) {
   deleteBtn.className = "icon-btn danger";
   deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
   deleteBtn.title = "Delete";
-  deleteBtn.onclick = async () => {
-    if (confirm(`Delete note "${note.name}"?`)) {
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete note "${note.name}"?`, async () => {
       await deleteNotes([note.id]);
-    }
+    });
   };
 
   actionBar.appendChild(editBtn);
@@ -2024,6 +2172,7 @@ function renderWalletItem(wallet, shouldUpdateUI = true) {
       </button>
     </div>
     <div><strong>Remarks:</strong> ${wallet.remarks}</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(wallet.timestamp)}</div>
   `;
 
   const actionBar = document.createElement("div");
@@ -2056,10 +2205,10 @@ function renderWalletItem(wallet, shouldUpdateUI = true) {
   deleteBtn.className = "icon-btn danger";
   deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
   deleteBtn.title = "Delete";
-  deleteBtn.onclick = async () => {
-    if (confirm(`Delete wallet "${wallet.name}"?`)) {
-      await deleteWallets([wallet.ids]);
-    }
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete wallet "${wallet.name}"?`, async () => {
+      await deleteWallets([wallet.id]);
+    });
   };
 
   actionBar.appendChild(editBtn);
@@ -2108,6 +2257,7 @@ function renderTotpItem(totp, shouldUpdateUI = true) {
     </div>
     <div><strong>Algorithm:</strong> ${totp.algorithm}</div>
     <div><strong>Interval:</strong> ${totp.interval} sec</div>
+    <div><strong>Last Updated:</strong> ${formatTimestamp(totp.timestamp)}</div>
   `;
 
   const actionBar = document.createElement("div");
@@ -2141,10 +2291,10 @@ function renderTotpItem(totp, shouldUpdateUI = true) {
   deleteBtn.className = "icon-btn danger";
   deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
   deleteBtn.title = "Delete";
-  deleteBtn.onclick = async () => {
-    if (confirm(`Delete TOTP secret "${totp.name}"?`)) {
+  deleteBtn.onclick = () => {
+    showConfirm(`Delete TOTP "${totp.name}"?`, async () => {
       await deleteTotps([totp.id]);
-    }
+    });
   };
 
   actionBar.appendChild(editBtn);
@@ -2204,7 +2354,7 @@ function handleIdleTimeout(timeout = true) {
     // 🔥 Force rendering first, then alert
     requestAnimationFrame(() => {
       setTimeout(() => {
-        alert("You were inactive for 2½ minutes. Vault access has been reset for your security.");
+        showAlert("You were inactive for 2½ minutes. Vault access has been reset for your security.", "info");
       }, 0);
     });
   }
@@ -2229,15 +2379,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   provider = provider || new ethers.providers.JsonRpcProvider(cronosRpcUrl);
 
+  await getFactoryAddress();
   await fetchVaultCount();    // ✅ Always fetch vault count
-  await fetchAndCacheCosts(); // ✅ Always fetch cost info
+  await getVaultUpsertCost(); // ✅ Always fetch cost info
   // ⛔ Skip the rest for index page
   const path = window.location.pathname.toLowerCase();
   if (path.endsWith("/") || path.endsWith("/index") || path.endsWith("/index.html")) return;
 
   const Web3ModalConstructor = window.Web3Modal && (window.Web3Modal.default || window.Web3Modal);
   if (!Web3ModalConstructor) {
-    console.error("Web3Modal library not found!");
     return;
   }
   web3Modal = new Web3ModalConstructor({
@@ -2276,13 +2426,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("globalSaveAllBtn")?.addEventListener("click", saveAllPendingItems);
   document.getElementById("retrySignBtn")?.addEventListener("click", async () => {
     try {
-      await deriveWalletKey();
         const retryBtn = document.getElementById("retrySignBtn");
         if (retryBtn) retryBtn.classList.add("displayNone");
-        await loadAllSections();
-    } catch (err) {
-      console.warn("Signing failed or cancelled:", err);
-    }
+        unlockAndLoadAllSections();
+    } catch {}
   }); 
 
   // Vault section header toggles
@@ -2328,12 +2475,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
   
           if (hasUnsaved) {
-            if (!confirm(`Discard unsaved ${title}?`)) {
-              return; // User cancelled → keep section and form open
-            }
-            form.classList.add("slide-hidden");
-            form.classList.add("displayNone");
-            clearFunc?.();
+            showConfirm(`Discard unsaved ${title}?`, () => {
+              form.classList.add("slide-hidden");
+              form.classList.add("displayNone");
+              clearFunc?.();
+            });
           } else {
             // Form is open but no data → just hide
             form.classList.add("slide-hidden");
@@ -2370,18 +2516,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? "Cancel editing this credential?"
         : "Cancel adding this credential?";
   
-      if (confirm(message)) {
-        const form = document.getElementById("newCredentialForm");
-        form.classList.add("slide-hidden");
-        form.classList.add("displayNone"); // ✅ hide completely
-        document.getElementById("credentialFormTitle").innerHTML = '<i class="fas fa-lock"></i> New Credential';
-        clearCredentialForm();
-  
-        if (editingOriginalCredential) {
-          renderCredentialItem(editingOriginalCredential);
-          editingOriginalCredential = null;
-        }
-      }
+        showConfirm(message, () => {
+          const form = document.getElementById("newCredentialForm");
+          form.classList.add("slide-hidden");
+          form.classList.add("displayNone"); // ✅ hide completely
+          document.getElementById("credentialFormTitle").innerHTML = '<i class="fas fa-lock"></i> New Credential';
+          clearCredentialForm();
+        
+          if (editingOriginalCredential) {
+            renderCredentialItem(editingOriginalCredential);
+            editingOriginalCredential = null;
+          }
+        });        
     });
   }
   
@@ -2393,7 +2539,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const remarks = document.getElementById("credRemarks").value.trim();
 
       if (!name || !username || !password) {
-        alert("Name, username, and password are required.");
+        showAlert("Name, username, and password are required.", "warning");
         return;
       }
 
@@ -2437,18 +2583,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? "Cancel editing this note?"
         : "Cancel adding this note?";
   
-      if (confirm(message)) {
-        const form = document.getElementById("newNoteForm");
-        form.classList.add("slide-hidden");
-        form.classList.add("displayNone"); // ✅ hide completely
-        document.getElementById("noteFormTitle").innerHTML = '<i class="fas fa-note"></i> New Note';
-        clearNoteForm();
-  
-        if (editingOriginalNote) {
-          renderNoteItem(editingOriginalNote);
-          editingOriginalNote = null;
-        }
-      }
+        showConfirm(message, () => {
+          const form = document.getElementById("newNoteForm");
+          form.classList.add("slide-hidden");
+          form.classList.add("displayNone"); // ✅ hide completely
+          document.getElementById("noteFormTitle").innerHTML = '<i class="fas fa-note"></i> New Note';
+          clearNoteForm();
+        
+          if (editingOriginalNote) {
+            renderNoteItem(editingOriginalNote);
+            editingOriginalNote = null;
+          }
+        });        
     });
   }
   
@@ -2458,7 +2604,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const content = document.getElementById("noteContent").value.trim();
   
       if (!name || !content) {
-        alert("Both name and content are required.");
+        showAlert("Both name and content are required.", "warning");
         return;
       }
   
@@ -2503,18 +2649,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? "Cancel editing this wallet?"
         : "Cancel adding this wallet?";
   
-      if (confirm(message)) {
-        const form = document.getElementById("newWalletForm");
-        form.classList.add("slide-hidden");
-        form.classList.add("displayNone"); // ✅ hide completely
-        document.getElementById("walletFormTitle").innerHTML = '<i class="fas fa-wallet"></i> New Wallet';
-        clearWalletForm();
-  
-        if (editingOriginalWallet) {
-          renderWalletItem(editingOriginalWallet);
-          editingOriginalWallet = null;
-        }
-      }
+        showConfirm(message, () => {
+          const form = document.getElementById("newWalletForm");
+          form.classList.add("slide-hidden");
+          form.classList.add("displayNone"); // ✅ hide completely
+          document.getElementById("walletFormTitle").innerHTML = '<i class="fas fa-wallet"></i> New Wallet';
+          clearWalletForm();
+        
+          if (editingOriginalWallet) {
+            renderWalletItem(editingOriginalWallet);
+            editingOriginalWallet = null;
+          }
+        });        
     });
   }
   
@@ -2527,12 +2673,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       const remarks = document.getElementById("walletRemarks").value.trim();
   
       if (!name || !walletAddress) {
-        alert("Name and wallet address are required.");
+        showAlert("Name and wallet address are required.", "warning");
         return;
       }
   
       if (editingOriginalWallet && editingOriginalWallet.walletAddress === walletAddress) {
         pendingWallets.push({
+          id: editingOriginalWallet.id,
           walletAddress,
           name,
           privateKey,
@@ -2575,21 +2722,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? "Cancel editing this TOTP?"
         : "Cancel adding this TOTP?";
     
-      if (confirm(message)) {
-        const form = document.getElementById("newTotpForm");
-        form.classList.add("slide-hidden");
-        form.classList.add("displayNone"); // ✅ hide completely
-
-        document.getElementById("totpFormTitle").innerHTML = '<i class="fas fa-key"></i> New TOTP Secret';
-        clearTotpForm();
-    
-        if (editingOriginalTotp) {
-          renderTotpItem(editingOriginalTotp);
-          editingOriginalTotp = null;
-        }
-      }
-    });
-    
+        showConfirm(message, () => {
+          const form = document.getElementById("newTotpForm");
+          form.classList.add("slide-hidden");
+          form.classList.add("displayNone"); // ✅ hide completely
+        
+          document.getElementById("totpFormTitle").innerHTML = '<i class="fas fa-key"></i> New TOTP Secret';
+          clearTotpForm();
+        
+          if (editingOriginalTotp) {
+            renderTotpItem(editingOriginalTotp);
+            editingOriginalTotp = null;
+          }
+        });        
+    });  
   }
 
   if (saveTotpBtn) {
@@ -2600,7 +2746,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const interval = parseInt(document.getElementById("totpInterval").value.trim(), 10);
     
       if (!name || !key || !algorithm || !interval || interval <= 0) {
-        alert("All fields are required and interval must be positive.");
+        showAlert("All fields are required and interval must be positive.", "warning");
         return;
       }
     

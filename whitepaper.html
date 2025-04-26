@@ -31,13 +31,14 @@
   <div class="content">
     <div class="text-center mb-5">
         <h1><i class="fas fa-lock"></i> CroVault Whitepaper</h1>
-        <p>April 21, 2025</p>
+        <p>April 26, 2025</p>
     </div>
 
     <section class="section">
         <h2>Introduction</h2>
-        <p>In an increasingly digital world, safeguarding sensitive information such as credentials, notes, and cryptocurrency wallet data is critical. 
-            CroVault is a decentralized, blockchain-based privacy vault designed to securely store sensitive user data with robust encryption and blockchain technology.</p>
+        <p>In an increasingly digital world, safeguarding sensitive information including credentials, notes, cryptocurrency wallets, PINs, bank accounts,
+           credit cards, insurance policies, identity documents, legal documents, assets, emergency contacts, and subscriptions. CroVault is a decentralized, 
+           blockchain-based privacy vault designed to securely store sensitive user data with robust encryption and blockchain technology.</p>
     </section>
 
     <section class="section">
@@ -45,9 +46,18 @@
         <p>CroVault allows users to securely store:</p>
         <ul>
             <li>Credentials (usernames, passwords, remarks)</li>
-            <li>Notes</li>
+            <li>Notes (private encrypted notes)</li>
             <li>Wallet Addresses (including private keys and seed phrases)</li>
-            <li>Time-based One-Time Passwords (TOTP)</li>
+            <li>TOTP Secrets (for 2FA authentication)</li>
+            <li>PIN Codes (for cards, devices, vaults)</li>
+            <li>Bank Accounts (IBAN, SWIFT, bank details)</li>
+            <li>Credit Cards (encrypted card info and usage)</li>
+            <li>Insurance Policies (coverage, expiry, linked assets)</li>
+            <li>Identity Documents (passport, driver's license, ID cards)</li>
+            <li>Legal Documents (wills, powers of attorney, contracts)</li>
+            <li>Assets & Ownership Records (property, vehicles, artwork)</li>
+            <li>Emergency Contacts & Trustees (family, legal representatives)</li>
+            <li>Subscriptions & Recurring Payments (Netflix, AWS, etc.)</li>
         </ul>
         <p>
             Data is encrypted client-side using a combination of the user's chosen password and a cryptographic key derived from a signed wallet message, 
@@ -58,28 +68,36 @@
     <section class="section">
         <h2>Smart Contract Infrastructure</h2>
         <p>CroVault consists of several smart contracts deployed on the Cronos blockchain:</p>
-        <h3>VaultFactory.sol</h3>
+        <h3><a href="https://cronoscan.com/address/0x50E2c7201d5714e018a33203FbD92979BC51eee4" rel="noopener" target="_blank">CostManager.sol</a></h3>
+        <ul>
+            <li>Centralized contract to manage fees related to vault creation and data operations.</li>
+            <li>Provides functions to query current pricing (vaultCreationCost, vaultUpsertCost).</li>
+        </ul>        
+        <h3><a href="https://cronoscan.com/address/0x3a2649A49c8Bb5A9d0500bF0e43af27B706D084F" rel="noopener" target="_blank">VaultFactory.sol</a></h3>
         <ul>
             <li>Manages the creation of individual user VaultContracts.</li>
             <li>Maintains a mapping from wallet addresses to user-specific vault addresses.</li>
             <li>Emits events upon successful vault creation.</li>
         </ul>
-        <h3>VaultContract.sol</h3>
+        <h3><a href="https://cronoscan.com/address/0x3D47B247c139F55F5e01371d145d65d406c54A55" rel="noopener" target="_blank">VaultContract.sol</a></h3>
         <ul>
             <li>Individual contracts deployed per user.</li>
             <li>Stores encrypted user data including credentials, notes, wallet details, and TOTP secrets.</li>
-            <li>Provides functions for batch operations:</li>
-            <ul>
-                <li>upsertCredentials, readCredentials, deleteCredentials</li>
-                <li>upsertNotes, readNote, deleteNotes</li>
-                <li>upsertWalletAddress, readWalletAddress, deleteWalletAddresses</li>
-                <li>upsertTOTP, readTOTP, deleteTOTP</li>
-            </ul>
         </ul>
-        <h3>CostManager.sol</h3>
+        <h3><a href="https://cronoscan.com/address/0x15Dc7cb6641cddcF66C28Dfb86cdEffdBa3Bf0E8" rel="noopener" target="_blank">VaultContract2.sol</a></h3>
         <ul>
-            <li>Centralized contract to manage fees related to vault creation and data operations.</li>
-            <li>Provides functions to query current pricing (vaultCreationCost, vaultUpsertCost).</li>
+            <li>Individual contracts deployed per user.</li>
+            <li>Stores encrypted user data including PIN codes, Bank accounts and Credit cards.</li>
+        </ul>
+        <h3><a href="https://cronoscan.com/address/0x44f46316616e6db886269Aedf495CB723CCf3dE6" rel="noopener" target="_blank">VaultContract3.sol</a></h3>
+        <ul>
+            <li>Individual contracts deployed per user.</li>
+            <li>Stores encrypted user data including Insurances, Identity documents and Legal documents.</li>
+        </ul>
+        <h3><a href="https://cronoscan.com/address/0x39fCf13A75B3Cb2957620F3034fed7C2E6731e6a" rel="noopener" target="_blank">VaultContract4.sol</a></h3>
+        <ul>
+            <li>Individual contracts deployed per user.</li>
+            <li>Stores encrypted user data including Assets, Emergency contacts and Subscriptions.</li>
         </ul>
     </section>
 
@@ -109,7 +127,8 @@
             </ul>
             <li>Data Management</li>
             <ul>
-                <li>Users add or modify credentials, notes, wallet addresses, and TOTP entries.</li>
+                <li>Users can add or modify credentials, notes, wallet addresses, TOTP entries, PIN codes, bank accounts, credit cards, 
+                  insurance policies, identity documents, legal documents, asset ownership records, emergency contacts, and subscription data.</li>
                 <li>Data is encrypted client-side before being transmitted and stored in the user's VaultContract.</li>
                 <li>Batch operations allow efficient updates with optimized transaction costs.</li>
             </ul>
@@ -143,7 +162,8 @@
 
     <section class="section">
         <h2>Conclusion</h2>
-        <p>CroVault provides a secure, decentralized solution for storing and managing sensitive information using blockchain technology, ensuring privacy, security, and user autonomy.</p>
+        <p>CroVault provides a secure, decentralized solution for storing and managing sensitive personal, financial, and legal information 
+          securely and privately using blockchain technology, ensuring privacy, security, and user autonomy.</p>
     </section>
 
   </div>
