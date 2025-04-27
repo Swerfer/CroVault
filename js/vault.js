@@ -8,6 +8,8 @@ const fetchVaultCountUrl  = `https://cronos.org/explorer/api?module=logs&action=
 const cronosRpcUrl        = "https://evm-cronos.crypto.org";
 const cronoScanUrl        = "https://cronoscan.com";
 
+// ==== Contract ABI's ====
+
 const costManagerAbi = [
   {
     inputs: [],
@@ -703,8 +705,9 @@ let web3Modal;
 let provider;       // ethers provider
 let signer;         // ethers signer
 let walletAddress;  // connected wallet
-let sessionPassword = null;
-let walletDerivedKey = null;
+let sessionPassword   = null;
+let sessionPasswordOk = false;
+let walletDerivedKey  = null;
 let userVaults = [];
 
 // ==== IDLE TIMEOUT HANDLING ====
@@ -749,9 +752,13 @@ let editingOriginalSubscription = null;
 
 // ==== Utilities ====
 
-function strToUint8(str) { return new TextEncoder().encode(str); }
+function strToUint8(str) { 
+  return new TextEncoder().encode(str); 
+}
 
-function uint8ToB64(bytes) { return btoa(String.fromCharCode(...new Uint8Array(bytes))); }
+function uint8ToB64(bytes) { 
+  return btoa(String.fromCharCode(...new Uint8Array(bytes))); 
+}
 
 function b64ToUint8(base64) {
   const binary = atob(base64);
@@ -934,11 +941,109 @@ function showConfirm(message, onConfirm, onCancel = null) {
   noBtn.addEventListener("click", noHandler);
 }
 
+function isValidSeedPhrase(seedPhrase) {
+  if (!seedPhrase) return true; // Empty check
+
+  const words = seedPhrase.trim().split(/\s+/);
+  if (words.length !== 12 && words.length !== 24) return false;
+
+  const wordRegex = /^[a-zA-Z]+$/; // Only letters allowed (case insensitive)
+  
+  for (const word of words) {
+    if (!wordRegex.test(word)) {
+      return false; // invalid word found
+    }
+  }
+
+  return true; // all checks passed
+}
+
+function isValidCreditCardNumber(cardNumber) {
+  if (!cardNumber) return false;
+
+  // Remove spaces or dashes
+  cardNumber = cardNumber.replace(/\D/g, '');
+
+  if (!/^\d{13,19}$/.test(cardNumber)) return false; // 13–19 digits
+
+  let sum = 0;
+  let shouldDouble = false;
+
+  for (let i = cardNumber.length - 1; i >= 0; i--) {
+    let digit = parseInt(cardNumber.charAt(i), 10);
+
+    if (shouldDouble) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+
+    sum += digit;
+    shouldDouble = !shouldDouble;
+  }
+
+  return sum % 10 === 0;
+}
+
+function isValidCVV(cvv) {
+  if (!cvv) return false;
+
+  // Remove spaces
+  cvv = cvv.trim();
+
+  if (!/^\d+$/.test(cvv)) return false; // Only digits
+
+}
+
+function isValidIBAN(iban) {
+  if (!iban) return false;
+
+  // Remove spaces and uppercase
+  iban = iban.replace(/\s+/g, '').toUpperCase();
+
+  // Basic format check (country + 2 digits + up to 30 chars)
+  if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{10,30}$/.test(iban)) {
+    return false;
+  }
+
+  // Rearrange: move first 4 chars to end
+  const rearranged = iban.slice(4) + iban.slice(0, 4);
+
+  // Replace letters with numbers (A=10, B=11, ..., Z=35)
+  const numericIban = rearranged.replace(/[A-Z]/g, (char) => char.charCodeAt(0) - 55);
+
+  // Now modulo 97, but the number can be VERY big, so do it piece by piece
+  let remainder = numericIban.slice(0, 2);
+  for (let offset = 2; offset < numericIban.length; offset += 7) {
+    const part = remainder + numericIban.slice(offset, offset + 7);
+    remainder = String(parseInt(part, 10) % 97);
+  }
+
+  return parseInt(remainder, 10) === 1;
+}
+
+function showLockButton() {
+  const unlockBtn = document.getElementById("unlockBtn");
+  if (unlockBtn)    unlockBtn.classList.add("displayNone");
+  const lockBtn   = document.getElementById("lockBtn");
+  if (lockBtn)     lockBtn.classList.remove("displayNone");
+}
+
+function showUnlockButton() {
+  const unlockBtn =    document.getElementById("unlockBtn");
+  if (unlockBtn)    unlockBtn.classList.remove("displayNone");
+  const lockBtn   =    document.getElementById("lockBtn");
+  if (lockBtn)           lockBtn.classList.add("displayNone");
+}
+
 // ==== Encryption / Decryption ====
 
 async function encryptWithPassword(password, data) {
-  if (!walletDerivedKey) {
-    await deriveWalletKey();
+  if (!password || !walletDerivedKey) {
+    showUnlockModal(async (pw) => {
+      sessionPassword = pw;
+      password = pw;
+      await deriveWalletKey();
+    });
   }
 
   const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -987,6 +1092,7 @@ async function decryptWithPassword(password, payload) {
   );
 
   const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+  sessionPasswordOk = true;
   return JSON.parse(new TextDecoder().decode(decrypted));
 }
 
@@ -1147,7 +1253,7 @@ async function hideOrShowCreateVault() {
       document.getElementById("createVaultSection").classList.add("hidden");
 
       const vaultAddressEl = document.getElementById("vaultAddress");
-      vaultAddressEl.innerHTML = "<strong>Vaults:</strong><br>";
+      vaultAddressEl.innerHTML = "<strong>Your personal vaults:</strong><br>";
 
       userVaults.forEach((vault, index) => {
         vaultAddressEl.innerHTML += `
@@ -1253,7 +1359,6 @@ async function loadAllSections() {
 }
 
 async function deriveWalletKey() {
-  const retryBtn = document.getElementById("retryUnlockBtn");
   if (walletDerivedKey) return; // Already derived
   try {
     const signer = provider.getSigner();
@@ -1261,9 +1366,9 @@ async function deriveWalletKey() {
     const signature = await signer.signMessage(message);
     const rawKey = await crypto.subtle.digest("SHA-256", strToUint8(signature));
     walletDerivedKey = new Uint8Array(rawKey);
-    if (retryBtn) retryBtn.classList.add("displayNone");
+    showLockButton();
   } catch (err) {
-    if (retryBtn) retryBtn.classList.remove("displayNone");
+    showUnlockButton();
     throw err; // rethrow to let caller know
   }  
 }
@@ -1293,14 +1398,13 @@ function showUnlockModal(onConfirm) {
     document.removeEventListener("keydown", handleKey);
     onConfirm(pw); // 🔁 No deriveWalletKey here anymore
     startIdleMonitor(); // ✅ Start idle timeout after unlock
-    document.getElementById("retryUnlockBtn")?.classList.add("displayNone");
+    showLockButton();
   };
   
   cancelBtn.onclick = () => {
     modal.classList.add("hidden");
     document.removeEventListener("keydown", handleKey);
-    const retryUnlockBtn = document.getElementById("retryUnlockBtn");
-    if (retryUnlockBtn) retryUnlockBtn.classList.remove("displayNone"); // ✅ here
+    showUnlockButton();
   };  
 
   document.addEventListener("keydown", handleKey);
@@ -1326,18 +1430,19 @@ async function createNewVault() {
       showSpinner("Deploying your vault...");
       // 2. Call createVault
       const tx = await factory.createVaultsForAllImplementations({
-      value: ethers.utils.parseEther(cachedCosts.creation),
+        value: ethers.utils.parseEther("0"), // 0 CRO Keep it 0 CRO, else only one vault will be created and the rest fails.
       });
-
       const receipt = await tx.wait();
       try {
-        // 3. Extract new vault address from event
-        // Change later for future extra vault contracts
-        const vaultEvent = receipt.events.find(e => e.event === "VaultCreated");
-        const deployedAddress = vaultEvent.args.vault;
-        deployResult.textContent = "Vault deployed at: " + deployedAddress;
-        showAlert("Vault deployed at: " + deployedAddress, "success");
-      } catch {}
+        const vaultEvents = receipt.events.filter(e => e.event === "VaultCreated");
+        if (vaultEvents.length > 0) {
+          const addresses = vaultEvents.map(e => e.args.vault);
+          const addressList = addresses.map(a => `<div>${a}</div>`).join("");
+      
+          deployResult.innerHTML = "Vaults deployed at:<br>" + addressList;
+          showAlert(`Vaults deployed at:<br>${addressList}`, "success");
+        }
+      } catch {}      
       hideSpinner();
       hideOrShowCreateVault();
 
@@ -1414,16 +1519,12 @@ function showPasswordModal(onConfirm) {
     document.removeEventListener("keydown", handleKey);
     onConfirm(passInput.value);
     startIdleMonitor(); // ✅ Start idle timeout after password is set
-    document.getElementById("retryUnlockBtn")?.classList.add("displayNone");
-    document.getElementById("retryPasswordBtn")?.classList.add("displayNone");
   };
 
   cancelBtn.onclick = () => {
     modal.classList.add("hidden");
     strengthText.remove();
     document.removeEventListener("keydown", handleKey);
-    const retryPasswordBtn = document.getElementById("retryPasswordBtn");
-    if (retryPasswordBtn) retryPasswordBtn.classList.remove("displayNone");
   };
 
   document.addEventListener("keydown", handleKey);
@@ -1438,15 +1539,12 @@ function showWrongPasswordModal() {
 
   retryBtn.onclick = () => {
     modal.classList.add("hidden");
-    showUnlockModal(async (pw) => {
-      sessionPassword = pw;
-      unlockAndLoadAllSections();
-    });
+    unlockAndLoadAllSections();
   };
 
   cancelBtn.onclick = () => {
     modal.classList.add("hidden");
-    document.getElementById("retryUnlockBtn")?.classList.remove("displayNone"); // ✅ This now works!
+    showUnlockButton();
   };
 }
 
@@ -1585,10 +1683,7 @@ async function loadAndShowCredentials() {
     try {
       await deriveWalletKey();
     } catch (e) {
-      const btn = document.getElementById("retryUnlockBtn");
-      if (btn) {
-        btn.classList.toggle("displayNone", false);
-      }
+      showUnlockButton();
       return;
     }
   }
@@ -1597,7 +1692,7 @@ async function loadAndShowCredentials() {
   document.getElementById("vaultDataSection").classList.remove("displayNone");
 
   // Hide the retry button
-  document.getElementById("retryUnlockBtn")?.classList.add("displayNone");
+  showLockButton();
 
   // If there is no session password or vault address, return early
   if (!sessionPassword || !userVaults[0] || !userVaults[0].startsWith("0x")) return;
@@ -1631,8 +1726,10 @@ async function loadAndShowCredentials() {
         timestamp:  cred.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderCredentialItem(decrypted, false);
@@ -1671,8 +1768,10 @@ async function loadAndShowNotes() {
         timestamp:  note.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderNoteItem(decrypted, false);
@@ -1715,8 +1814,10 @@ async function loadAndShowWallets() {
         timestamp:      wallet.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderWalletItem(decrypted, false);
@@ -1756,8 +1857,10 @@ async function loadAndShowTotps() {
         timestamp:  totp.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderTotpItem(decrypted, false);
@@ -1796,8 +1899,10 @@ async function loadAndShowPins() {
         timestamp:  pin.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderPinItem(decrypted, false);
@@ -1837,8 +1942,10 @@ async function loadAndShowBankAccounts() {
         timestamp:      account.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderBankAccountItem(decrypted, false);
@@ -1878,8 +1985,10 @@ async function loadAndShowCreditCards() {
         timestamp:  card.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderCreditCardItem(decrypted, false);
@@ -1920,8 +2029,10 @@ async function loadAndShowInsurances() {
         timestamp:    insurance.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderInsuranceItem(decrypted, false);
@@ -1960,8 +2071,10 @@ async function loadAndShowIdentities() {
         timestamp:      identity.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderIdentityItem(decrypted, false);
@@ -1999,8 +2112,10 @@ async function loadAndShowLegalDocuments() {
         timestamp:        doc.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderLegalItem(decrypted, false);
@@ -2040,8 +2155,10 @@ async function loadAndShowAssets() {
         timestamp:      asset.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderAssetItem(decrypted, false);
@@ -2079,8 +2196,10 @@ async function loadAndShowContacts() {
         timestamp:  contact.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderContactItem(decrypted, false);
@@ -2118,8 +2237,10 @@ async function loadAndShowSubscriptions() {
         timestamp:      sub.timestamp,
       };
     } catch (e) {
-      showWrongPasswordModal();
-      return;
+      if (!sessionPasswordOk) {
+        showWrongPasswordModal();
+        return;
+      }
     }
 
     renderSubscriptionItem(decrypted, false);
@@ -2235,7 +2356,7 @@ async function deleteTotps(ids = []) {
 
 // ==== Data delete from blockchain Vault 2 ====
 
-async function deletePin(id) {
+async function deletePins(id) {
   if (!userVaults[1]) return;
 
   const signer = provider.getSigner();
@@ -2253,7 +2374,7 @@ async function deletePin(id) {
   }
 }
 
-async function deleteBankAccount(id) {
+async function deleteBankAccounts(id) {
   if (!userVaults[1]) return;
 
   const signer = provider.getSigner();
@@ -2271,7 +2392,7 @@ async function deleteBankAccount(id) {
   }
 }
 
-async function deleteCreditCard(id) {
+async function deleteCreditCards(id) {
   if (!userVaults[1]) return;
 
   const signer = provider.getSigner();
@@ -2291,7 +2412,7 @@ async function deleteCreditCard(id) {
 
 // ==== Data delete from blockchain Vault 3 ====
 
-async function deleteInsurance(id) {
+async function deleteInsurances(id) {
   if (!userVaults[2]) return;
 
   const signer = provider.getSigner();
@@ -2309,7 +2430,7 @@ async function deleteInsurance(id) {
   }
 }
 
-async function deleteIdentity(id) {
+async function deleteIdentities(id) {
   if (!userVaults[2]) return;
 
   const signer = provider.getSigner();
@@ -2327,7 +2448,7 @@ async function deleteIdentity(id) {
   }
 }
 
-async function deleteLegalDocument(id) {
+async function deleteLegalDocuments(id) {
   if (!userVaults[2]) return;
 
   const signer = provider.getSigner();
@@ -2347,7 +2468,7 @@ async function deleteLegalDocument(id) {
 
 // ==== Data delete from blockchain Vault 4 ====
 
-async function deleteAsset(id) {
+async function deleteAssets(id) {
   if (!userVaults[3]) return;
 
   const signer = provider.getSigner();
@@ -2365,7 +2486,7 @@ async function deleteAsset(id) {
   }
 }
 
-async function deleteContact(id) {
+async function deleteContacts(id) {
   if (!userVaults[3]) return;
 
   const signer = provider.getSigner();
@@ -2383,7 +2504,7 @@ async function deleteContact(id) {
   }
 }
 
-async function deleteSubscription(id) {
+async function deleteSubscriptions(id) {
   if (!userVaults[3]) return;
 
   const signer = provider.getSigner();
@@ -4636,6 +4757,7 @@ function renderSubscriptionItem(subscription, shouldUpdateUI = true) {
 // ==== Data write to blockchain ====
 
 async function estimateSaveAllFees() {
+  showSpinner("Estimating...");
   if (newVault) {
     showPasswordModal(async (pw) => {
       sessionPassword = pw;
@@ -4890,22 +5012,34 @@ async function estimateSaveAllFees() {
     }
 
     const gasPrice = await provider.getGasPrice();
-    const totalFee = ethers.utils.formatEther(totalGas.mul(gasPrice));
+    const upsertCost = ethers.utils.parseEther(cachedCosts.upsert);
 
-    let summary = `Estimated gas fees:\n`;
+    const totalFee = ethers.utils.formatEther(totalGas.mul(gasPrice).add(upsertCost.mul(results.length)));
+
+    let summary = `Estimated gas fees:<br>`;
     for (const r of results) {
-      const fee = ethers.utils.formatEther(r.gas.mul(gasPrice));
-      summary += `- ${r.type}: ~${parseFloat(fee).toFixed(2)} CRO\n`;
+      const feeWithoutUpsert = r.gas.mul(gasPrice);
+      const feeWithUpsert = feeWithoutUpsert.add(upsertCost);
+      const fee = ethers.utils.formatEther(feeWithUpsert);
+
+      summary += `- ${r.type}: ~${parseFloat(fee).toFixed(2)} CRO<br>`;
     }
     summary += `Total estimated fee: ~${parseFloat(totalFee).toFixed(2)} CRO`;
+
 
     showAlert(summary, "info");
   } catch (err) {
     showAlert("Failed to estimate gas: " + err.message, "error");
+  } finally {
+    hideSpinner();
   }
 }
 
 async function saveAllPendingItems() {
+  if (idleListening) {
+    clearTimeout(idleTimeout);
+    idleListening = false;
+  }
   if (!sessionPassword) {
     showPasswordModal(async (pw) => {
       sessionPassword = pw;
@@ -4919,19 +5053,19 @@ async function saveAllPendingItems() {
   let overallFailureMessages = [];
 
   try {
-    let credentialsFailed   = false;
-    let notesFailed         = false;
-    let walletsFailed       = false;
-    let totpsFailed         = false;     
-    let pinsFailed          = false;
-    let banksFailed         = false;
-    let cardsFailed         = false;
-    let insurancesFailed    = false;
-    let identitiesFailed    = false;
-    let legalDocsFailed     = false; 
-    let assetsFailed        = false;
-    let contactsFailed      = false;
-    let subscriptionsFailed = false;
+    let credentialsFailed   = null;
+    let notesFailed         = null;
+    let walletsFailed       = null;
+    let totpsFailed         = null;
+    let pinsFailed          = null;
+    let banksFailed         = null;
+    let cardsFailed         = null;
+    let insurancesFailed    = null;
+    let identitiesFailed    = null;
+    let legalDocsFailed     = null;
+    let assetsFailed        = null;
+    let contactsFailed      = null;
+    let subscriptionsFailed = null;
 
     for (let vaultIndex = 0; vaultIndex <= 3; vaultIndex++) {
       const abi = vaultIndex === 0 ? vault1Abi : vaultIndex === 1 ? vault2Abi : vaultIndex === 2 ? vault3Abi : vault4Abi;
@@ -4958,9 +5092,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            credentialsFailed = false;
           } catch {
             credentialsFailed = true;
-            showAlert("Saving credentials failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -4982,9 +5117,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            notesFailed = false;
           } catch {
             notesFailed = true;
-            showAlert("Saving notes failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5009,9 +5145,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            walletsFailed = false;
           } catch {
             walletsFailed = true;
-            showAlert("Saving wallets failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5035,9 +5172,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            totpsFailed = false;
           } catch {
             totpsFailed = true;
-            showAlert("Saving TOTPs failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5073,9 +5211,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            pinsFailed = false;
           } catch {
             pinsFailed = true;
-            showAlert("Saving PINs failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5102,9 +5241,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            banksFailed = false;
           } catch {
             banksFailed = true;
-            showAlert("Saving Bank Accounts failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5131,9 +5271,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            cardsFailed = false;
           } catch {
             cardsFailed = true;
-            showAlert("Saving Credit Cards failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5169,9 +5310,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            insurancesFailed = false;
           } catch {
             insurancesFailed = true;
-            showAlert("Saving Insurances failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5197,9 +5339,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            identitiesFailed = false;
           } catch {
             identitiesFailed = true;
-            showAlert("Saving Identities failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5224,9 +5367,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            legalDocsFailed = false;
           } catch {
             legalDocsFailed = true;
-            showAlert("Saving Legal Documents failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5261,9 +5405,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            assetsFailed = false;
           } catch {
             assetsFailed = true;
-            showAlert("Saving Assets failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5288,9 +5433,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            contactsFailed = false;
           } catch {
             contactsFailed = true;
-            showAlert("Saving Contacts failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5315,9 +5461,10 @@ async function saveAllPendingItems() {
             });
             await waitForTxWithTimeout(tx, 15000);
             newVault = false;
+            subscriptionsFailed = false;
           } catch {
             subscriptionsFailed = true;
-            showAlert("Saving Subscriptions failed.", "error");
+          } finally {
             hideSpinner();
           }
         }
@@ -5336,11 +5483,34 @@ async function saveAllPendingItems() {
       }
     }
   
-    let alertMessage = "All pending data saved!";
-    if (overallFailureMessages.length) {
-      alertMessage += "\n\nHowever, the following failed:\n" + overallFailureMessages.join("\n");
-    }
-    showAlert(alertMessage, "info");
+    const anythingSucceeded =
+      credentialsFailed   === false ||
+      notesFailed         === false ||
+      walletsFailed       === false ||
+      totpsFailed         === false ||
+      pinsFailed          === false ||
+      banksFailed         === false ||
+      cardsFailed         === false ||
+      insurancesFailed    === false ||
+      identitiesFailed    === false ||
+      legalDocsFailed     === false ||
+      assetsFailed        === false ||
+      contactsFailed      === false ||
+      subscriptionsFailed === false;
+
+      let alertMessage = "";
+
+      if (anythingSucceeded) {
+        alertMessage = "All pending data saved!";
+        if (overallFailureMessages.length) {
+          alertMessage += "<br><br>However, the following failed:<br>" + overallFailureMessages.join("<br>");
+        }
+      } else {
+        alertMessage = "Saving failed for all pending items.<br><br>Details:<br>" + overallFailureMessages.join("<br>");
+      }
+      
+      showAlert(alertMessage, "info");
+      
 
     // Immediately update UI to remove yellow pending items before redraw
     if (!credentialsFailed)   updateCredentialPendingUI();
@@ -5378,7 +5548,7 @@ async function saveAllPendingItems() {
   } catch (err) {
     showAlert("Saving failed: " + err.message, "error");
   } finally {
-    hideSpinner();
+    startIdleMonitor();
   }
 }
   
@@ -5394,6 +5564,7 @@ function resetIdleTimer() {
 function handleIdleTimeout(timeout = true) {
   // Reset session
   sessionPassword = null;
+  sessionPasswordOk = false;
   walletDerivedKey = null;
 
   // Hide vault section
@@ -5402,8 +5573,7 @@ function handleIdleTimeout(timeout = true) {
   const balanceEl = document.getElementById("balance");
   balanceEl.textContent = "";
   // Show retry sign button
-  const signBtn = document.getElementById("retryUnlockBtn");
-  if (signBtn) signBtn.classList.remove("displayNone");
+  showUnlockButton();
 
   // Stop the idle system until reinitialized
   idleListening = false;
@@ -5458,21 +5628,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Set up button listeners
-  document.getElementById("connectWalletBtn").addEventListener("click", () => {
+  document.getElementById("connectWalletBtn").addEventListener("click", async () => {
     if (walletAddress) {
       // Already connected: go to CronoScan
       const url = `https://cronoscan.com/address/${walletAddress}`;
       window.open(url, '_blank');
     } else {
       // Not connected: trigger wallet connect
-      connectWallet();
+      await connectWallet();
     }
   });
   document.getElementById("createVaultBtn").addEventListener("click", createNewVault);
 
-  document.getElementById("retryUnlockBtn")?.addEventListener("click", () => {
-    document.getElementById("retryUnlockBtn").classList.add("displayNone");
+  document.getElementById("unlockBtn")?.addEventListener("click", () => {
+    showLockButton();
     unlockAndLoadAllSections();
+  });
+
+  document.getElementById("lockBtn")?.addEventListener("click", () => {
+    handleIdleTimeout(false);
   });
 
   document.getElementById("estimateSaveBtn")?.addEventListener("click", estimateSaveAllFees);
@@ -5725,6 +5899,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
   
+      if (!isValidSeedPhrase(seedPhrase)) {
+        showAlert("Not a valid seed phrase. A valid seed phrase contains 12 or 24 words.", "warning");
+        return;
+      }
+
       if (editingOriginalWallet && editingOriginalWallet.walletAddress === walletAddress) {
         pendingWallets.push({
           id: editingOriginalWallet.id,
@@ -5862,6 +6041,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       const pin       = document.getElementById("pinValue").value.trim();
       const remarks   = document.getElementById("pinRemarks").value.trim();
   
+      if (!name) {
+        showAlert("Name cannot be empty.", "warning");
+        return;
+      }
+
       if (!pin) {
         showAlert("PIN cannot be empty.", "warning");
         return;
@@ -5934,11 +6118,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       const country       = document.getElementById("bankCountry").value.trim();
       const remarks       = document.getElementById("bankRemarks").value.trim();
   
-      if (!iban) {
-        showAlert("IBAN cannot be empty.", "warning");
+      if (!name) {
+        showAlert("Name cannot be empty.", "warning");
+        return;
+      }
+      
+      if (!iban && !accountNumber) {
+        showAlert("Account number and IBAN cannot both be empty.", "warning");
         return;
       }
   
+      if(iban) {
+        if(!isValidIBAN(iban)) {
+          showAlert("The IBAN is not valid.", "warning");
+          return;
+        }
+      }
+
       if (editingOriginalBankAccount && editingOriginalBankAccount.id) {
         pendingBankAccounts.push({
           id: editingOriginalBankAccount.id,
@@ -6009,8 +6205,38 @@ document.addEventListener("DOMContentLoaded", async () => {
       const linkedTo    = document.getElementById("cardLinkedTo").value.trim();
       const remarks     = document.getElementById("cardRemarks").value.trim();
   
+      if (!name) {
+        showAlert("Name cannot be empty.", "warning");
+        return;
+      }
+
       if (!cardNumber) {
         showAlert("Card number cannot be empty.", "warning");
+        return;
+      }
+
+      if (!cardHolder) {
+        showAlert("Card holder cannot be empty.", "warning");
+        return;
+      }
+
+      if (!expiryDate) {
+        showAlert("Expiry date cannot be empty.", "warning");
+        return;
+      }
+
+      if (!ccv) {
+        showAlert("CCV cannot be empty.", "warning");
+        return;
+      }
+
+      if (!isValidCreditCardNumber(cardNumber)) {
+        showAlert("The credit card number is not valid.", "warning");
+        return;
+      }
+
+      if (!isValidCVV(cvv)) {
+        showAlert("The CVV is not valid.", "warning");
         return;
       }
   
@@ -6160,6 +6386,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         showAlert("Identity name cannot be empty.", "warning");
         return;
       }
+
+      if (!documentType) {
+        showAlert("Document type cannot be empty.", "warning");
+        return;
+      }
+
+      if (!documentNumber) {
+        showAlert("Document number cannot be empty.", "warning");
+        return;
+      }
   
       if (editingOriginalIdentity && editingOriginalIdentity.id) {
         pendingIdentities.push({
@@ -6233,6 +6469,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
   
+      if (!documentType) {
+        showAlert("Document type cannot be empty.", "warning");
+        return;
+      }
+
       if (editingOriginalLegalDocument && editingOriginalLegalDocument.id) {
         pendingLegalDocuments.push({
           id: editingOriginalLegalDocument.id,
@@ -6375,6 +6616,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         showAlert("Contact name cannot be empty.", "warning");
         return;
       }
+
+      if (!relation) {
+        showAlert("Relation cannot be empty.", "warning");
+        return;
+      }
+
+      if (!email && !phone) {
+        showAlert("Email and phone cannot both be empty.", "warning");
+        return;
+      }
   
       if (editingOriginalContact && editingOriginalContact.id) {
         pendingContacts.push({
@@ -6434,38 +6685,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  if (saveContactBtn) {
-    saveContactBtn.addEventListener("click", () => {
-      const name      = document.getElementById("contactName").value.trim();
-      const relation  = document.getElementById("contactRelation").value.trim();
-      const email     = document.getElementById("contactEmail").value.trim();
-      const phone     = document.getElementById("contactPhone").value.trim();
-      const remarks   = document.getElementById("contactRemarks").value.trim();
+  if (saveSubscriptionBtn) {
+    saveSubscriptionBtn.addEventListener("click", () => {
+      const serviceName    = document.getElementById("subscriptionServiceName").value.trim();
+      const billingAccount = document.getElementById("subscriptionBillingAccount").value.trim();
+      const frequency      = document.getElementById("subscriptionFrequency").value.trim();
+      const linkedTo       = document.getElementById("subscriptionLinkedTo").value.trim();
+      const remarks        = document.getElementById("subscriptionRemarks").value.trim();
   
-      if (!name) {
-        showAlert("Contact name cannot be empty.", "warning");
+      if (!serviceName) {
+        showAlert("Subscription name cannot be empty.", "warning");
         return;
       }
   
-      if (editingOriginalContact && editingOriginalContact.id) {
-        pendingContacts.push({
-          id: editingOriginalContact.id,
-          name,
-          relation,
-          email,
-          phone,
+      if (editingOriginalSubscription && editingOriginalSubscription.id) {
+        pendingSubscriptions.push({
+          id: editingOriginalSubscription.id,
+          serviceName,
+          billingAccount,
+          frequency,
+          linkedTo,
           remarks,
-          _original: { ...editingOriginalContact }
+          _original: { ...editingOriginalSubscription }
         });
-        editingOriginalContact = null;
+        editingOriginalSubscription = null;
       } else {
-        pendingContacts.push({ name, relation, email, phone, remarks });
+        pendingSubscriptions.push({ serviceName, billingAccount, frequency, linkedTo, remarks });
       }
   
-      document.getElementById("newContactForm").classList.add("slide-hidden");
-      document.getElementById("contactFormTitle").innerHTML = '<i class="fas fa-address-book"></i> New Contact';
-      clearContactForm();
-      updateContactPendingUI();
+      document.getElementById("newSubscriptionForm").classList.add("slide-hidden");
+      document.getElementById("subscriptionFormTitle").innerHTML = '<i class="fas fa-address-book"></i> New Subscription';
+      clearSubscriptionForm();
+      updateSubscriptionPendingUI();
     });
   }  
 
