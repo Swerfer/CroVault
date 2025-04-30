@@ -1366,6 +1366,11 @@ async function hideOrShowCreateVault() {
       });
 
       unlockAndLoadAllSections();
+    } else if (ownedVaultCount === 0) {
+      // New user: no vaults yet
+      createVaultSection.classList.remove("hidden");
+      newVaultsBanner?.classList.add("hidden");
+      document.getElementById("vaultDataSection").classList.add("displayNone");
     } else {
       // User is missing vaults
       createVaultSection.classList.add("hidden");
