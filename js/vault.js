@@ -28,9 +28,9 @@
 ⚡ That's it! Very scalable structure. Only steps 3, 4 and 5 need manual updating.
 */
 
-// ==== Cost manager ABI ====
+// ==== Cost manager ABI      ====
 
-const costManagerAbi = [
+const costManagerAbi            = [
     {
       inputs: [],
       name: "vaultUpsertCost",
@@ -60,9 +60,9 @@ const costManagerAbi = [
     },
 ];
 
-// ==== VaultFactory ABI ====
+// ==== VaultFactory ABI      ====
 
-const factoryAbi = [
+const factoryAbi                = [
     {
       inputs: [],
       name: "createVaultsForAllImplementations",
@@ -106,9 +106,9 @@ const factoryAbi = [
     }
 ];
 
-// ==== Vault contracts ABIs ====
+// ==== Vault contracts ABIs  ====
 
-const vault1Abi = [
+const vault1Abi                 = [
     {
       inputs: [{
         components: [
@@ -286,7 +286,7 @@ const vault1Abi = [
     }
 ];
 
-const vault2Abi = [
+const vault2Abi                 = [
     // === Pins ===
     {
       inputs: [{
@@ -438,7 +438,7 @@ const vault2Abi = [
     }
 ];
 
-const vault3Abi = [
+const vault3Abi                 = [
     // === Insurances ===
     {
       inputs: [{
@@ -588,7 +588,7 @@ const vault3Abi = [
     }
 ];
 
-const vault4Abi = [
+const vault4Abi                 = [
     // === Assets ===
     {
       inputs: [{
@@ -735,19 +735,19 @@ const vault4Abi = [
 ];
 
 // ==== Config ====
-const costManagerAddress  = "0x50E2c7201d5714e018a33203FbD92979BC51eee4";
+const costManagerAddress        = "0x50E2c7201d5714e018a33203FbD92979BC51eee4";
 let factoryAddress;
 
 // ==== topic0 = Event VaultCreated in CostManager contract Topics 0 ====
-const topic0              = "0x0b045af6aff86dd2cda5342fd0329a354dc66759ff1eda00d7ecf13a76c7fb3b";
-const fetchVaultCountUrl  = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=19160779&toBlock=latest&address=factoryAddress&topic0=${topic0}`;
-const cronosRpcUrl        = "https://evm-cronos.crypto.org";
-const cronoScanUrl        = "https://cronoscan.com";
+const topic0                    = "0x0b045af6aff86dd2cda5342fd0329a354dc66759ff1eda00d7ecf13a76c7fb3b";
+const fetchVaultCountUrl        = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=19160779&toBlock=latest&address=factoryAddress&topic0=${topic0}`;
+const cronosRpcUrl              = "https://evm-cronos.crypto.org";
+const cronoScanUrl              = "https://cronoscan.com";
 
 // ==== Mapping of vault index, vault ABI and pretty names. ====
 // ==== This const must be in the .js after the vault#Abi's ====
 
-const vaultTypeMapping = {
+const vaultTypeMapping          = {
   readCredentials: {
     index: 0,
     types: ["Credentials", "Notes", "Wallets", "TOTPs"],
@@ -772,55 +772,55 @@ const vaultTypeMapping = {
 
 // ==== State ====
 
-let newVault = false;
-let cachedCosts = { creation: null, upsert: null };
+let newVault                    = false;
+let cachedCosts                 = { creation: null, upsert: null };
 let web3Modal;
-let provider;       // ethers provider
-let signer;         // ethers signer
-let walletAddress;  // connected wallet
-let sessionPassword   = null;
-let sessionPasswordOk = false;
-let walletDerivedKey  = null;
-let userVaults = [];
+let provider;                   // ethers provider
+let signer;                     // ethers signer
+let walletAddress;              // connected wallet
+let sessionPassword             = null;
+let sessionPasswordOk           = false;
+let walletDerivedKey            = null;
+let userVaults                  = [];
 
 // ==== IDLE TIMEOUT HANDLING ====
 
 let idleTimeout;
-let idleListening = false;
-const idleLimitMs = 5 * 30 * 1000; // 2.5 minutes
+let idleListening               = false;
+const idleLimitMs               = 5 * 30 * 1000; // 2.5 minutes
 
-// ==== Vault 1 (Credentials, Notes, Wallets, TOTPs)
-let pendingCredentials = [];
-let pendingNotes = [];
-let pendingWallets = [];
-let pendingTotps = [];
-let editingOriginalCredential = null;
-let editingOriginalNote = null;
-let editingOriginalWallet = null;
-let editingOriginalTotp = null;
+// ==== Vault 1 (Credentials, Notes, Wallets, TOTPs)  ====
+let pendingCredentials          = [];
+let pendingNotes                = [];
+let pendingWallets              = [];
+let pendingTotps                = [];
+let editingOriginalCredential   = null;
+let editingOriginalNote         = null;
+let editingOriginalWallet       = null;
+let editingOriginalTotp         = null;
 
-// === Vault 2 (PINs, Bank Accounts, Credit Cards)
-let pendingPins = [];
-let pendingBankAccounts = [];
-let pendingCreditCards = [];
-let editingOriginalPin = null;
-let editingOriginalBankAccount = null;
-let editingOriginalCreditCard = null;
+// === Vault 2 (PINs, Bank Accounts, Credit Cards)    ====
+let pendingPins                 = [];
+let pendingBankAccounts         = [];
+let pendingCreditCards          = [];
+let editingOriginalPin          = null;
+let editingOriginalBankAccount  = null;
+let editingOriginalCreditCard   = null;
 
-// === Vault 3 (Insurances, Identities, Legal Docs)
-let pendingInsurances = [];
-let pendingIdentities = [];
-let pendingLegalDocuments = [];
-let editingOriginalInsurance = null;
-let editingOriginalIdentity = null;
-let editingOriginalLegal = null;
+// === Vault 3 (Insurances, Identities, Legal Docs)   ====
+let pendingInsurances           = [];
+let pendingIdentities           = [];
+let pendingLegalDocuments       = [];
+let editingOriginalInsurance    = null;
+let editingOriginalIdentity     = null;
+let editingOriginalLegal        = null;
 
-// === Vault 4 (Assets, Contacts, Subscriptions)
-let pendingAssets = [];
-let pendingContacts = [];
-let pendingSubscriptions = [];
-let editingOriginalAsset = null;
-let editingOriginalContact = null;
+// === Vault 4 (Assets, Contacts, Subscriptions)      ====
+let pendingAssets               = [];
+let pendingContacts             = [];
+let pendingSubscriptions        = [];
+let editingOriginalAsset        = null;
+let editingOriginalContact      = null;
 let editingOriginalSubscription = null;
 
 // ==== Utilities ====
