@@ -1,0 +1,38 @@
+# .github/workflows/deny-visitor-prs.yml
+name: “Deny visitor pull-requests”
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  close-visitor-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close PRs from non-collaborators
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // list users with direct push/collab rights
+            const { data: collabs } = await github.rest.repos.listCollaborators({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              affiliation: 'direct'
+            });
+            const isCollaborator = collabs.some(u => u.login === context.actor);
+            if (!isCollaborator) {
+              // leave a comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: '🔒 Thanks for your interest, but we only accept PRs from our core team.'
+              });
+              // close the PR
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                state: 'closed'
+              });
+            }
