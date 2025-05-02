@@ -12,23 +12,16 @@
 
 ## 📄 Data which can be stored
 
-Vault1:
 1.  Credentials
 2.  Notes
 3.  Wallets
 4.  TOTPs
-
-Vault2:
 5.  PINs
 6.  Bank accounts
 7.  Credit cards
-
-Vault3:
 8.  Insurances
 9.  Identities
 10. Legal documents
-
-Vault4:
 11. Assets
 12. Contacts
 13. Subscriptions
@@ -110,8 +103,3 @@ This project is licensed under the [MIT License](./license.html).
 
 CroVault is a decentralized application (dApp). You are solely responsible for your vault password, crypto wallet, and private keys. **If you lose access, your data cannot be recovered.**
 
----
-
-## 🙌 Contributions
-
-Contributions are welcome! For major changes, please open an issue first to discuss your ideas, then submit a pull request.
