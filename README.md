@@ -1,12 +1,37 @@
 # 🔐 CroVault
 
-**CroVault** is a decentralized privacy vault DApp that allows users to securely store encrypted credentials, notes, and wallet information on the Cronos blockchain. It uses client-side encryption, self-custody design, and open-source smart contracts to give users full control over their sensitive data — even beyond their lifetime.
+**CroVault** is a decentralized privacy vault DApp that allows users to securely store encrypted privacy information on the Cronos blockchain. It uses client-side encryption, self-custody design, and open-source smart contracts to give users full control over their sensitive data — even beyond their lifetime.
 
 ---
 
 ## 🌍 Live Site
 
 👉 [https://crovault.com](https://crovault.com)
+
+---
+
+## 📄 Data which can be stored
+
+Vault1:
+1.  Credentials
+2.  Notes
+3.  Wallets
+4.  TOTPs
+
+Vault2:
+5.  PINs
+6.  Bank accounts
+7.  Credit cards
+
+Vault3:
+8.  Insurances
+9.  Identities
+10. Legal documents
+
+Vault4:
+11. Assets
+12. Contacts
+13. Subscriptions
 
 ---
 
@@ -59,9 +84,12 @@ Full technical overview available in [`workflow.html`](./workflow.html).
 
 All smart contracts are publicly verified on Cronoscan:
 
-- [Vault Contract](https://cronoscan.com/address/0x3D47B247c139F55F5e01371d145d65d406c54A55)
-- [Vault Factory](https://cronoscan.com/address/0x6324CfA3c13b690d135B69886BB06C736e6aCf52)
-- [Cost Manager](https://cronoscan.com/address/0xcBB5409246532Ac3935598Bc4d50baed60fe0EF6)
+- [Cost Manager](https://cronoscan.com/address/0x50E2c7201d5714e018a33203FbD92979BC51eee4)
+- [Vault Factory](https://cronoscan.com/address/0x3a2649A49c8Bb5A9d0500bF0e43af27B706D084F)
+- [Vault1 Contract](https://cronoscan.com/address/0x3D47B247c139F55F5e01371d145d65d406c54A55)
+- [Vault2 Contract](https://cronoscan.com/address/0x15Dc7cb6641cddcF66C28Dfb86cdEffdBa3Bf0E8)
+- [Vault3 Contract](https://cronoscan.com/address/0x44f46316616e6db886269Aedf495CB723CCf3dE6)
+- [Vault4 Contract](https://cronoscan.com/address/0x39fCf13A75B3Cb2957620F3034fed7C2E6731e6a)
 
 ---
 
