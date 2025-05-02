@@ -103,8 +103,3 @@ This project is licensed under the [MIT License](./license.html).
 
 CroVault is a decentralized application (dApp). You are solely responsible for your vault password, crypto wallet, and private keys. **If you lose access, your data cannot be recovered.**
 
----
-
-## 🙌 Contributions
-
-Contributions are welcome! For major changes, please open an issue first to discuss your ideas, then submit a pull request.
