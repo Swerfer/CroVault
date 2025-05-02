@@ -372,6 +372,10 @@ summary {
   }
 }
 
+.lockBtn {
+  width: 95px !important;
+}
+
 /* ==== End CSS for the index page ==== */
 
 /* ==== CSS for instructions page === */

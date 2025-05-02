@@ -22,7 +22,7 @@
   <!-- Ethers + Web3Modal JS -->
   <script src="js/ethers.umd.min.js"></script>
   <script src="js/web3modal.js"></script>
-  <script type="module" src="js/vault.js"></script>
+  <script src="js/vault.js"></script>
 
 </head>
 <body>
@@ -51,10 +51,10 @@
             <button id="connectWalletBtn" class="btn-custom small maxwidth" title="Connect Wallet">
               <span id="connectBtnText">Connect Wallet</span>
             </button>
-            <button id="unlockBtn" class="btn-custom small your-vault-buttons displayNone">
+            <button id="unlockBtn" class="btn-custom small your-vault-buttons displayNone lockBtn">
               <i class="fas fa-unlock"></i> Unlock
             </button>
-            <button id="lockBtn" class="btn-custom small your-vault-buttons displayNone">
+            <button id="lockBtn" class="btn-custom small your-vault-buttons displayNone lockBtn">
               <i class="fas fa-lock"></i> Lock
             </button>
             <p id="balance" class="mt-2"></p>
@@ -621,14 +621,6 @@
     </div>
 
     <div id="modalOverlay" class="modal-overlay hidden"></div>
-
-    <div id="spinnerOverlay" class="hidden"> 
-      <div class="spinner-container">
-        <button class="spinner-close" onclick="hideSpinner()"><i class="fas fa-xmark"></i></button>
-        <div class="loader"></div>
-        <div class="spinner-text">Saving to blockchain...</div>
-      </div>
-    </div>
 
     <div id="stickySaveBar" class="hidden">
       <button id="stickySaveBtn" class="btn-custom small"><i class="fas fa-save"></i> Save All</button>

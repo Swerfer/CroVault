@@ -862,6 +862,31 @@ function hideSpinner() {
   overlay.classList.add("hidden");
 }
 
+(function initSpinnerOverlay() {
+  function init() {
+    const overlay = document.createElement("div");
+    overlay.id = "spinnerOverlay";
+    overlay.classList.add("hidden");
+    overlay.innerHTML = `
+      <div class="spinner-container">
+        <button class="spinner-close"><i class="fas fa-xmark"></i></button>
+        <div class="loader"></div>
+        <div class="spinner-text">Saving to blockchain...</div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay
+      .querySelector(".spinner-close")
+      .addEventListener("click", hideSpinner);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+
 function showVaultType(type) {
   document.querySelectorAll('.vault-card').forEach(el => el.classList.add('displayNone'));
   document.querySelectorAll(`.vault-${type}`).forEach(el => el.classList.remove('displayNone'));
@@ -1252,11 +1277,17 @@ async function connectWallet() {
     showSpinner("Connecting...");
     const instance = await retryWeb3ConnectWithTimeout(10, 1000); // 10 tries max, 1s timeout each
     if (!instance) {
-      throw new Error("Wallet connection failed after multiple timed-out attempts");
+      hideSpinner();
+      showAlert("<p>Wallet connection timed out.</p>" + 
+                "<p>If you are on mobile, try opening CroVault.com in the wallet's browers instead.</p>" + 
+                "<p>Try again and be sured that you are logged into your wallet.</p>"
+                , "error");
+      return;
     }
     await afterWalletConnect(instance);
   } catch (err) {
     connectBtnText.textContent = "Connect Wallet";
+    hideSpinner();
   } 
 }
 
