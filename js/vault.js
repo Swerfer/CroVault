@@ -28,7 +28,7 @@
 ⚡ That's it! Very scalable structure. Only steps 3, 4 and 5 need manual updating.
 */
 
-// ==== Cost manager ABI      ====
+// ==== Cost manager ABI      ==== 
 
 const costManagerAbi            = [
     {
@@ -1357,7 +1357,7 @@ async function hideOrShowCreateVault() {
 
   if (!walletAddress) {
     createVaultSection.classList.add("hidden");
-    newVaultsBanner?.classList.add("hidden");
+    newVaultsBanner.classList.add("hidden");
     return;
   }
 
@@ -1375,7 +1375,7 @@ async function hideOrShowCreateVault() {
 
     if (ownedVaultCount === totalVaultTypes) {
       createVaultSection.classList.add("hidden");
-      newVaultsBanner?.classList.add("hidden");
+      newVaultsBanner.classList.add("hidden");
 
       const vaultAddressEl = document.getElementById("vaultAddress");
       vaultAddressEl.innerHTML = "<strong>Your personal vaults:</strong><br>";
@@ -1400,12 +1400,13 @@ async function hideOrShowCreateVault() {
     } else if (ownedVaultCount === 0) {
       // New user: no vaults yet
       createVaultSection.classList.remove("hidden");
-      newVaultsBanner?.classList.add("hidden");
+      newVaultsBanner.classList.add("hidden");
       document.getElementById("vaultDataSection").classList.add("displayNone");
     } else {
       // User is missing vaults
       createVaultSection.classList.add("hidden");
-      newVaultsBanner?.classList.remove("hidden");
+      newVaultsBanner.classList.remove("hidden");
+      newVaultsBanner.style.display = "";
 
       const missingIndexes = [];
       for (const [funcName, details] of Object.entries(vaultTypeMapping)) {
@@ -1432,7 +1433,7 @@ async function hideOrShowCreateVault() {
   } catch (e) {
     console.error(e);
     createVaultSection.classList.add("hidden");
-    newVaultsBanner?.classList.add("hidden");
+    newVaultsBanner.classList.add("hidden");
   } 
   hideSpinner();
 }
@@ -1632,7 +1633,8 @@ async function createNewVault() {
       hideOrShowCreateVault();
 
   } catch (err) {
-    deployResult.textContent = "Error: " + err.message;
+    hideSpinner();
+    showAlert("Failed to create vault: " + err.message, "error");
   } finally {
     deployLoader.classList.remove("visibleInline");
     createVaultBtn.disabled = false;

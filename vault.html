@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"> 
 <head>
   <!-- Basic meta tags --> 
   <meta charset="UTF-8"/>
@@ -488,13 +488,7 @@
             <div id="subscriptionPendingItems"></div>
             </div>
         </div>
-  
-        <div id="newVaultsBanner" class="hidden alert alert-warning">
-            <p><strong>New vault types available!</strong></p>
-            <div id="missingVaultTypes"></div>
-            <button class="btn primary" onclick="createNewVault()">Create New Vaults</button>
-        </div>          
-          
+         
       </section>
 
       <footer>
@@ -619,6 +613,19 @@
         </div>
       </div>
     </div>
+
+    <div id="newVaultsBanner" class="modal hidden">
+      <div class="modal-content">
+        <h3><i class="fas fa-vault"></i> New vault types available!</h3>
+        <p>The following vault types are available to add:</p>
+        <div id="missingVaultTypes" class="text-start" style="margin-top: 10px;"></div>
+        <div class="buttonDiv" style="margin-top: 15px;">
+          <button class="btn-custom green" onclick="createNewVault()">
+            <i class="fas fa-plus"></i> Create New Vaults
+          </button>
+        </div>
+      </div>
+    </div>     
 
     <div id="modalOverlay" class="modal-overlay hidden"></div>
 
