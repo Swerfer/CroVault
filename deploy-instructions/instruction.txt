@@ -36,3 +36,9 @@ In Cronoscan:
  - Paste code from flattened on next page
  - Add ABI if necessary (if there are contructor arguments)
  - Verify and Publish!
+
+ In Cronos Explorer:
+ - npx hardhat compile 
+ - Use artifacts/build-info/{hash}.json as input in Cronos Explorer (Hardhat Build-Map-Json)
+ - For VaultFactory, the argument looks like (first address is from VaultContract, 2nd address is from the CostManager): 
+   0x0000000000000000000000003D47B247c139F55F5e01371d145d65d406c54A5500000000000000000000000050E2c7201d5714e018a33203FbD92979BC51eee4 No spaces or enters!

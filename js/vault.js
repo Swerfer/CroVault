@@ -753,7 +753,7 @@ let factoryAddress;
 const topic0                    = "0x0b045af6aff86dd2cda5342fd0329a354dc66759ff1eda00d7ecf13a76c7fb3b";
 const fetchVaultCountUrl        = `https://cronos.org/explorer/api?module=logs&action=getLogs&fromBlock=19160779&toBlock=latest&address=factoryAddress&topic0=${topic0}`;
 const cronosRpcUrl              = "https://evm-cronos.crypto.org";
-const cronoScanUrl              = "https://cronoscan.com";
+const cronosExplorerUrl         = "https://explorer.cronos.org";
 
 // ==== Mapping of vault index, vault ABI and pretty names. ====
 // ==== This const must be in the .js after the vault#Abi's ====
@@ -1456,7 +1456,7 @@ async function afterWalletConnect(instance) {
             chainName: "Cronos Mainnet",
             rpcUrls: [cronosRpcUrl],
             nativeCurrency: { name: "Cronos CRO", symbol: "CRO", decimals: 18 },
-            blockExplorerUrls: [cronoScanUrl]
+            blockExplorerUrls: [cronosExplorerUrl]
           }],
         });
       } catch {}
@@ -1500,7 +1500,7 @@ async function hideOrShowCreateVault() {
           <div>
             <span>Vault ${index + 1}:</span>
             <span>${shortenAddress(vault)}</span>
-            <a href="https://cronoscan.com/address/${vault}" target="_blank" class="icon-btn" title="View on Cronoscan" style="margin-left: 6px;">
+            <a href="https://explorer.cronos.org/address/${vault}" target="_blank" class="icon-btn" title="View on Cronos Explorer" style="margin-left: 6px;">
               <i class="fas fa-external-link-alt"></i>
             </a>
             <button class="icon-btn" title="Copy Address" onclick="copyToClipboard('${vault}')">
@@ -5719,8 +5719,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Set up button listeners
   document.getElementById("connectWalletBtn").addEventListener("click", async () => {
     if (walletAddress) {
-      // Already connected: go to CronoScan
-      const url = `https://cronoscan.com/address/${walletAddress}`;
+      // Already connected: go to Cronos Explorer
+      const url = `https://explorer.cronos.org/address/${walletAddress}`;
       window.open(url, '_blank');
     } else {
       // Not connected: trigger wallet connect

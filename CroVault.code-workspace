@@ -6,9 +6,9 @@
 		}
 	],
 	"settings": {
-		"solidity.compileUsingRemoteVersion": "latest",
-		"solidity.defaultCompiler": "remote",
-		"solidity.compileUsingLocalVersion": "c:\\Users\\denni\\OneDrive\\Rat Token\\soljson-v0.8.28+commit.7893614a.js",
+		"solidity.compileUsingRemoteVersion": "v0.8.28+commit.7893614a",
+		"solidity.defaultCompiler": "localFile",
+		"solidity.compileUsingLocalVersion": "c:\\Users\\denni\\OneDrive\\CroVault\\soljson-v0.8.28+commit.7893614a.js",
 		"solidity.packageDefaultDependenciesDirectory": "node_modules"
 	}
 }

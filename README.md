@@ -34,7 +34,7 @@
 - ✅ **No Centralized Storage** – Everything lives on-chain
 - ✅ **Secure Legacy Planning** – Share access only when needed
 - ✅ **Multi-device access** – Nothing stored locally
-- ✅ **Verified Smart Contracts** – Viewable on Cronoscan
+- ✅ **Verified Smart Contracts** – Viewable on Cronos Explorer
 - ✅ **Open Source & Auditable**
 
 ---
@@ -75,14 +75,14 @@ Full technical overview available in [`workflow.html`](./workflow.html).
 
 ## 🔐 Smart Contracts
 
-All smart contracts are publicly verified on Cronoscan:
+All smart contracts are publicly verified on Cronos Explorer:
 
-- [Cost Manager](https://cronoscan.com/address/0x50E2c7201d5714e018a33203FbD92979BC51eee4)
-- [Vault Factory](https://cronoscan.com/address/0x3a2649A49c8Bb5A9d0500bF0e43af27B706D084F)
-- [Vault1 Contract](https://cronoscan.com/address/0x3D47B247c139F55F5e01371d145d65d406c54A55)
-- [Vault2 Contract](https://cronoscan.com/address/0x15Dc7cb6641cddcF66C28Dfb86cdEffdBa3Bf0E8)
-- [Vault3 Contract](https://cronoscan.com/address/0x44f46316616e6db886269Aedf495CB723CCf3dE6)
-- [Vault4 Contract](https://cronoscan.com/address/0x39fCf13A75B3Cb2957620F3034fed7C2E6731e6a)
+- [Cost Manager](https://explorer.cronos.org/address/0x50E2c7201d5714e018a33203FbD92979BC51eee4)
+- [Vault Factory](https://explorer.cronos.org/address/0x3a2649A49c8Bb5A9d0500bF0e43af27B706D084F)
+- [Vault1 Contract](https://explorer.cronos.org/address/0x3D47B247c139F55F5e01371d145d65d406c54A55)
+- [Vault2 Contract](https://explorer.cronos.org/address/0x15Dc7cb6641cddcF66C28Dfb86cdEffdBa3Bf0E8)
+- [Vault3 Contract](https://explorer.cronos.org/address/0x44f46316616e6db886269Aedf495CB723CCf3dE6)
+- [Vault4 Contract](https://explorer.cronos.org/address/0x39fCf13A75B3Cb2957620F3034fed7C2E6731e6a)
 
 ---
 
