@@ -28,6 +28,9 @@
 ⚡ That's it! Very scalable structure. Only steps 3, 4 and 5 need manual updating.
 */
 
+
+// #region ABIs
+
 // ==== Cost manager ABI      ==== 
 
 const costManagerAbi            = [
@@ -734,6 +737,14 @@ const vault4Abi                 = [
     }
 ];
 
+// #endregion
+
+
+
+
+
+// #region Global Variables
+
 // ==== Config ====
 const costManagerAddress        = "0x50E2c7201d5714e018a33203FbD92979BC51eee4";
 let factoryAddress;
@@ -783,6 +794,14 @@ let sessionPasswordOk           = false;
 let walletDerivedKey            = null;
 let userVaults                  = [];
 
+// ==== GLOBAL FRONTEND LIMITS ====
+// Max number of unsaved (yellow) items allowed at once across ALL sections.
+// After this, user must "Save All" before adding more.
+const MAX_PENDING_BATCH   = 5;
+// Max length for free-text "Remarks"/notes-ish fields we push on-chain.
+// This keeps calldata per item under control.
+const MAX_REMARKS_LENGTH  = 256;
+
 // ==== IDLE TIMEOUT HANDLING ====
 
 let idleTimeout;
@@ -823,7 +842,80 @@ let editingOriginalAsset        = null;
 let editingOriginalContact      = null;
 let editingOriginalSubscription = null;
 
-// ==== Utilities ====
+// #endregion
+
+
+
+
+
+// #region Pend/size helpers
+
+// helper: safe length getter so we don't crash if one array doesn't exist yet
+function _len(arrName) {
+  return (typeof window[arrName] !== "undefined" && Array.isArray(window[arrName]))
+    ? window[arrName].length
+    : 0;
+}
+
+// total number of unsaved (yellow) items currently staged
+function getTotalPendingCount() {
+  return (
+    pendingCredentials.length    +
+    pendingNotes.length          +
+    pendingWallets.length        +
+    pendingTotps.length          +
+    pendingPins.length           +
+    pendingBankAccounts.length   +
+    pendingCreditCards.length    +
+    pendingInsurances.length     +
+    pendingIdentities.length     +
+    pendingLegalDocuments.length +
+    pendingAssets.length         +
+    pendingContacts.length       +
+    pendingSubscriptions.length
+  );
+}
+
+// trim long free-text (Remarks etc.)
+function truncateRemarks(str) {
+  if (!str) return "";
+  if (str.length <= MAX_REMARKS_LENGTH) return str;
+  return str.slice(0, MAX_REMARKS_LENGTH);
+}
+
+// check if we can add another item; show warning if at limit
+function canAddAnotherPending() {
+  const total = getTotalPendingCount();
+  if (total >= MAX_PENDING_BATCH) {
+    showAlert(`You have reached the maximum of ${MAX_PENDING_BATCH} unsaved items. Please save your changes before adding more.`, "warning");
+    return false;
+  }
+  return true;
+}
+
+// after every change to pending arrays, call this
+// - disables all "+" buttons when limit is hit
+function enforcePendingLimitUI() {
+  const atLimit = getTotalPendingCount() >= MAX_PENDING_BATCH;
+  document.querySelectorAll(".icon-only-btn").forEach(btn => {
+    // do NOT actually disable the button, so onClick still fires canAddAnotherPending()
+    if (atLimit) {
+      btn.classList.add("disabled");
+      btn.setAttribute("title", "Save first before adding more");
+    } else {
+      btn.classList.remove("disabled");
+      btn.setAttribute("title", btn.getAttribute("data-default-title") || "Add");
+    }
+  });
+}
+
+// #endregion
+
+
+
+
+
+// #region Utilities
 
 function strToUint8(str) { 
   return new TextEncoder().encode(str); 
@@ -953,9 +1045,13 @@ function updateGlobalSaveButtonVisibility() {
   const btn1 = document.getElementById("estimateSaveBtn");
   const btn2 = document.getElementById("globalSaveAllBtn");
   const stickyBar = document.getElementById("stickySaveBar");
+
   btn1?.classList.toggle("displayNone", !shouldShow);
   btn2?.classList.toggle("displayNone", !shouldShow);
   stickyBar?.classList.toggle("hidden", !shouldShow);
+
+  // NEW: lock the UI when batch is full
+  enforcePendingLimitUI();
 }
 
 function showCostModal() {
@@ -1133,7 +1229,13 @@ function showUnlockButton() {
   if (lockBtn)           lockBtn.classList.add("displayNone");
 }
 
-// ==== Encryption / Decryption ====
+// #endregion
+
+
+
+
+
+// #region En-/Decryption
 
 async function encryptWithPassword(password, data) {
   if (!password || !walletDerivedKey) {
@@ -1199,7 +1301,13 @@ function shortenAddress(addr) {
   return addr.slice(0, 6) + "..." + addr.slice(-4);
 }
 
-// ==== Helpers ====
+// #endregion
+
+
+
+
+
+// #region Helpers
 
 function clearForm(fieldIds) {
     fieldIds.forEach(id => {
@@ -1266,7 +1374,13 @@ async function updateBalanceDisplay() {
   } catch {}
 }
 
-// ==== Connect wallet flow ====
+// #endregion
+
+
+
+
+
+// #region Wallet Connection
 
 async function connectWallet() {
   if (walletAddress) return; // Already connected
@@ -1559,6 +1673,13 @@ async function deriveWalletKey() {
   }  
 }
 
+// #endregion
+
+
+
+
+
+// #region Modals
 // ==== Vault Unlock Modal ====
 
 function showUnlockModal(onConfirm) {
@@ -1594,51 +1715,6 @@ function showUnlockModal(onConfirm) {
   };  
 
   document.addEventListener("keydown", handleKey);
-}
-
-// ==== Create new vault ====
-
-async function createNewVault() {
-  const createVaultBtn = document.getElementById("createVaultBtn");
-  const deployLoader   = document.getElementById("deployLoader");
-  const deployResult   = document.getElementById("deployResult");
-
-  deployResult.textContent = "";
-  deployLoader.classList.add("visibleInline");
-  createVaultBtn.disabled = true;
-
-  try {
-    if (!walletAddress) {
-      throw new Error("Wallet not connected!");
-    }
-
-      const factory = new ethers.Contract(factoryAddress, factoryAbi, signer);
-      showSpinner("Deploying your vault...");
-      // 2. Call createVault
-      const tx = await factory.createVaultsForAllImplementations({
-        value: ethers.utils.parseEther("0"), // 0 CRO Keep it 0 CRO, else only one vault will be created and the rest fails.
-      });
-      const receipt = await tx.wait();
-      try {
-        const vaultEvents = receipt.events.filter(e => e.event === "VaultCreated");
-        if (vaultEvents.length > 0) {
-          const addresses = vaultEvents.map(e => e.args.vault);
-          const addressList = addresses.map(a => `<div>${a}</div>`).join("");
-      
-          deployResult.innerHTML = "Vaults deployed at:<br>" + addressList;
-          showAlert(`Vaults deployed at:<br>${addressList}`, "success");
-        }
-      } catch {}      
-      hideSpinner();
-      hideOrShowCreateVault();
-
-  } catch (err) {
-    hideSpinner();
-    showAlert("Failed to create vault: " + err.message, "error");
-  } finally {
-    deployLoader.classList.remove("visibleInline");
-    createVaultBtn.disabled = false;
-  }
 }
 
 // ==== Password Creation Modal ====
@@ -1848,9 +1924,72 @@ async function loadAndShowSection({
         renderFunc(decrypted, false);
       }         
     updatePendingUIFunc();
-}  
+}
 
-// ==== Load and show functions Vault 1 ====
+// #endregion
+
+
+
+
+
+// #region Create vault
+
+async function createNewVault() {
+  const createVaultBtn = document.getElementById("createVaultBtn");
+  const deployLoader   = document.getElementById("deployLoader");
+  const deployResult   = document.getElementById("deployResult");
+
+  deployResult.textContent = "";
+  deployLoader.classList.add("visibleInline");
+  createVaultBtn.disabled = true;
+
+  try {
+    if (!walletAddress) {
+      throw new Error("Wallet not connected!");
+    }
+
+      const factory = new ethers.Contract(factoryAddress, factoryAbi, signer);
+      showSpinner("Deploying your vault...");
+      // 2. Call createVault
+      const tx = await factory.createVaultsForAllImplementations({
+        value: ethers.utils.parseEther("0"), // 0 CRO Keep it 0 CRO, else only one vault will be created and the rest fails.
+      });
+      const receipt = await tx.wait();
+      try {
+        const vaultEvents = receipt.events.filter(e => e.event === "VaultCreated");
+        if (vaultEvents.length > 0) {
+          const addresses = vaultEvents.map(e => e.args.vault);
+          const addressList = addresses.map(a => `<div>${a}</div>`).join("");
+      
+          deployResult.innerHTML = "Vaults deployed at:<br>" + addressList;
+          showAlert(`Vaults deployed at:<br>${addressList}`, "success");
+        }
+      } catch {}      
+      hideSpinner();
+      hideOrShowCreateVault();
+
+  } catch (err) {
+    hideSpinner();
+    showAlert("Failed to create vault: " + err.message, "error");
+  } finally {
+    deployLoader.classList.remove("visibleInline");
+    createVaultBtn.disabled = false;
+  }
+}
+
+// #endregion
+
+
+
+
+
+// #region >> Load & Show
+
+
+
+
+
+// #region load & show Vault 1
 
 async function loadAndShowCredentials() {
     await loadAndShowSection({
@@ -1907,8 +2046,14 @@ async function loadAndShowTotps() {
       updatePendingUIFunc: updateTotpPendingUI
     });
 }
-  
-// ==== Load and show functions Vault 2 ====
+
+// #endregion
+
+
+
+
+
+// #region load & show Vault 2
 
 async function loadAndShowPins() {
     await loadAndShowSection({
@@ -1951,8 +2096,14 @@ async function loadAndShowCreditCards() {
       updatePendingUIFunc: updateCreditCardPendingUI
     });
 }
-  
-// ==== Load and show functions Vault 3 ====
+
+// #endregion
+
+
+
+
+
+// #region load & show Vault 3
 
 async function loadAndShowInsurances() {
     await loadAndShowSection({
@@ -1995,8 +2146,14 @@ async function loadAndShowLegalDocuments() {
       updatePendingUIFunc: updateLegalDocumentPendingUI
     });
 }
-  
-// ==== Load and show functions Vault 4 ====
+
+// #endregion
+
+
+
+
+
+// #region load & show Vault 4
 
 async function loadAndShowAssets() {
     await loadAndShowSection({
@@ -2039,8 +2196,22 @@ async function loadAndShowSubscriptions() {
       updatePendingUIFunc: updateSubscriptionPendingUI
     });
 }
-  
-// ==== Data delete from blockchain Vault 1 ====
+
+// #endregion
+
+// #endregion
+
+
+
+
+
+// #region >> Vault upserting 
+
+
+
+
+
+// #region Delete data Vault 1
 
 async function deleteCredentials(ids = []) {
   if (!userVaults[0] || !userVaults[0].startsWith("0x")) return;
@@ -2146,7 +2317,13 @@ async function deleteTotps(ids = []) {
   }
 }
 
-// ==== Data delete from blockchain Vault 2 ====
+// #endregion
+
+
+
+
+
+// #region Delete data Vault 2
 
 async function deletePins(id) {
   if (!userVaults[1]) return;
@@ -2202,7 +2379,13 @@ async function deleteCreditCards(id) {
   }
 }
 
-// ==== Data delete from blockchain Vault 3 ====
+// #endregion
+
+
+
+
+
+// #region Delete data Vault 3
 
 async function deleteInsurances(id) {
   if (!userVaults[2]) return;
@@ -2258,7 +2441,13 @@ async function deleteLegalDocuments(id) {
   }
 }
 
-// ==== Data delete from blockchain Vault 4 ====
+// #endregion
+
+
+
+
+
+// #region Delete data Vault 4
 
 async function deleteAssets(id) {
   if (!userVaults[3]) return;
@@ -2314,11 +2503,16 @@ async function deleteSubscriptions(id) {
   }
 }
 
-// ==== Data editors client side new data====
+// #endregion
 
-// ==== editPending Vault 1 ====
+
+
+
+
+// #region editPending Vault 1
 
 function editPendingCredential(index) {
+  if (!canAddAnotherPending()) return;
   const cred = pendingCredentials[index];
 
   // Track it for restoration in case of cancel/delete
@@ -2337,6 +2531,7 @@ function editPendingCredential(index) {
 }
 
 function editPendingNote(index) {
+  if (!canAddAnotherPending()) return;
   const note = pendingNotes[index];
 
   editingOriginalNote = note.id ? { ...note } : null;
@@ -2352,6 +2547,7 @@ function editPendingNote(index) {
 }
 
 function editPendingWallet(index) {
+  if (!canAddAnotherPending()) return;
   const wallet = pendingWallets[index];
 
   editingOriginalWallet = wallet._original ? { ...wallet._original } : (wallet.walletAddress ? { ...wallet } : null);
@@ -2370,6 +2566,7 @@ function editPendingWallet(index) {
 }
 
 function editPendingTotp(index) {
+  if (!canAddAnotherPending()) return;
   const totp = pendingTotps[index];
 
   // Track original for possible revert
@@ -2391,9 +2588,16 @@ function editPendingTotp(index) {
   updateTotpPendingUI();
 }
 
-// ==== editPending Vault 2 ====
+// #endregion
+
+
+
+
+
+// #region editPending Vault 2
 
 function editPendingPin(index) {
+  if (!canAddAnotherPending()) return;
   const pin = pendingPins[index];
 
   editingOriginalPin = pin.id ? { ...pin } : null;
@@ -2412,6 +2616,7 @@ function editPendingPin(index) {
 }
 
 function editPendingBankAccount(index) {
+  if (!canAddAnotherPending()) return;
   const bank = pendingBankAccounts[index];
 
   editingOriginalBank = bank.id ? { ...bank } : null;
@@ -2433,6 +2638,7 @@ function editPendingBankAccount(index) {
 }
 
 function editPendingCreditCard(index) {
+  if (!canAddAnotherPending()) return;
   const card = pendingCreditCards[index];
 
   editingOriginalCard = card.id ? { ...card } : null;
@@ -2453,9 +2659,16 @@ function editPendingCreditCard(index) {
   updateCreditCardPendingUI();
 }
 
-// ==== editPending Vault 3 ====
+// #endregion
+
+
+
+
+
+// #region editPending Vault 3
 
 function editPendingInsurance(index) {
+  if (!canAddAnotherPending()) return;
   const insurance = pendingInsurances[index];
 
   editingOriginalInsurance = insurance.id ? { ...insurance } : null;
@@ -2476,6 +2689,7 @@ function editPendingInsurance(index) {
 }
 
 function editPendingIdentity(index) {
+  if (!canAddAnotherPending()) return;
   const identity = pendingIdentities[index];
 
   editingOriginalIdentity = identity.id ? { ...identity } : null;
@@ -2496,6 +2710,7 @@ function editPendingIdentity(index) {
 }
 
 function editPendingLegalDocument(index) {
+  if (!canAddAnotherPending()) return;
   const legal = pendingLegalDocuments[index];
 
   editingOriginalLegal = legal.id ? { ...legal } : null;
@@ -2514,9 +2729,16 @@ function editPendingLegalDocument(index) {
   updateLegalDocumentPendingUI();
 }
 
-// ==== editPending Vault 4 ====
+// #endregion
+
+
+
+
+
+// #region editPending Vault 4
 
 function editPendingAsset(index) {
+  if (!canAddAnotherPending()) return;
   const asset = pendingAssets[index];
 
   editingOriginalAsset = asset.id ? { ...asset } : null;
@@ -2536,6 +2758,7 @@ function editPendingAsset(index) {
 }
 
 function editPendingContact(index) {
+  if (!canAddAnotherPending()) return;
   const contact = pendingContacts[index];
 
   editingOriginalContact = contact.id ? { ...contact } : null;
@@ -2555,6 +2778,7 @@ function editPendingContact(index) {
 }
 
 function editPendingSubscription(index) {
+  if (!canAddAnotherPending()) return;
   const subscription = pendingSubscriptions[index];
 
   editingOriginalSubscription = subscription.id ? { ...subscription } : null;
@@ -2573,7 +2797,13 @@ function editPendingSubscription(index) {
   updateSubscriptionPendingUI();
 }
 
-// ==== deletePending Vault 1 ====
+// #endregion
+
+
+
+
+
+// #region deletePending Vault 1
 
 function deletePendingCredential(index) {
   showConfirm("Are you sure you want to discard this pending credential?", () => {
@@ -2618,7 +2848,13 @@ function deletePendingTotp(index) {
   });  
 }
 
-// ==== deletePending Vault 2 ====
+// #endregion
+
+
+
+
+
+// #region deletePending Vault 2
 
 function deletePendingPin(index) {
   showConfirm("Are you sure you want to discard this pending PIN?", () => {
@@ -2641,7 +2877,13 @@ function deletePendingCreditCard(index) {
   });
 }
 
-// ==== deletePending Vault 3 ====
+// #endregion
+
+
+
+
+
+// #region deletePending Vault 3
 
 function deletePendingInsurance(index) {
   showConfirm("Are you sure you want to discard this pending Insurance?", () => {
@@ -2664,7 +2906,13 @@ function deletePendingLegalDocument(index) {
   });
 }
 
-// ==== deletePending Vault 4 ====
+// #endregion 
+
+
+
+
+
+// #region deletePending Vault 4
 
 function deletePendingAsset(index) {
   showConfirm("Are you sure you want to discard this pending Asset?", () => {
@@ -2687,7 +2935,13 @@ function deletePendingSubscription(index) {
   });
 }
 
-// ==== updatePending Vault 1 ====
+// #endregion
+
+
+
+
+
+// #region updatePending Vault1
 
 function updateCredentialPendingUI() {
   const credentialItems = document.getElementById("credentialPendingItems");
@@ -2915,7 +3169,13 @@ function updateTotpPendingUI() {
   updateGlobalSaveButtonVisibility();
 }
 
-// ==== updatePending Vault 2 ====
+// #endregion
+
+
+
+
+
+// #region updatePending Vault2
 
 function updatePinPendingUI() {
   const pinItems = document.getElementById("pinPendingItems");
@@ -3061,7 +3321,13 @@ function updateCreditCardPendingUI() {
   updateGlobalSaveButtonVisibility();
 }
 
-// ==== updatePending Vault 3 ====
+// #endregion 
+
+
+
+
+
+// #region updatePending Vault3
 
 function updateInsurancePendingUI() {
   const insuranceItems = document.getElementById("insurancePendingItems");
@@ -3206,7 +3472,13 @@ function updateLegalDocumentPendingUI() {
   updateGlobalSaveButtonVisibility();
 }
 
-// ==== updatePending Vault 4 ====
+// #endregion
+
+
+
+
+
+// #region updatePending Vault4
 
 function updateAssetPendingUI() {
   const assetItems = document.getElementById("assetPendingItems");
@@ -3349,8 +3621,21 @@ function updateSubscriptionPendingUI() {
   updateGlobalSaveButtonVisibility();
 }
 
-// ==== updateCountDisplay Vault 1 ====
+// #endregion
 
+// #endregion
+
+
+
+
+
+// #region >> updateCounters
+
+
+
+
+
+// #region updateCount Vault 1
 
 function updateCredentialCountDisplay() {
   const readCount = document.querySelectorAll('#credentialReadItems .vault-data-item').length;
@@ -3389,7 +3674,13 @@ function updateTotpCountDisplay() {
       : `${readCount}`;
 }
 
-// ==== updateCountDisplay Vault 2 ====
+// #endregion
+
+
+
+
+
+// #region updateCount Vault 2
 
 function updatePinCountDisplay() {
   const readCount = document.querySelectorAll('#pinReadItems .vault-data-item').length;
@@ -3421,7 +3712,13 @@ function updateCreditCardCountDisplay() {
       : `${readCount}`;
 }
 
-// ==== updateCountDisplay Vault 3 ====
+// #endregion
+
+
+
+
+
+// #region updateCount Vault 3
 
 function updateInsuranceCountDisplay() {
   const readCount = document.querySelectorAll('#insuranceReadItems .vault-data-item').length;
@@ -3453,7 +3750,13 @@ function updateLegalDocumentCountDisplay() {
       : `${readCount}`;
 }
 
-// ==== updateCountDisplay Vault 4 ====
+// #endregion
+
+
+
+
+
+// #region updateCount Vault 4
 
 function updateAssetCountDisplay() {
   const readCount = document.querySelectorAll('#assetReadItems .vault-data-item').length;
@@ -3485,7 +3788,21 @@ function updateSubscriptionCountDisplay() {
       : `${readCount}`;
 }
 
-// ==== Render functions Vault 1 ====
+// #endregion
+
+// #endregion
+
+
+
+
+
+// #region >> Render functions
+
+
+
+
+
+// #region Render func Vault 1
 
 function renderCredentialItem(cred, shouldUpdateUI = true) {
   const container = document.getElementById("credentialReadItems");
@@ -3530,6 +3847,7 @@ function renderCredentialItem(cred, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("credName").value = cred.name;
     document.getElementById("credUsername").value = cred.username;
     document.getElementById("credPassword").value = cred.password;
@@ -3605,6 +3923,7 @@ function renderNoteItem(note, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("noteName").value = note.name;
     document.getElementById("noteContent").value = note.note;
     document.getElementById("newNoteForm").classList.remove("slide-hidden");
@@ -3687,6 +4006,7 @@ function renderWalletItem(wallet, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("walletName").value = wallet.name;
     document.getElementById("walletAddress").value = wallet.walletAddress;
     document.getElementById("walletPrivateKey").value = wallet.privateKey;
@@ -3772,6 +4092,7 @@ function renderTotpItem(totp, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("totpName").value = totp.name;
     document.getElementById("totpKey").value = totp.key;
     document.getElementById("totpAlgorithm").value = totp.algorithm;
@@ -3824,7 +4145,13 @@ function renderTotpItem(totp, shouldUpdateUI = true) {
   
 }
 
-// ==== Render functions Vault 2 ====
+// #endregion
+
+
+
+
+
+// #region Render func Vault 2
 
 function renderPinItem(pin, shouldUpdateUI = true) {
   const container = document.getElementById("pinReadItems");
@@ -3866,6 +4193,7 @@ function renderPinItem(pin, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("pinName").value = pin.name;
     document.getElementById("pinLinkedTo").value = pin.linkedTo;
     document.getElementById("pinValue").value = pin.pin;
@@ -3946,6 +4274,7 @@ function renderBankAccountItem(bank, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("bankName").value = bank.name;
     document.getElementById("bankAccountNumber").value = bank.accountNumber;
     document.getElementById("bankIban").value = bank.iban;
@@ -4023,6 +4352,7 @@ function renderCreditCardItem(card, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("cardName").value = card.name;
     document.getElementById("cardNumber").value = card.cardNumber;
     document.getElementById("cardHolder").value = card.cardHolder;
@@ -4075,7 +4405,13 @@ function renderCreditCardItem(card, shouldUpdateUI = true) {
   });
 }
 
-// ==== Render functions Vault 3 ====
+// #endregion
+
+
+
+
+
+// #region Render func Vault 3
 
 function renderInsuranceItem(insurance, shouldUpdateUI = true) {
   const container = document.getElementById("insuranceReadItems");
@@ -4107,6 +4443,7 @@ function renderInsuranceItem(insurance, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("insuranceName").value = insurance.name;
     document.getElementById("insuranceProvider").value = insurance.provider;
     document.getElementById("insurancePolicyNumber").value = insurance.policyNumber;
@@ -4174,6 +4511,7 @@ function renderIdentityItem(identity, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("identityName").value = identity.name;
     document.getElementById("identityDocumentType").value = identity.documentType;
     document.getElementById("identityDocumentNumber").value = identity.documentNumber;
@@ -4240,6 +4578,7 @@ function renderLegalDocumentItem(legal, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("legalName").value = legal.name;
     document.getElementById("legalDocumentType").value = legal.documentType;
     document.getElementById("legalStorageLocation").value = legal.storageLocation;
@@ -4276,7 +4615,13 @@ function renderLegalDocumentItem(legal, shouldUpdateUI = true) {
   container.appendChild(item);
 }
 
-// ==== Render functions Vault 4 ====
+// #endregion
+
+
+
+
+
+// #region Render func Vault 4
 
 function renderAssetItem(asset, shouldUpdateUI = true) {
   const container = document.getElementById("assetReadItems");
@@ -4307,6 +4652,7 @@ function renderAssetItem(asset, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("assetType").value = asset.assetType;
     document.getElementById("assetOwnershipId").value = asset.ownershipId;
     document.getElementById("assetValueEstimate").value = asset.valueEstimate;
@@ -4372,6 +4718,7 @@ function renderContactItem(contact, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("contactName").value = contact.name;
     document.getElementById("contactRelation").value = contact.relation;
     document.getElementById("contactEmail").value = contact.email;
@@ -4437,6 +4784,7 @@ function renderSubscriptionItem(subscription, shouldUpdateUI = true) {
   editBtn.innerHTML = '<i class="fas fa-pen"></i>';
   editBtn.title = "Edit";
   editBtn.onclick = () => {
+    if (!canAddAnotherPending()) return;
     document.getElementById("subscriptionServiceName").value = subscription.serviceName;
     document.getElementById("subscriptionBillingAccount").value = subscription.billingAccount;
     document.getElementById("subscriptionFrequency").value = subscription.frequency;
@@ -4473,7 +4821,15 @@ function renderSubscriptionItem(subscription, shouldUpdateUI = true) {
   container.appendChild(item);
 }
 
-// ==== Data write to blockchain ====
+// #endregion
+
+// #endregion
+
+
+
+
+
+// #region Data write blockchain
 
 async function estimateSaveAllFees() {
   showSpinner("Estimating...");
@@ -5270,8 +5626,14 @@ async function saveAllPendingItems() {
     startIdleMonitor();
   }
 }
-  
-// ==== IDLE TIMEOUT HANDLING ====
+
+// #endregion
+
+
+
+
+
+// #region IDLE TIMEOUT HANDL
 
 function resetIdleTimer() {
   if (!idleListening) return;
@@ -5306,6 +5668,14 @@ function handleIdleTimeout(timeout = true) {
     });
   }
 }
+
+// #endregion
+
+
+
+
+
+// #region DOM Events
 
 // Activity events that reset the idle timer
 ["click", "mousedown", "keydown", "scroll", "touchstart"].forEach(event =>
@@ -5501,11 +5871,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addCredentialBtn) {
     addCredentialBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("credential");
       document.getElementById("credentialList").classList.remove("displayNone");
-      const credentialForm = document.getElementById("newCredentialForm");
-      credentialForm.classList.remove("slide-hidden");
-      credentialForm.classList.remove("displayNone"); // ✅ <- this fixes it
+      const credForm = document.getElementById("newCredentialForm");
+      credForm.classList.remove("slide-hidden");
+      credForm.classList.remove("displayNone");
     });
   }
  
@@ -5532,10 +5904,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   if (saveCredentialBtn) {
     saveCredentialBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       const name      = document.getElementById("credName").value.trim();
       const username  = document.getElementById("credUsername").value.trim();
       const password  = document.getElementById("credPassword").value.trim();
-      const remarks   = document.getElementById("credRemarks").value.trim();
+      const remarksRaw= document.getElementById("credRemarks").value.trim();
+      const remarks   = truncateRemarks(remarksRaw);
 
       if (!name || !username || !password) {
         showAlert("Name, username, and password are required.", "warning");
@@ -5543,15 +5918,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (editingOriginalCredential && editingOriginalCredential.id) {
-        pendingCredentials.push({ 
-          id: editingOriginalCredential.id, 
-          name, username, password, remarks,
-          _original: { ...editingOriginalCredential }  // Store original for restore
+        pendingCredentials.push({
+          id: editingOriginalCredential.id,
+          name,
+          username,
+          password,
+          remarks,
+          _original: { /* editingOriginalCredential */ }
         });
         editingOriginalCredential = null;
       } else {
         pendingCredentials.push({ name, username, password, remarks });
-      }         
+      }
 
       document.getElementById("newCredentialForm").classList.add("slide-hidden");
       document.getElementById("credentialFormTitle").innerHTML = '<i class="fas fa-lock"></i> New Credential';
@@ -5568,11 +5946,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addNoteBtn) {
     addNoteBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("note");
       document.getElementById("noteList").classList.remove("displayNone");
       const noteForm = document.getElementById("newNoteForm");
       noteForm.classList.remove("slide-hidden");
-      noteForm.classList.remove("displayNone"); // ✅ <- this fixes it
+      noteForm.classList.remove("displayNone");
     });
   }
 
@@ -5599,6 +5979,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   if (saveNoteBtn) {
     saveNoteBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
       const name    = document.getElementById("noteName").value.trim();
       const content = document.getElementById("noteContent").value.trim();
   
@@ -5634,11 +6015,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addWalletBtn) {
     addWalletBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("wallet");
       document.getElementById("walletList").classList.remove("displayNone");
       const walletForm = document.getElementById("newWalletForm");
       walletForm.classList.remove("slide-hidden");
-      walletForm.classList.remove("displayNone"); // ✅ <- this fixes it
+      walletForm.classList.remove("displayNone");
     });
   }
 
@@ -5665,17 +6048,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   if (saveWalletBtn) {
     saveWalletBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       const name          = document.getElementById("walletName").value.trim();
       const walletAddress = document.getElementById("walletAddress").value.trim();
       const privateKey    = document.getElementById("walletPrivateKey").value.trim();
       const seedPhrase    = document.getElementById("walletSeedPhrase").value.trim();
-      const remarks       = document.getElementById("walletRemarks").value.trim();
-  
+      const remarksRaw    = document.getElementById("walletRemarks").value.trim();
+      const remarks       = truncateRemarks(remarksRaw);
+
       if (!name || !walletAddress) {
         showAlert("Name and wallet address are required.", "warning");
         return;
       }
-  
+
       if (!isValidSeedPhrase(seedPhrase)) {
         showAlert("Not a valid seed phrase. A valid seed phrase contains 12 or 24 words.", "warning");
         return;
@@ -5689,19 +6075,18 @@ document.addEventListener("DOMContentLoaded", async () => {
           privateKey,
           seedPhrase,
           remarks,
-          _original: { ...editingOriginalWallet }
+          _original: { /* editingOriginalWallet */ }
         });
         editingOriginalWallet = null;
       } else {
         pendingWallets.push({ name, walletAddress, privateKey, seedPhrase, remarks });
       }
-  
+
       document.getElementById("newWalletForm").classList.add("slide-hidden");
       document.getElementById("walletFormTitle").innerHTML = '<i class="fas fa-wallet"></i> New Wallet';
       clearForm(["walletName", "walletAddress", "walletPrivateKey", "walletSeedPhrase", "walletRemarks"]);
-  
-      updateWalletPendingUI();
 
+      updateWalletPendingUI();
     });
   }
 
@@ -5712,11 +6097,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addTotpBtn) {
     addTotpBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("totp");
       document.getElementById("totpList").classList.remove("displayNone");
       const totpForm = document.getElementById("newTotpForm");
       totpForm.classList.remove("slide-hidden");
-      totpForm.classList.remove("displayNone"); // ✅ <- this fixes it
+      totpForm.classList.remove("displayNone");
     });
   }
 
@@ -5744,6 +6131,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (saveTotpBtn) {
     saveTotpBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
       const name      = document.getElementById("totpName").value.trim();
       const key       = document.getElementById("totpKey").value.trim();
       const algorithm = document.getElementById("totpAlgorithm").value.trim();
@@ -5782,6 +6170,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addPinBtn) {
     addPinBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("pin");
       document.getElementById("pinList").classList.remove("displayNone");
       const form = document.getElementById("newPinForm");
@@ -5813,11 +6203,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (savePinBtn) {
     savePinBtn.addEventListener("click", () => {
-      const name      = document.getElementById("pinName").value.trim();
-      const linkedTo  = document.getElementById("pinLinkedTo").value.trim();
-      const pin       = document.getElementById("pinValue").value.trim();
-      const remarks   = document.getElementById("pinRemarks").value.trim();
-  
+      if (!canAddAnotherPending()) return;
+
+      const name        = document.getElementById("pinName").value.trim();
+      const linkedTo    = document.getElementById("pinLinkedTo").value.trim();
+      const pin         = document.getElementById("pinValue").value.trim();
+      const remarksRaw  = document.getElementById("pinRemarks").value.trim();
+      const remarks     = truncateRemarks(remarksRaw);
+
       if (!name) {
         showAlert("Name cannot be empty.", "warning");
         return;
@@ -5827,7 +6220,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         showAlert("PIN cannot be empty.", "warning");
         return;
       }
-  
+
       if (editingOriginalPin && editingOriginalPin.id) {
         pendingPins.push({
           id: editingOriginalPin.id,
@@ -5835,19 +6228,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           linkedTo,
           pin,
           remarks,
-          _original: { ...editingOriginalPin }
+          _original: { /* editingOriginalPin */ }
         });
         editingOriginalPin = null;
       } else {
         pendingPins.push({ name, linkedTo, pin, remarks });
       }
-  
+
       document.getElementById("newPinForm").classList.add("slide-hidden");
       document.getElementById("pinFormTitle").innerHTML = '<i class="fas fa-key"></i> New PIN';
       clearForm(["pinName", "pinLinkedTo", "pinValue", "pinRemarks"]);
       updatePinPendingUI();
     });
-  }  
+  }
 
   // ===== Bank Account =====
   const addBankBtn    = document.getElementById("addBankBtn");
@@ -5856,6 +6249,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addBankBtn) {
     addBankBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("bank");
       document.getElementById("bankList").classList.remove("displayNone");
       const form = document.getElementById("newBankForm");
@@ -5887,26 +6282,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (saveBankBtn) {
     saveBankBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       const name          = document.getElementById("bankName").value.trim();
       const accountNumber = document.getElementById("bankAccountNumber").value.trim();
       const iban          = document.getElementById("bankIban").value.trim();
       const swift         = document.getElementById("bankSwift").value.trim();
       const bankName      = document.getElementById("bankBankName").value.trim();
       const country       = document.getElementById("bankCountry").value.trim();
-      const remarks       = document.getElementById("bankRemarks").value.trim();
-  
+      const remarksRaw    = document.getElementById("bankRemarks").value.trim();
+      const remarks       = truncateRemarks(remarksRaw);
+
       if (!name) {
         showAlert("Name cannot be empty.", "warning");
         return;
       }
-      
+
       if (!iban && !accountNumber) {
         showAlert("Account number and IBAN cannot both be empty.", "warning");
         return;
       }
-  
-      if(iban) {
-        if(!isValidIBAN(iban)) {
+
+      if (iban) {
+        if (!isValidIBAN(iban)) {
           showAlert("The IBAN is not valid.", "warning");
           return;
         }
@@ -5922,19 +6320,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           bankName,
           country,
           remarks,
-          _original: { ...editingOriginalBankAccount }
+          _original: { /* editingOriginalBankAccount */ }
         });
         editingOriginalBankAccount = null;
       } else {
         pendingBankAccounts.push({ name, accountNumber, iban, swift, bankName, country, remarks });
       }
-  
+
       document.getElementById("newBankForm").classList.add("slide-hidden");
       document.getElementById("bankFormTitle").innerHTML = '<i class="fas fa-university"></i> New Bank Account';
       clearForm(["bankName", "bankAccountNumber", "bankIban", "bankSwift", "bankBankName", "bankCountry", "bankRemarks"]);
       updateBankAccountPendingUI();
     });
-  }  
+  }
 
   // ===== Credit Card =====
   const addCardBtn    = document.getElementById("addCardBtn");
@@ -5943,6 +6341,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addCardBtn) {
     addCardBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("card");
       document.getElementById("cardList").classList.remove("displayNone");
       const form = document.getElementById("newCardForm");
@@ -5974,14 +6374,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (saveCardBtn) {
     saveCardBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       const name        = document.getElementById("cardName").value.trim();
       const cardNumber  = document.getElementById("cardNumber").value.trim();
       const cardHolder  = document.getElementById("cardHolder").value.trim();
       const expiryDate  = document.getElementById("cardExpiration").value.trim();
       const cvv         = document.getElementById("cardCVV").value.trim();
       const linkedTo    = document.getElementById("cardLinkedTo").value.trim();
-      const remarks     = document.getElementById("cardRemarks").value.trim();
-  
+      const remarksRaw  = document.getElementById("cardRemarks").value.trim();
+      const remarks     = truncateRemarks(remarksRaw);
+
       if (!name) {
         showAlert("Name cannot be empty.", "warning");
         return;
@@ -6016,7 +6419,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         showAlert("The CVV is not valid.", "warning");
         return;
       }
-  
+
       if (editingOriginalCreditCard && editingOriginalCreditCard.id) {
         pendingCreditCards.push({
           id: editingOriginalCreditCard.id,
@@ -6027,19 +6430,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           cvv,
           linkedTo,
           remarks,
-          _original: { ...editingOriginalCreditCard }
+          _original: { /* editingOriginalCreditCard */ }
         });
         editingOriginalCreditCard = null;
       } else {
         pendingCreditCards.push({ name, cardNumber, cardHolder, expiryDate, cvv, linkedTo, remarks });
       }
-  
+
       document.getElementById("newCardForm").classList.add("slide-hidden");
       document.getElementById("cardFormTitle").innerHTML = '<i class="fas fa-credit-card"></i> New Credit Card';
       clearForm(["cardName", "cardNumber", "cardHolder", "cardExpiration", "cardCVV", "cardLinkedTo", "cardRemarks"]);
       updateCreditCardPendingUI();
     });
-  }  
+  }
 
   // ===== Insurance =====
   const addInsuranceBtn     = document.getElementById("addInsuranceBtn");
@@ -6048,6 +6451,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addInsuranceBtn) {
     addInsuranceBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("insurance");
       document.getElementById("insuranceList").classList.remove("displayNone");
       const form = document.getElementById("newInsuranceForm");
@@ -6079,12 +6484,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (saveInsuranceBtn) {
     saveInsuranceBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
       const name          = document.getElementById("insuranceName").value.trim();
       const provider      = document.getElementById("insuranceProvider").value.trim();
       const policyNumber  = document.getElementById("insurancePolicyNumber").value.trim();
       const expiryDate    = document.getElementById("insuranceExpiryDate").value.trim();
       const linkedTo      = document.getElementById("insuranceLinkedTo").value.trim();
-      const remarks       = document.getElementById("insuranceRemarks").value.trim();
+      const remarksRaw    = document.getElementById("insuranceRemarks").value.trim();
+      const remarks       = truncateRemarks(remarksRaw);
   
       if (!name) {
         showAlert("Insurance name cannot be empty.", "warning");
@@ -6121,6 +6528,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addIdentityBtn) {
     addIdentityBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("identity");
       document.getElementById("identityList").classList.remove("displayNone");
       const form = document.getElementById("newIdentityForm");
@@ -6152,12 +6561,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (saveIdentityBtn) {
     saveIdentityBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
       const name            = document.getElementById("identityName").value.trim();
       const documentType    = document.getElementById("identityDocumentType").value.trim();
       const documentNumber  = document.getElementById("identityDocumentNumber").value.trim();
       const country         = document.getElementById("identityCountry").value.trim();
       const expiryDate      = document.getElementById("identityExpiryDate").value.trim();
-      const remarks         = document.getElementById("identityRemarks").value.trim();
+      const remarksRaw      = document.getElementById("identityRemarks").value.trim();
+      const remarks         = truncateRemarks(remarksRaw);
   
       if (!name) {
         showAlert("Identity name cannot be empty.", "warning");
@@ -6204,6 +6615,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addLegalBtn) {
     addLegalBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("legal");
       document.getElementById("legalList").classList.remove("displayNone");
       const form = document.getElementById("newLegalForm");
@@ -6235,17 +6648,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (saveLegalBtn) {
     saveLegalBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       const name            = document.getElementById("legalName").value.trim();
       const documentType    = document.getElementById("legalDocumentType").value.trim();
       const storageLocation = document.getElementById("legalStorageLocation").value.trim();
       const linkedTo        = document.getElementById("legalLinkedTo").value.trim();
-      const remarks         = document.getElementById("legalRemarks").value.trim();
-  
+      const remarksRaw      = document.getElementById("legalRemarks").value.trim();
+      const remarks         = truncateRemarks(remarksRaw);
+
       if (!name) {
         showAlert("Legal Document name cannot be empty.", "warning");
         return;
       }
-  
+
       if (!documentType) {
         showAlert("Document type cannot be empty.", "warning");
         return;
@@ -6259,20 +6675,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           storageLocation,
           linkedTo,
           remarks,
-          _original: { ...editingOriginalLegal }
+          _original: { /* editingOriginalLegal */ }
         });
         editingOriginalLegal = null;
       } else {
         pendingLegalDocuments.push({ name, documentType, storageLocation, linkedTo, remarks });
       }
-  
+
       document.getElementById("newLegalForm").classList.add("slide-hidden");
       document.getElementById("legalFormTitle").innerHTML = '<i class="fas fa-file-contract"></i> New Legal Document';
-      clearForm(["legalName", "legalDocumentType", "legalStorageLocation", "legalLinkedTo", "legalRemarks"])
+      clearForm(["legalName", "legalDocumentType", "legalStorageLocation", "legalLinkedTo", "legalRemarks"]);
       updateLegalDocumentPendingUI();
     });
   }
-  
 
   // ===== Asset =====
   const addAssetBtn     = document.getElementById("addAssetBtn");
@@ -6281,6 +6696,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addAssetBtn) {
     addAssetBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("asset");
       document.getElementById("assetList").classList.remove("displayNone");
       const form = document.getElementById("newAssetForm");
@@ -6312,17 +6729,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (saveAssetBtn) {
     saveAssetBtn.addEventListener("click", () => {
-      const assetType     = document.getElementById("assetType").value.trim();
-      const ownershipId   = document.getElementById("assetOwnershipId").value.trim();
-      const valueEstimate = document.getElementById("assetValueEstimate").value.trim();
-      const linkedTo      = document.getElementById("assetLinkedTo").value.trim();
-      const remarks       = document.getElementById("assetRemarks").value.trim();
-  
+      if (!canAddAnotherPending()) return;
+
+      const assetType       = document.getElementById("assetType").value.trim();
+      const ownershipId     = document.getElementById("assetOwnershipId").value.trim();
+      const valueEstimate   = document.getElementById("assetValueEstimate").value.trim();
+      const linkedTo        = document.getElementById("assetLinkedTo").value.trim();
+      const remarksRaw      = document.getElementById("assetRemarks").value.trim();
+      const remarks         = truncateRemarks(remarksRaw);
+
       if (!assetType) {
         showAlert("Asset Type cannot be empty.", "warning");
         return;
       }
-  
+
       if (editingOriginalAsset && editingOriginalAsset.id) {
         pendingAssets.push({
           id: editingOriginalAsset.id,
@@ -6331,19 +6751,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           valueEstimate,
           linkedTo,
           remarks,
-          _original: { ...editingOriginalAsset }
+          _original: { /* editingOriginalAsset */ }
         });
         editingOriginalAsset = null;
       } else {
         pendingAssets.push({ assetType, ownershipId, valueEstimate, linkedTo, remarks });
       }
-  
+
       document.getElementById("newAssetForm").classList.add("slide-hidden");
       document.getElementById("assetFormTitle").innerHTML = '<i class="fas fa-building"></i> New Asset';
       clearForm(["assetType", "assetOwnershipId", "assetValueEstimate", "assetLinkedTo", "assetRemarks"]);
       updateAssetPendingUI();
     });
-  }  
+  }
 
   // ===== Contact =====
   const addContactBtn     = document.getElementById("addContactBtn");
@@ -6352,6 +6772,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addContactBtn) {
     addContactBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("contact");
       document.getElementById("contactList").classList.remove("displayNone");
       const form = document.getElementById("newContactForm");
@@ -6383,27 +6805,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (saveContactBtn) {
     saveContactBtn.addEventListener("click", () => {
-      const name      = document.getElementById("contactName").value.trim();
-      const relation  = document.getElementById("contactRelation").value.trim();
-      const email     = document.getElementById("contactEmail").value.trim();
-      const phone     = document.getElementById("contactPhone").value.trim();
-      const remarks   = document.getElementById("contactRemarks").value.trim();
-  
+      if (!canAddAnotherPending()) return;
+
+      const name        = document.getElementById("contactName").value.trim();
+      const relation    = document.getElementById("contactRelation").value.trim();
+      const email       = document.getElementById("contactEmail").value.trim();
+      const phone       = document.getElementById("contactPhone").value.trim();
+      const remarksRaw  = document.getElementById("contactRemarks").value.trim();
+      const remarks     = truncateRemarks(remarksRaw);
+
       if (!name) {
         showAlert("Contact name cannot be empty.", "warning");
         return;
       }
 
-      if (!relation) {
-        showAlert("Relation cannot be empty.", "warning");
-        return;
-      }
-
-      if (!email && !phone) {
-        showAlert("Email and phone cannot both be empty.", "warning");
-        return;
-      }
-  
       if (editingOriginalContact && editingOriginalContact.id) {
         pendingContacts.push({
           id: editingOriginalContact.id,
@@ -6412,19 +6827,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           email,
           phone,
           remarks,
-          _original: { ...editingOriginalContact }
+          _original: { /* editingOriginalContact */ }
         });
         editingOriginalContact = null;
       } else {
         pendingContacts.push({ name, relation, email, phone, remarks });
       }
-  
+
       document.getElementById("newContactForm").classList.add("slide-hidden");
       document.getElementById("contactFormTitle").innerHTML = '<i class="fas fa-address-book"></i> New Contact';
       clearForm(["contactName", "contactRelation", "contactEmail", "contactPhone", "contactRemarks"]);
       updateContactPendingUI();
     });
-  }  
+  }
 
   // ===== Subscription =====
   const addSubscriptionBtn    = document.getElementById("addSubscriptionBtn");
@@ -6433,6 +6848,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (addSubscriptionBtn) {
     addSubscriptionBtn.addEventListener("click", () => {
+      if (!canAddAnotherPending()) return;
+
       closeOtherForms("subscription");
       document.getElementById("subscriptionList").classList.remove("displayNone");
       const form = document.getElementById("newSubscriptionForm");
@@ -6464,17 +6881,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (saveSubscriptionBtn) {
     saveSubscriptionBtn.addEventListener("click", () => {
-      const serviceName    = document.getElementById("subscriptionServiceName").value.trim();
-      const billingAccount = document.getElementById("subscriptionBillingAccount").value.trim();
-      const frequency      = document.getElementById("subscriptionFrequency").value.trim();
-      const linkedTo       = document.getElementById("subscriptionLinkedTo").value.trim();
-      const remarks        = document.getElementById("subscriptionRemarks").value.trim();
-  
+      if (!canAddAnotherPending()) return;
+
+      const serviceName      = document.getElementById("subscriptionServiceName").value.trim();
+      const billingAccount   = document.getElementById("subscriptionBillingAccount").value.trim();
+      const frequency        = document.getElementById("subscriptionFrequency").value.trim();
+      const linkedTo         = document.getElementById("subscriptionLinkedTo").value.trim();
+      const remarksRaw       = document.getElementById("subscriptionRemarks").value.trim();
+      const remarks          = truncateRemarks(remarksRaw);
+
       if (!serviceName) {
-        showAlert("Subscription name cannot be empty.", "warning");
+        showAlert("Service name cannot be empty.", "warning");
         return;
       }
-  
+
       if (editingOriginalSubscription && editingOriginalSubscription.id) {
         pendingSubscriptions.push({
           id: editingOriginalSubscription.id,
@@ -6483,19 +6903,20 @@ document.addEventListener("DOMContentLoaded", async () => {
           frequency,
           linkedTo,
           remarks,
-          _original: { ...editingOriginalSubscription }
+          _original: { /* editingOriginalSubscription */ }
         });
         editingOriginalSubscription = null;
       } else {
         pendingSubscriptions.push({ serviceName, billingAccount, frequency, linkedTo, remarks });
       }
-  
+
       document.getElementById("newSubscriptionForm").classList.add("slide-hidden");
-      document.getElementById("subscriptionFormTitle").innerHTML = '<i class="fas fa-address-book"></i> New Subscription';
+      document.getElementById("subscriptionFormTitle").innerHTML = '<i class="fas fa-sync-alt"></i> New Subscription';
       clearForm(["subscriptionServiceName", "subscriptionBillingAccount", "subscriptionFrequency", "subscriptionLinkedTo", "subscriptionRemarks"]);
       updateSubscriptionPendingUI();
     });
-  }  
+  }
 
 });
 
+// #endregion

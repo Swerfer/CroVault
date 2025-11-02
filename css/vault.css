@@ -1068,10 +1068,19 @@ a.btn-custom.maxwidth {
   width: 100vw; height: 100vh;
   background-color: rgba(0, 0, 0, 0.6); /* darker background */
   z-index: 9998; /* just below modal */
+  -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
   transition: opacity 0.2s ease;
 }
 
 .modal-overlay.hidden {
   display: none;
+}
+
+#missingVaultTypes {
+  margin-top: 10px;
+}
+
+#newVaultsButtonDiv {
+  margin-top: 15px;
 }
